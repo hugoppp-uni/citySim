@@ -1,19 +1,48 @@
-﻿namespace CitySim.Agents;
-using System;
+﻿using CitySim.World;
+using Mars.Common;
 using Mars.Interfaces.Agents;
-using World;
+using Mars.Interfaces.Environments;
 
-public class Person: IAgent<GridWorld>
+namespace CitySim.Agents;
+
+public class Person : IAgent<GridLayer>, IPositionable
 {
-    public void Init(GridWorld layer)
+    public Guid ID { get; set; }
+    public Position Position { get; set; } = null!; //Init()
+
+    private GridLayer _gridLayer = null!; //Init()
+
+    public string Name { get; }
+
+    private static Queue<string> Names = new(new[]
     {
-        Console.WriteLine("Agent init");
+        "Peter",
+        "Bob",
+        "Micheal",
+        "Gunther"
+    });
+
+    public Person()
+    {
+        Name = Names.Dequeue();
+    }
+
+    public void Init(GridLayer layer)
+    {
+        _gridLayer = layer;
+        Position = _gridLayer.RandomPosition();
+        _gridLayer.GridEnvironment.Insert(this);
+        Console.WriteLine($"Agent {ID} init");
     }
 
     public void Tick()
     {
-        Console.WriteLine("Agent ticks");
-    }
+        var personsInVicinity = _gridLayer.GridEnvironment.Explore(Position, radius: 2)
+            .Where(p => p.ID != ID)
+            .Select(p => p.Name);
+        Console.WriteLine($"{Name} {Position} can see: [{string.Join(',', personsInVicinity)}]");
 
-    public Guid ID { get; set; }
+        var centerBearing = Position.GetBearing(_gridLayer.GridEnvironment.Centre);
+        _gridLayer.GridEnvironment.MoveTowards(this, centerBearing, distanceToPass: 1);
+    }
 }

@@ -1,15 +1,11 @@
 ﻿using CitySim.Agents;
 using CitySim.World;
 using Mars.Components.Starter;
-using Mars.Core.Simulation;
 using Mars.Interfaces.Model;
 
-// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
-
 var desc = new ModelDescription();
-desc.AddLayer<GridWorld>();
-desc.AddAgent<Person, GridWorld>();
+desc.AddLayer<GridLayer>();
+desc.AddAgent<Person, GridLayer>();
 
 var config = new SimulationConfig
 {
@@ -18,17 +14,14 @@ var config = new SimulationConfig
     Globals = new Globals
     {
         StartPoint = DateTime.Now,
-        EndPoint = DateTime.Now.AddHours(1),
+        EndPoint = DateTime.Now.AddSeconds(30),
         DeltaTUnit = TimeSpanUnit.Seconds,
-        ShowConsoleProgress = true,
+        ShowConsoleProgress = false,
         OutputTarget = OutputTargetType.Csv,
     }
 };
 
-var app = SimulationStarter.BuildApplication(desc, config);
-
-var simulation = app.Resolve<ISimulation>();
-
-await simulation.StartSimulationAsync(desc, config);
-
-Console.ReadKey();
+var task = SimulationStarter.Start(desc, config);
+var loopResults = task.Run();
+// Feedback to user that simulation run was successful
+Console.WriteLine($"Simulation execution finished after {loopResults.Iterations} steps");

@@ -13,13 +13,14 @@ using Agents;
 using Mars.Components.Layers;
 using Mars.Components.Services;
 using Mars.Core.Data;
+using Mars.Interfaces.Agents;
 using Mars.Interfaces.Data;
 using Mars.Interfaces.Layers;
 
 public class GridLayer : AbstractLayer
 {
     public SpatialHashEnvironment<Person> GridEnvironment { get; private set; } = new (10, 10, true);
-
+    
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle, UnregisterAgent unregisterAgentHandle)
     {
@@ -29,8 +30,13 @@ public class GridLayer : AbstractLayer
 
         // Create and register objects of type MyAgentType.
         var agents = agentManager.Spawn<Person, GridLayer>().Take(3).ToList();
-
+        
         return true;
+    }
+
+    public void RemoveAgent(ITickClient agent)
+    {
+        this.UnregisterAgent(this, agent);
     }
     
 

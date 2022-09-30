@@ -1,9 +1,9 @@
-﻿using CitySim.World;
+﻿using CitySim.Backend.World;
 using Mars.Common;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
 
-namespace CitySim.Agents;
+namespace CitySim.Backend.Agents;
 
 public class Person : IAgent<GridLayer>, IPositionable
 {

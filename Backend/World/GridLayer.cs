@@ -1,20 +1,13 @@
-﻿using Mars.Components.Environments;
-using Mars.Interfaces.Environments;
-using Mars.Numerics.Statistics;
-
-namespace CitySim.World;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Agents;
+﻿using CitySim.Backend.Agents;
+using Mars.Components.Environments;
 using Mars.Components.Layers;
-using Mars.Components.Services;
 using Mars.Core.Data;
 using Mars.Interfaces.Data;
+using Mars.Interfaces.Environments;
 using Mars.Interfaces.Layers;
+using Mars.Numerics.Statistics;
+
+namespace CitySim.Backend.World;
 
 public class GridLayer : AbstractLayer
 {

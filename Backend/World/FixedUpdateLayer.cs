@@ -1,7 +1,7 @@
 using Mars.Components.Layers;
 using Mars.Interfaces.Layers;
 
-namespace CitySim.World;
+namespace CitySim.Backend.World;
 
 public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 {

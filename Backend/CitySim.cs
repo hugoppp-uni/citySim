@@ -10,7 +10,7 @@ namespace CitySim.Backend;
 
 public class CitySim
 {
-    public GridLayer GridLayer => (GridLayer)Simulation.WorkflowState.Model.Layers[new LayerType(typeof(GridLayer))];
+    public GridLayer GridLayer { get; }
     public IRuntimeModel Model => Simulation.WorkflowState.Model;
     private ISimulationContainer Application { get; }
     private ISimulation Simulation { get; }
@@ -40,6 +40,7 @@ public class CitySim
         Simulation = Application.Resolve<ISimulation>();
         var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];
         fixedUpdateLayer.SimulationController = SimulationController;
+        GridLayer = (GridLayer)Model.Layers[new LayerType(typeof(GridLayer))];
     }
 
 

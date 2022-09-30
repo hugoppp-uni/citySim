@@ -5,9 +5,10 @@ namespace CitySim.Backend.World;
 
 public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 {
+    internal SimulationController SimulationController = null!; // set in CitySim ctor
     public void Tick()
     {
-        Task.Delay(TimeSpan.FromMilliseconds(1000)).Wait();
+        Task.Delay(TimeSpan.FromMilliseconds(1000 / SimulationController.TimeMultiplier)).Wait();
         //todo
     }
 

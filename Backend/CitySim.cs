@@ -1,6 +1,7 @@
 using CitySim.Backend.Agents;
 using CitySim.Backend.World;
 using Mars.Components.Starter;
+using Mars.Core.Executor;
 using Mars.Core.Simulation;
 using Mars.Interfaces;
 using Mars.Interfaces.Model;
@@ -10,8 +11,10 @@ namespace CitySim.Backend;
 public class CitySim
 {
     public GridLayer GridLayer => (GridLayer)Simulation.WorkflowState.Model.Layers[new LayerType(typeof(GridLayer))];
+    public IRuntimeModel Model => Simulation.WorkflowState.Model;
     private ISimulationContainer Application { get; }
     private ISimulation Simulation { get; }
+    public SimulationController SimulationController { get; } = new();
 
     public CitySim()
     {
@@ -35,6 +38,8 @@ public class CitySim
         };
         Application = SimulationStarter.BuildApplication(desc, config);
         Simulation = Application.Resolve<ISimulation>();
+        var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];
+        fixedUpdateLayer.SimulationController = SimulationController;
     }
 
 

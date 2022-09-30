@@ -6,6 +6,13 @@ Console.WriteLine("Hello, World!");
 var citySim = new CitySim.Backend.CitySim();
 var simulationTask = citySim.StartAsync();
 
+//change simulation speed
+Task.Factory.StartNew(async () =>
+{
+    await Task.Delay(TimeSpan.FromSeconds(2));
+    citySim.SimulationController.TimeMultiplier = 0.3;
+});
+
 // Initialization
 //--------------------------------------------------------------------------------------
 const int screenWidth = 800;
@@ -28,9 +35,9 @@ while (!WindowShouldClose())
         for (int y = 0; y < 10; y++)
         {
             var personOnCoord = citySim.GridLayer.GridEnvironment.Explore(x, y, 0).Any();
-            Color color = personOnCoord ? new Color(50, 255, 0, 255) : new Color(50, 255,255,255);
+            Color color = personOnCoord ? new Color(50, 255, 0, 255) : new Color(50, 255, 255, 255);
             DrawRectangleRounded(new Rectangle(x * 50 + 150, y * 30 + 100, 50 - 2, 30 - 2), 0.1f, 3,
-                    color);
+                color);
         }
     }
 

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CitySim": {
+      "commandName": "Project",
+      "workingDirectory": "."
+    }
+  }
+}

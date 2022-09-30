@@ -6,8 +6,8 @@ We're simulating a city!
 
 | Kennung | Name              | Relevante Skills                                                                   |
 |---------|-------------------|------------------------------------------------------------------------------------|
-| @acw954 | Tobias Schulz     | <ul><li>Etwas C#</li><li>WPF</li><li>Inkscape</li></ul>                            |                                                         
-| @acx589 | Julius Held       | <ul><li>C#</li><li>Visualierung (im Zweifel auch Python)</li></ul>                 |                                                        
+| @acw954 | Tobias Schulz     | <ul><li>Etwas C#</li><li>WPF</li></ul>                            |                                                         
+| @acx589 | Julius Held       | <ul><li>C#</li><li>Inkscape</li><li>Visualierung (im Zweifel auch Python)</li></ul>                 |                                                        
 | @acx807 | Marlon Regenhardt | <ul><li>C#</li><li>WPF / Blazor</li><li>Python</li><li>CI/CD</li><li>Git</li></ul> |                                                       
 | @acs521 | Hugo Protsch      | <ul><li>C#</li> <li>WPF</li><li>CI/CD</li></ul>                                    |
 | @acz494 | Hossam Waziry     | <ul> <li> C# </li><li>Photoshop / Illustrator</li></ul>                            |
@@ -19,7 +19,7 @@ We're simulating a city!
   - @acs521 Hugo
   - @acz361 Aslam
   - @acx807 Marlon
-  - (@acw954 Tobias)?
+  - @acw954 Tobias
 - Visualisierung Code
     - @acx589 Julius
 - Assets

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CitySim.Backend.Agents;
 using CitySim.Backend.World;
 using Mars.Components.Starter;
@@ -46,11 +47,15 @@ public class CitySim
 
     public Task StartAsync()
     {
-        return Task.Factory.StartNew(() =>
+        var watch = new Stopwatch();
+        var task = Simulation.StartSimulationAsync();
+        watch.Start();
+        task.ContinueWith(result =>
         {
-            var loopResults = Simulation.StartSimulation();
-            Console.WriteLine($"Simulation execution finished after {loopResults.Iterations} steps");
+            Console.WriteLine($"Simulation execution finished after {result.Result.Iterations} steps " +
+                              $"and took {watch.ElapsedMilliseconds}ms");
         });
+        return task;
     }
 
     public void Pause()

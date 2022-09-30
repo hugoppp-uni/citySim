@@ -3,15 +3,11 @@ using static Raylib_CsLo.Raylib;
 
 Console.WriteLine("Hello, World!");
 
-var citySim = new CitySim.Backend.CitySim();
-var simulationTask = citySim.StartAsync();
+
+
 
 //change simulation speed
-Task.Factory.StartNew(async () =>
-{
-    await Task.Delay(TimeSpan.FromSeconds(2));
-    citySim.SimulationController.TimeMultiplier = 0.3;
-});
+
 
 // Initialization
 //--------------------------------------------------------------------------------------
@@ -19,6 +15,16 @@ const int screenWidth = 800;
 const int screenHeight = 450;
 
 InitWindow(screenWidth, screenHeight, "CitySim");
+
+var citySim = new CitySim.Backend.CitySim
+{
+    SimulationController =
+    {
+        TicksPerSecond = 2
+    }
+};
+var simulationTask = citySim.StartAsync();
+
 
 SetTargetFPS(60);
 
@@ -42,7 +48,7 @@ while (!WindowShouldClose())
     }
 
     int width = MeasureText("CitySim", 60);
-
+    DrawFPS(10, 10);
     DrawText("CitySim", screenWidth / 2 - width / 2 + 2, 22,
         60, new Color(0, 0, 0, 100));
 

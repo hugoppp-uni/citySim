@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Mars.Components.Layers;
 using Mars.Interfaces.Layers;
 
@@ -6,6 +7,7 @@ namespace CitySim.Backend.World;
 public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 {
     internal SimulationController SimulationController = null!; // set in CitySim ctor
+    private Stopwatch _stopwatch = new Stopwatch();
     public void Tick()
     {
     }
@@ -17,12 +19,21 @@ public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 
     public void PostTick()
     {
-        Console.WriteLine($"### Finished Tick: {Context.CurrentTick} ###");
-        Console.WriteLine($"Current simulation speed multiplier: {SimulationController.TimeMultiplier:F1}");
-        
-        //todo calculate
-        var timeToWait = 1000 / SimulationController.TimeMultiplier;
-        Console.WriteLine($"Waiting: {timeToWait:F1}ms");
-        Task.Delay(TimeSpan.FromMilliseconds(timeToWait)).Wait();
+        if (_stopwatch.IsRunning)
+        {
+            Console.WriteLine($"### Finished Tick: {Context.CurrentTick} ###");
+            Console.WriteLine($"Current ticks per second: {SimulationController.TicksPerSecond:F1}");
+            long timeToWait =
+                Convert.ToInt64(GetCurrentTick() * SimulationController.TimePerTick - _stopwatch.ElapsedMilliseconds);
+            if (timeToWait > 0)
+            {
+                Console.WriteLine($"Waiting: {timeToWait:F1}ms");
+                Task.Delay(TimeSpan.FromMilliseconds(timeToWait)).Wait();
+            }
+        }
+        else
+        {
+            _stopwatch.Start();
+        }
     }
 }

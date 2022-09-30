@@ -8,20 +8,21 @@ public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 {
     internal SimulationController SimulationController = null!; // set in CitySim ctor
     private readonly Stopwatch _stopwatch = new();
+
     public void Tick()
     {
     }
 
     public void PreTick()
     {
-        Console.WriteLine($"### Starting Tick: {Context.CurrentTick} ###");
+        Console.WriteLine( $"############################### Starting Tick: {Context.CurrentTick} ###############################");
     }
 
     public void PostTick()
     {
         if (_stopwatch.IsRunning)
         {
-            Console.WriteLine($"### Finished Tick: {Context.CurrentTick} ###");
+            Console.WriteLine( $"############################### Finished Tick: {Context.CurrentTick} ############################### ");
             Console.WriteLine($"Current ticks per second: {SimulationController.TicksPerSecond:F1}");
             long timeToWait =
                 Convert.ToInt64(GetCurrentTick() * SimulationController.TimePerTick - _stopwatch.ElapsedMilliseconds);

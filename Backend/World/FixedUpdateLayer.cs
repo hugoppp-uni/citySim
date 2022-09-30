@@ -7,7 +7,7 @@ namespace CitySim.Backend.World;
 public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 {
     internal SimulationController SimulationController = null!; // set in CitySim ctor
-    private Stopwatch _stopwatch = new Stopwatch();
+    private readonly Stopwatch _stopwatch = new();
     public void Tick()
     {
     }

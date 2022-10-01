@@ -31,7 +31,7 @@ public class CitySim
             Globals = new Globals
             {
                 StartPoint = DateTime.Now,
-                EndPoint = DateTime.Now.AddSeconds(30),
+                EndPoint = DateTime.Now.AddYears(1),
                 DeltaTUnit = TimeSpanUnit.Seconds,
                 ShowConsoleProgress = false,
                 OutputTarget = OutputTargetType.Csv,

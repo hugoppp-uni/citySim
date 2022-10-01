@@ -4,6 +4,7 @@ using Mars.Common;
 using Mars.Components.Services.Planning.ActionCommons;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
+using Mars.Numerics;
 
 namespace CitySim.Backend.Agents;
 
@@ -16,8 +17,8 @@ public class Person : IAgent<GridLayer>, IPositionable
     public string Name { get; }
     private readonly PersonGoap _goap;
 
-    public int Hunger { get; set; } = 10;
-    public int Food { get; set; } = Random.Shared.Next(0, 3);
+    public int Hunger { get; set; } = 15;
+    public int Food { get; set; } = 30;
 
     private static Queue<string> Names = new(new[]
     {
@@ -52,13 +53,24 @@ public class Person : IAgent<GridLayer>, IPositionable
         Console.WriteLine(
             $"{Name} (Hunger: {Hunger}, Food: {Food}) {Position} can see: [{string.Join(',', personsInVicinity)}]");
 
-        var centerBearing = Position.GetBearing(_gridLayer.GridEnvironment.Centre);
-        _gridLayer.GridEnvironment.MoveTowards(this, centerBearing, distanceToPass: 1);
-
         var goapActions = _goap.Plan().ToList();
         if (goapActions.Any(action => action is not AllGoalsSatisfiedAction))
         {
-            goapActions.First().Execute();
+            var goapAction = goapActions.First();
+            if (goapAction is PersonAction personAction)
+            {
+                if (0 == Distance.Chebyshev(Position.PositionArray, personAction.GetTargetPosition().PositionArray))
+                {
+                    Console.WriteLine("Exectuing: " + goapAction.GetType());
+                    goapAction.Execute();
+                }
+                else
+                {
+                    Console.WriteLine($"Moving to {personAction.GetTargetPosition()} to execute: " + goapAction.GetType());
+                    //todo seems like this is the wrong method for this, the person always move to bottom right
+                    _gridLayer.GridEnvironment.MoveTo(this, personAction.GetTargetPosition(), 1);
+                }
+            }
         }
     }
 

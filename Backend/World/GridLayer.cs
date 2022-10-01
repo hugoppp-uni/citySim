@@ -21,7 +21,7 @@ public class GridLayer : AbstractLayer
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
 
         // Create and register objects of type MyAgentType.
-        var agents = agentManager.Spawn<Person, GridLayer>().Take(3).ToList();
+        var agents = agentManager.Spawn<Person, GridLayer>().Take(1).ToList();
 
         return true;
     }

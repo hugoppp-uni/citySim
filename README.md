@@ -25,3 +25,14 @@ We're simulating a city!
 - Assets
     - (@acx589 Julius)
     - @acz494 Hossam
+
+## Vorgänge
+
+### Bearbeiten von Tickets:
+1. Ticket erstellen
+   1. Asignee zuordnen
+   2. Auf "**in development**" stellen ([Kanban Board](https://git.haw-hamburg.de/mars2022/citysim/-/boards))
+2. Neuen Branch erstellen und Ticket bearbeiten
+3. MR erstellen
+   1. Review anfordern falls nötig
+   2. Merge in master

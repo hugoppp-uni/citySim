@@ -4,7 +4,7 @@ namespace CitySim.Backend.Agents.Behavior;
 
 public class PersonGoal : GoapGoal
 {
-    public PersonGoal(IGoapAgentStates agentStates, float relevance = 0) : base(agentStates, relevance)
+    protected PersonGoal(IGoapAgentStates agentStates, float relevance = 0) : base(agentStates, relevance)
     {
     }
 

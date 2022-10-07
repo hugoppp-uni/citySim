@@ -5,20 +5,17 @@ namespace CitySim.Backend.Agents.Behavior.Actions;
 
 public class Eat : PersonAction
 {
-    private readonly Person _person;
-
     public Eat(Person person, IGoapAgentStates agentStates, float cost = 0) : base(person, agentStates, cost)
     {
-        _person = person;
     }
 
     protected override bool ExecuteAction()
     {
-        var oldHunger = _person.Hunger;
-        _person.Hunger += 2;
-        _person.Food--;
+        var oldHunger = Person.Hunger;
+        Person.Hunger += 2;
+        Person.Food--;
 
-        Console.WriteLine($"{_person.Name} eat, Hunger: {oldHunger} -> {_person.Hunger}");
+        Console.WriteLine($"{Person.Name} eat, Hunger: {oldHunger} -> {Person.Hunger}");
         return true;
     }
 

@@ -5,8 +5,14 @@ namespace CitySim.Backend.Agents.Behavior;
 
 public abstract class PersonAction : GoapAction
 {
-    public PersonAction(Person person, IGoapAgentStates agentStates, float cost = 0) : base(agentStates, cost)
+    /**
+     * The acting person
+     */
+    protected readonly Person Person;
+
+    protected PersonAction(Person person, IGoapAgentStates agentStates, float cost = 0) : base(agentStates, cost)
     {
+        Person = person;
     }
 
     public abstract Position GetTargetPosition();

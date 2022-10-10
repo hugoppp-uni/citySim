@@ -9,6 +9,8 @@ using Mars.Numerics.Statistics;
 
 namespace CitySim.Backend.World;
 
+using Mars.Common.Core.Random;
+
 public class GridLayer : AbstractLayer
 {
     public SpatialHashEnvironment<Person> GridEnvironment { get; private set; } = new (10, 10, true);

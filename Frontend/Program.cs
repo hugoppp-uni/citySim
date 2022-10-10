@@ -31,7 +31,7 @@ SetTargetFPS(60);
 // Main game loop
 while (!WindowShouldClose())
 {
-    BeginDrawing();
+    BeginDrawing(); 
 
     ClearBackground(new Color(10, 130, 255, 255));
 

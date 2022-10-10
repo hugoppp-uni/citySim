@@ -9,6 +9,8 @@ using Mars.Interfaces.Model;
 
 namespace CitySim.Backend;
 
+using Mars.Core.Simulation.Entities;
+
 public class CitySim
 {
     public GridLayer GridLayer { get; }
@@ -35,7 +37,9 @@ public class CitySim
                 DeltaTUnit = TimeSpanUnit.Seconds,
                 ShowConsoleProgress = false,
                 OutputTarget = OutputTargetType.Csv,
-            }
+                
+            },
+            
         };
         Application = SimulationStarter.BuildApplication(desc, config);
         Simulation = Application.Resolve<ISimulation>();
@@ -45,16 +49,11 @@ public class CitySim
     }
 
 
-    public Task StartAsync()
+    public Task<SimulationWorkflowState> StartAsync()
     {
         var watch = new Stopwatch();
-        var task = Simulation.StartSimulationAsync();
+        var task = Task.Run(() => Simulation.StartSimulation());
         watch.Start();
-        task.ContinueWith(result =>
-        {
-            Console.WriteLine($"Simulation execution finished after {result.Result.Iterations} steps " +
-                              $"and took {watch.ElapsedMilliseconds}ms");
-        });
         return task;
     }
 

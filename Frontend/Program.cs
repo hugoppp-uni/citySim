@@ -60,7 +60,7 @@ const int TILE_HEIGHT = 30;
 
 SetTargetFPS(60);
 
-var model = LoadModel("C:\\Users\\jupah\\source\\repos\\Veldrid.PBR\\modules\\glTF-Sample-Models\\2.0\\Duck\\glTF\\Duck.gltf");
+//var model = LoadModel("C:\\Users\\jupah\\source\\repos\\Veldrid.PBR\\modules\\glTF-Sample-Models\\2.0\\Duck\\glTF\\Duck.gltf");
 
 // Main game loop
 while (!WindowShouldClose())

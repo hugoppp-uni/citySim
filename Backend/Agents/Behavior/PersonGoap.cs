@@ -67,7 +67,7 @@ public class PersonGoap
 
     private void ResetProperties()
     {
-        _states.AddOrUpdateState(new GoapStateProperty<bool>(_keyHunger, _person.Hunger < 8));
+        _states.AddOrUpdateState(new GoapStateProperty<bool>(_keyHunger, _person.Hunger < 10));
         _states.AddOrUpdateState(new GoapStateProperty<bool>(_keyHasFood, _person.Food > 0));
         _states.AddOrUpdateState(new GoapStateProperty<bool>(_keySleepy, true));
     }

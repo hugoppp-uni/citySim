@@ -29,6 +29,7 @@ public class PersonGoap
     {
         return _goapPlanner.Plan();
     }
+    
 
     // see reference:
     // https://git.haw-hamburg.de/mars/mars-learning/-/blob/main/Examples/Summer2022%20-%20Student%20Models/q-learning-goap-stronghold/Stronghold/Model/Agent/Villager.cs#L83
@@ -67,7 +68,7 @@ public class PersonGoap
 
     private void ResetProperties()
     {
-        _states.AddOrUpdateState(new GoapStateProperty<bool>(_keyHunger, _person.Hunger < 10));
+        _states.AddOrUpdateState(new GoapStateProperty<bool>(_keyHunger, _person.Hunger < 40));
         _states.AddOrUpdateState(new GoapStateProperty<bool>(_keyHasFood, _person.Food > 0));
         _states.AddOrUpdateState(new GoapStateProperty<bool>(_keySleepy, true));
     }

@@ -5,6 +5,8 @@ namespace CitySim.Backend.Agents.Behavior;
 
 public abstract class PersonAction : GoapAction
 {
+    public abstract string DescriptionNoun { get; }
+    public abstract string DescriptionVerb { get; }
     /**
      * The acting person
      */
@@ -15,5 +17,5 @@ public abstract class PersonAction : GoapAction
         Person = person;
     }
 
-    public abstract Position GetTargetPosition();
+    public abstract Position TargetPosition { get; }
 }

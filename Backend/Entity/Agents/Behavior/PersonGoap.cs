@@ -1,8 +1,8 @@
-using CitySim.Backend.Agents.Behavior.Actions;
-using CitySim.Backend.Agents.Behavior.Goals;
+using CitySim.Backend.Entity.Agents.Behavior.Actions;
+using CitySim.Backend.Entity.Agents.Behavior.Goals;
 using Mars.Components.Services.Planning;
 
-namespace CitySim.Backend.Agents.Behavior;
+namespace CitySim.Backend.Entity.Agents.Behavior;
 
 public class PersonGoap
 {

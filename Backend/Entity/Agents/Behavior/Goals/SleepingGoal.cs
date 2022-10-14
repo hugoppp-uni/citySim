@@ -1,6 +1,6 @@
 using Mars.Components.Services.Planning;
 
-namespace CitySim.Backend.Agents.Behavior.Goals;
+namespace CitySim.Backend.Entity.Agents.Behavior.Goals;
 
 public class SleepingGoal : PersonGoal
 {

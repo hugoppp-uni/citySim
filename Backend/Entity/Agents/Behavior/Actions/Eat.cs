@@ -1,7 +1,7 @@
 using Mars.Components.Services.Planning;
 using Mars.Interfaces.Environments;
 
-namespace CitySim.Backend.Agents.Behavior.Actions;
+namespace CitySim.Backend.Entity.Agents.Behavior.Actions;
 
 public class Eat : PersonAction
 {

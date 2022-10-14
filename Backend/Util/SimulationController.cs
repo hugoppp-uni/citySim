@@ -1,4 +1,4 @@
-namespace CitySim.Backend;
+namespace CitySim.Backend.Util;
 
 public class SimulationController
 {

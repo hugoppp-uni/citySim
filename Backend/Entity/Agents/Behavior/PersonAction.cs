@@ -1,7 +1,7 @@
 using Mars.Components.Services.Planning;
 using Mars.Interfaces.Environments;
 
-namespace CitySim.Backend.Agents.Behavior;
+namespace CitySim.Backend.Entity.Agents.Behavior;
 
 public abstract class PersonAction : GoapAction
 {

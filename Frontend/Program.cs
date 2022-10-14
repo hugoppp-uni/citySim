@@ -1,4 +1,6 @@
-﻿using Raylib_CsLo;
+﻿using CitySim.Backend.Entity;
+using CitySim.Backend.Entity.Agents;
+using Raylib_CsLo;
 using static Raylib_CsLo.Raylib;
 
 Console.WriteLine("Hello, World!");
@@ -36,9 +38,9 @@ while (!WindowShouldClose())
     ClearBackground(new Color(10, 130, 255, 255));
 
 
-    var personOnCoord = citySim.GridLayer.CollisionEnvironment.Characters.ToDictionary(person => ((int)person.Position.X, (int)person.Position.Y));
+    var personOnCoord = citySim.WorldLayer.GridEnvironment.Entities.OfType<Person>().ToDictionary(person => ((int)person.Position.X, (int)person.Position.Y));
     var buildingOnCoord =
-        citySim.GridLayer.Structures.ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
+        citySim.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
     
     for (int x = 0; x < 10; x++)
     {

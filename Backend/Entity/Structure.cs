@@ -1,60 +1,28 @@
-using System.Drawing;
 using CitySim.Backend.World;
-using Mars.Components.Environments.Cartesian;
-using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
-using Mars.Numerics;
-using NetTopologySuite.Geometries;
-using NetTopologySuite.Index.HPRtree;
-using Position = Mars.Interfaces.Environments.Position;
 
 namespace CitySim.Backend.Entity;
 
-public abstract class Structure : IAgent<GridLayer>, IPositionable, IObstacle
+//should be an IEntity
+public abstract class Structure : IPositionableEntity
 {
-    public virtual void Init(GridLayer landscape)
+    public virtual void Init(WorldLayer worldLayer)
     {
-        Landscape = landscape;
+        WorldLayer = worldLayer;
         if (Position is null)
             throw new Exception("Position not set");
-        InsertIntoEnv();
 
-        Landscape = landscape;
+        worldLayer.InsertStructure(this);
     }
 
-    protected GridLayer Landscape { get; set; }
+    protected WorldLayer WorldLayer { get; set; }
 
     public Position Position { get; set; }
 
     public Guid ID { get; set; }
 
 
-    public virtual void Tick()
+    public void Tick()
     {
-        // do nothing
-    }
-    public bool IsRoutable(ICharacter character) => false;
-
-
-    public virtual CollisionKind? HandleCollision(ICharacter character)
-    {
-        return CollisionKind.Pass;
-    }
-
-    public virtual VisibilityKind? HandleExploration(ICharacter explorer)
-    {
-        return VisibilityKind.Opaque;
-    }
-
-    protected virtual void InsertIntoEnv()
-    {
-        Landscape.CollisionEnvironment.Insert(this, new Polygon(new LinearRing(new[]
-        {
-            new Coordinate(Position.X + 0.5, Position.Y + 0.5),
-            new Coordinate(Position.X - 0.5, Position.Y + 0.5),
-            new Coordinate(Position.X - 0.5, Position.Y - 0.5),
-            new Coordinate(Position.X + 0.5, Position.Y - 0.5),
-            new Coordinate(Position.X + 0.5, Position.Y + 0.5)
-        })));
     }
 }

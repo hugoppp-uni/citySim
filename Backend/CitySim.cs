@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using CitySim.Backend.Agents;
+using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Util;
 using CitySim.Backend.World;
 using Mars.Components.Starter;
 using Mars.Core.Executor;
@@ -13,7 +14,7 @@ using Mars.Core.Simulation.Entities;
 
 public class CitySim
 {
-    public GridLayer GridLayer { get; }
+    public WorldLayer WorldLayer { get; }
     public IRuntimeModel Model => Simulation.WorkflowState.Model;
     private ISimulationContainer Application { get; }
     private ISimulation Simulation { get; }
@@ -22,9 +23,9 @@ public class CitySim
     public CitySim()
     {
         var desc = new ModelDescription();
-        desc.AddLayer<GridLayer>();
+        desc.AddLayer<WorldLayer>();
         desc.AddLayer<FixedUpdateLayer>();
-        desc.AddAgent<Person, GridLayer>();
+        desc.AddAgent<Person, WorldLayer>();
 
         var config = new SimulationConfig
         {
@@ -45,7 +46,7 @@ public class CitySim
         Simulation = Application.Resolve<ISimulation>();
         var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];
         fixedUpdateLayer.SimulationController = SimulationController;
-        GridLayer = (GridLayer)Model.Layers[new LayerType(typeof(GridLayer))];
+        WorldLayer = (WorldLayer)Model.Layers[new LayerType(typeof(WorldLayer))];
     }
 
 

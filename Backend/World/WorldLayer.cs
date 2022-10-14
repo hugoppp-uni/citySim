@@ -1,59 +1,87 @@
-﻿using CitySim.Backend.Agents;
-using CitySim.Backend.Entity;
+﻿using CitySim.Backend.Entity;
+using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity.Structures;
+using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
-using Mars.Components.Environments.Cartesian;
+using Mars.Components.Environments;
 using Mars.Components.Layers;
 using Mars.Core.Data;
 using Mars.Interfaces.Data;
 using Mars.Interfaces.Environments;
 using Mars.Interfaces.Layers;
+using NesScripts.Controls.PathFind;
 
 namespace CitySim.Backend.World;
 
-public class GridLayer : AbstractLayer
+public class WorldLayer : AbstractLayer
 {
-    public CollisionEnvironment<Person, IObstacle> CollisionEnvironment { get; set; } = new();
-    private IAgentManager AgentManager { get; set; }
-    public List<Structure> Structures = new();
+    public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
+        new(10, 10, true) { IsDiscretizePosition = true };
 
-    const int MAX_X = 10;
-    const int MAX_Y = 10;
+    public readonly List<Structure> Structures = new();
+
+    private const int MaxX = 10;
+    private const int MaxY = 10;
+    private readonly float[,] _pathFindingTileMap = new float[MaxX, MaxY];
+    private readonly PathFindingGrid _pathFindingGrid;
+
+    public WorldLayer()
+    {
+        for (int i = 0; i < MaxX; i++)
+        for (int j = 0; j < MaxY; j++)
+            _pathFindingTileMap[i, j] = 1;
+        _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
+    }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
         UnregisterAgent unregisterAgentHandle)
     {
         base.InitLayer(layerInitData, registerAgentHandle, unregisterAgentHandle);
 
-        AgentManager = layerInitData.Container.Resolve<IAgentManager>();
-        CollisionEnvironment.BoundingBox = new BoundingBox(0, 0, MAX_X, MAX_Y);
+        var agentManager = layerInitData.Container.Resolve<IAgentManager>();
+
 
         // Create and register objects of type MyAgentType.
-        AgentManager.Spawn<Person, GridLayer>().Take(1).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
 
-        Structures.Add( AgentManager.Spawn<House, GridLayer>(assignment: house => house.Position = new Position(5, 3)).First());
-        Structures.Add( AgentManager.Spawn<House, GridLayer>(assignment: house => house.Position = new Position(4, 3)).First());
-        Structures.Add( AgentManager.Spawn<House, GridLayer>(assignment: house => house.Position = new Position(3, 3)).First());
-        Structures.Add( AgentManager.Spawn<House, GridLayer>(assignment: house => house.Position = new Position(3, 4)).First());
-        Structures.Add( AgentManager.Spawn<House, GridLayer>(assignment: house => house.Position = new Position(3, 5)).First());
+        InsertStructure(new House { Position = new Position(6, 3) });
+        InsertStructure(new House { Position = new Position(5, 3) });
+        // InsertStructure(new House { Position = new Position(4, 3) });
+        InsertStructure(new House { Position = new Position(3, 3) });
+        InsertStructure(new House { Position = new Position(3, 4) });
+        InsertStructure(new House { Position = new Position(3, 5) });
+        InsertStructure(new House { Position = new Position(3, 6) });
+        InsertStructure(new House { Position = new Position(4, 5) });
+        InsertStructure(new House { Position = new Position(5, 5) });
 
         return true;
     }
 
+
     public void Kill(Person person)
     {
-        CollisionEnvironment.Remove(person);
+        GridEnvironment.Remove(person);
         UnregisterAgent.Invoke(this, person);
     }
-
-    public void RemoveObstacle(IObstacle obstacle)
-    {
-        CollisionEnvironment.Remove(obstacle);
-    }
-
 
     public Position RandomPosition()
     {
         var random = RandomHelper.Random;
-        return Position.CreatePosition(random.Next(MAX_X - 1), random.Next(MAX_Y - 1));
+        return Position.CreatePosition(random.Next(MaxX - 1), random.Next(MaxY - 1));
+    }
+
+    public void InsertStructure(Structure structure)
+    {
+        _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 0;
+        _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
+        GridEnvironment.Insert(structure);
+    }
+
+    public PathFindingRoute FindRoute(Position position, Position plannedActionTargetPosition)
+    {
+        return new PathFindingRoute(_pathFindingGrid.FindPath(
+            new PathFindingPoint((int)position.X, (int)position.Y),
+            new PathFindingPoint((int)plannedActionTargetPosition.X, (int)plannedActionTargetPosition.Y),
+            Pathfinding.DistanceType.Manhattan));
     }
 }

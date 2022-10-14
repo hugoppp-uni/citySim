@@ -42,7 +42,7 @@ public class WorldLayer : AbstractLayer
 
 
         // Create and register objects of type MyAgentType.
-        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
 
         InsertStructure(new House { Position = new Position(6, 3) });
         InsertStructure(new House { Position = new Position(5, 3) });
@@ -73,15 +73,17 @@ public class WorldLayer : AbstractLayer
     public void InsertStructure(Structure structure)
     {
         _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 0;
-        _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
+        lock (_pathFindingGrid)
+            _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);
     }
 
     public PathFindingRoute FindRoute(Position position, Position plannedActionTargetPosition)
     {
-        return new PathFindingRoute(_pathFindingGrid.FindPath(
-            new PathFindingPoint((int)position.X, (int)position.Y),
-            new PathFindingPoint((int)plannedActionTargetPosition.X, (int)plannedActionTargetPosition.Y),
-            Pathfinding.DistanceType.Manhattan));
+        lock (_pathFindingGrid)
+            return new PathFindingRoute(_pathFindingGrid.FindPath(
+                new PathFindingPoint((int)position.X, (int)position.Y),
+                new PathFindingPoint((int)plannedActionTargetPosition.X, (int)plannedActionTargetPosition.Y),
+                Pathfinding.DistanceType.Manhattan));
     }
 }

@@ -20,7 +20,7 @@ public class CitySim
     private ISimulation Simulation { get; }
     public SimulationController SimulationController { get; } = new();
 
-    public CitySim()
+    public CitySim(int maxTick = int.MaxValue)
     {
         var desc = new ModelDescription();
         desc.AddLayer<WorldLayer>();
@@ -33,12 +33,9 @@ public class CitySim
             ModelDescription = desc,
             Globals = new Globals
             {
-                StartPoint = DateTime.Now,
-                EndPoint = DateTime.Now.AddYears(1),
-                DeltaTUnit = TimeSpanUnit.Seconds,
                 ShowConsoleProgress = false,
                 OutputTarget = OutputTargetType.Csv,
-                
+                Steps = maxTick
             },
             
         };

@@ -34,7 +34,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public Person()
     {
-        Name = Names.Dequeue();
+        Names.TryDequeue(out var name);
+        Name = name ?? ":(";
         _goap = new(this);
     }
 
@@ -54,7 +55,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         var personsInVicinity = _worldLayer.GridEnvironment
             .Explore(Position, 2, predicate: person => person.ID != ID)
             .Select(p => p switch { Person person => person.Name, _ => p.GetType().ToString() });
-        _logger.Debug(
+        _logger.Trace(
             $"{Name} (Hunger: {Hunger}, Food: {Food}) {Position} can see: [{string.Join(',', personsInVicinity)}]");
 
         if (_plannedAction is null)
@@ -74,7 +75,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             if (1 > Distance.Euclidean(Position.PositionArray, _plannedAction.TargetPosition.PositionArray))
             {
-                _logger.Info($"{Name} is {_plannedAction.DescriptionVerb}");
+                _logger.Trace($"{Name} is {_plannedAction.DescriptionVerb}");
                 _plannedAction.Execute();
                 _plannedAction = null;
                 return;
@@ -82,7 +83,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
             if (!Route.Completed)
             {
-                _logger.Debug($"Moving to {_plannedAction.TargetPosition} to " + _plannedAction.DescriptionNoun);
+                _logger.Trace($"Moving to {_plannedAction.TargetPosition} to " + _plannedAction.DescriptionNoun);
                 (int x, int y) = Route.Next();
                 _worldLayer.GridEnvironment.PosAt(this, x, y);
             }
@@ -97,7 +98,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         if (Hunger < 0)
         {
             Kill();
-            Console.WriteLine($"{Name} DIED of starvation");
+            _logger.Trace($"{Name} DIED of starvation");
             return false;
         }
 

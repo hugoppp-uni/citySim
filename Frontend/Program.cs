@@ -38,7 +38,7 @@ while (!WindowShouldClose())
     ClearBackground(new Color(10, 130, 255, 255));
 
 
-    var personOnCoord = citySim.WorldLayer.GridEnvironment.Entities.OfType<Person>().ToDictionary(person => ((int)person.Position.X, (int)person.Position.Y));
+    var personOnCoord = citySim.WorldLayer.GridEnvironment.Entities.OfType<Person>().Select(p => (p.Position.X, p.Position.Y)).ToHashSet();
     var buildingOnCoord =
         citySim.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
     
@@ -46,7 +46,7 @@ while (!WindowShouldClose())
     {
         for (int y = 0; y < 10; y++)
         {
-            Color color = personOnCoord.ContainsKey((x,y)) ? new Color(50, 255, 0, 255) : 
+            Color color = personOnCoord.Contains((x,y)) ? new Color(50, 255, 0, 255) : 
                 buildingOnCoord.ContainsKey((x,y)) ? new Color(255, 255, 255, 255) :
                 new Color(50, 255, 255, 255);
             DrawRectangleRounded(new Rectangle(x * 50 + 150, y * 30 + 100, 50 - 2, 30 - 2), 0.1f, 3,

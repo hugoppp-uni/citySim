@@ -19,8 +19,6 @@ public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
 
     public void PreTick()
     {
-        _logger.Debug(
-            $"############################### Starting Tick: {Context.CurrentTick} ###############################");
     }
 
     public void PostTick()
@@ -28,14 +26,15 @@ public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
         if (_stopwatch.IsRunning)
         {
             _logger.Debug(
-                $"############################### Finished Tick: {Context.CurrentTick} ############################### ");
+                $"############################### Tick: {Context.CurrentTick} ############################### ");
             _logger.Debug($"Current ticks per second: {SimulationController.TicksPerSecond:F1}");
-            long timeToWait =
-                Convert.ToInt64(GetCurrentTick() * SimulationController.TimePerTick - _stopwatch.ElapsedMilliseconds);
-            if (timeToWait > 0)
+            long msToWait =
+                Math.Max(0, Convert.ToInt64(GetCurrentTick() * SimulationController.MsPerTick - _stopwatch.ElapsedMilliseconds));
+            _logger.Debug($"CPU %: {(1 - msToWait / SimulationController.MsPerTick)*100}");
+            if (msToWait > 0)
             {
-                _logger.Debug($"Waiting: {timeToWait:F1}ms");
-                Task.Delay(TimeSpan.FromMilliseconds(timeToWait)).Wait();
+                _logger.Debug($"Waiting: {msToWait:F1}ms");
+                Task.Delay(TimeSpan.FromMilliseconds(msToWait)).Wait();
             }
         }
         else

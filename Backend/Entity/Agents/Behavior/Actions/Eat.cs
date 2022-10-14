@@ -1,5 +1,6 @@
 using Mars.Components.Services.Planning;
 using Mars.Interfaces.Environments;
+using NLog;
 
 namespace CitySim.Backend.Entity.Agents.Behavior.Actions;
 
@@ -14,11 +15,8 @@ public class Eat : PersonAction
 
     protected override bool ExecuteAction()
     {
-        var oldHunger = Person.Hunger;
         Person.Hunger += 50;
         Person.Food--;
-
-        Console.WriteLine($"{Person.Name} eat, Hunger: {oldHunger} -> {Person.Hunger}");
         return true;
     }
 

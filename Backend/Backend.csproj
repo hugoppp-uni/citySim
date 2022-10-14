@@ -9,10 +9,17 @@
 
   <ItemGroup>
     <PackageReference Include="Mars.Life.Simulations" Version="4.4.0" />
+    <PackageReference Include="NLog" Version="5.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Pathfinding\Pathfinding.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

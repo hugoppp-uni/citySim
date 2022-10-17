@@ -1,7 +1,6 @@
 ﻿using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Util;
 using CitySim.Backend.World;
-using Mars.Components.Services.Planning.ActionCommons;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
@@ -17,10 +16,10 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     public string Name { get; }
-    private readonly PersonGoap _goap;
+    private readonly IMind _mind;
+    private readonly PersonRecollection _recollection = new();
 
-    public int Hunger { get; set; } = 50;
-    public int Food { get; set; } = 30;
+    public PersonNeeds Needs { get; } = new();
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
 
@@ -36,7 +35,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         Names.TryDequeue(out var name);
         Name = name ?? ":(";
-        _goap = new(this);
+        _mind = MindMock.Instance;
     }
 
     public void Init(WorldLayer layer)
@@ -56,46 +55,49 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             .Explore(Position, 2, predicate: person => person.ID != ID)
             .Select(p => p switch { Person person => person.Name, _ => p.GetType().ToString() });
         _logger.Trace(
-            $"{Name} (Hunger: {Hunger}, Food: {Food}) {Position} can see: [{string.Join(',', personsInVicinity)}]");
+            $"{Name} (Hunger: {Needs}) {Position} can see: [{string.Join(',', personsInVicinity)}]");
 
         if (_plannedAction is null)
         {
-            if (_goap.Plan().ToList().Any(action => action is not AllGoalsSatisfiedAction))
-            {
-                var goapAction = _goap.Plan().ToList().First();
-                if (goapAction is PersonAction personAction)
-                {
-                    _plannedAction = personAction;
-                    Route = _worldLayer.FindRoute(Position, _plannedAction.TargetPosition);
-                }
-            }
+            _plannedAction = PlanNextAction();
+            if (_plannedAction is null) return;
+            Route = _worldLayer.FindRoute(Position, _plannedAction.TargetPosition);
         }
 
-        if (_plannedAction is not null)
-        {
-            if (1 > Distance.Euclidean(Position.PositionArray, _plannedAction.TargetPosition.PositionArray))
-            {
-                _logger.Trace($"{Name} is {_plannedAction.DescriptionVerb}");
-                _plannedAction.Execute();
-                _plannedAction = null;
-                return;
-            }
 
-            if (!Route.Completed)
-            {
-                _logger.Trace($"Moving to {_plannedAction.TargetPosition} to " + _plannedAction.DescriptionNoun);
-                (int x, int y) = Route.Next();
-                _worldLayer.GridEnvironment.PosAt(this, x, y);
-            }
+        if (!Route.Completed)
+        {
+            _logger.Trace($"Moving to {_plannedAction.TargetPosition} to " + _plannedAction);
+            (int x, int y) = Route.Next();
+            _worldLayer.GridEnvironment.PosAt(this, x, y);
+            return;
+        }
+
+        _logger.Trace($"{Name} is {_plannedAction}");
+        if (_plannedAction.Execute() == ActionExecuter.Result.Executed)
+            _plannedAction = null;
+    }
+
+    private PersonAction PlanNextAction()
+    {
+        var nextActionType = _mind.GetNextActionType(Needs, 0.5, 0.5);
+        Position? nearestActionPos = _recollection.ResolvePosition(nextActionType)
+            .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray));
+        if (nearestActionPos != null)
+        {
+            return new PersonAction(nextActionType, nearestActionPos, this);
+        }
+        else
+        {
+            //todo exploration
+            return null;
         }
     }
 
     private bool ApplyGameRules()
     {
-        Hunger--;
-        _goap.Tick();
-
-        if (Hunger < 0)
+        Needs.Tick();
+        if (Needs.Hunger < 0)
         {
             Kill();
             _logger.Trace($"{Name} DIED of starvation");
@@ -109,6 +111,4 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         _worldLayer.Kill(this);
     }
-
-    public double Extent { get; set; } = 1;
 }

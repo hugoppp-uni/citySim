@@ -42,7 +42,7 @@ public class WorldLayer : AbstractLayer
 
 
         // Create and register objects of type MyAgentType.
-        agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
 
         InsertStructure(new House { Position = new Position(6, 3) });
         InsertStructure(new House { Position = new Position(5, 3) });

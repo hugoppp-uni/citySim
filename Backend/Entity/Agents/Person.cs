@@ -1,10 +1,13 @@
 ﻿using CitySim.Backend.Entity.Agents.Behavior;
+using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using CitySim.Backend.World;
+using Mars.Common.Core.Collections;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
 using NLog;
+using ServiceStack.Script;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -20,8 +23,10 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private readonly PersonRecollection _recollection = new();
 
     public PersonNeeds Needs { get; } = new();
+
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
+
 
     private static Queue<string> Names = new(new[]
     {
@@ -43,6 +48,9 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         _worldLayer = layer;
         Position = _worldLayer.RandomPosition();
         _worldLayer.GridEnvironment.Insert(this);
+
+        var home = _worldLayer.Structures[^1];
+        _recollection.Add(ActionType.Sleep, home.Position);
     }
 
     public void Tick()

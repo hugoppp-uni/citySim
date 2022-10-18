@@ -40,10 +40,6 @@ public class WorldLayer : AbstractLayer
 
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
 
-
-        // Create and register objects of type MyAgentType.
-        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
-
         InsertStructure(new House { Position = new Position(6, 3) });
         InsertStructure(new House { Position = new Position(5, 3) });
         // InsertStructure(new House { Position = new Position(4, 3) });
@@ -53,6 +49,24 @@ public class WorldLayer : AbstractLayer
         InsertStructure(new House { Position = new Position(3, 6) });
         InsertStructure(new House { Position = new Position(4, 5) });
         InsertStructure(new House { Position = new Position(5, 5) });
+        InsertStructure(new House { Position = new Position(6, 0) });
+        InsertStructure(new House { Position = new Position(6, 1) });
+        InsertStructure(new House { Position = new Position(6, 2) });
+        
+        InsertStructure(new House { Position = new Position(8, 9) });
+        InsertStructure(new House { Position = new Position(8, 8) });
+        InsertStructure(new House { Position = new Position(8, 7) });
+        InsertStructure(new House { Position = new Position(8, 6) });
+        InsertStructure(new House { Position = new Position(8, 5) });
+        InsertStructure(new House { Position = new Position(8, 4) });
+        InsertStructure(new House { Position = new Position(8, 3) });
+        InsertStructure(new House { Position = new Position(8, 2) });
+        InsertStructure(new House { Position = new Position(8, 1) });
+        
+        //last one will be sleep location for now
+        InsertStructure(new House { Position = new Position(9, 9) });
+
+        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
 
         return true;
     }
@@ -72,10 +86,11 @@ public class WorldLayer : AbstractLayer
 
     public void InsertStructure(Structure structure)
     {
-        _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 0;
+        _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 100000;
         lock (_pathFindingGrid)
             _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);
+        Structures.Add(structure);
     }
 
     public PathFindingRoute FindRoute(Position position, Position plannedActionTargetPosition)

@@ -39,7 +39,7 @@ public class WorldLayer : AbstractLayer
         base.InitLayer(layerInitData, registerAgentHandle, unregisterAgentHandle);
 
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
-
+        
         InsertStructure(new House { Position = new Position(6, 3) });
         InsertStructure(new House { Position = new Position(5, 3) });
         // InsertStructure(new House { Position = new Position(4, 3) });
@@ -100,5 +100,15 @@ public class WorldLayer : AbstractLayer
                 new PathFindingPoint((int)position.X, (int)position.Y),
                 new PathFindingPoint((int)plannedActionTargetPosition.X, (int)plannedActionTargetPosition.Y),
                 Pathfinding.DistanceType.Manhattan));
+    }
+
+
+    public GlobalState GetGlobalState()
+    {
+        return new GlobalState(
+            this.GridEnvironment.Entities.Count((it) => it is Person),
+            Structures.Count((it) => it is House),
+            Structures.Count((it) => it is Restaurant)
+        );
     }
 }

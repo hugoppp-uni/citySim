@@ -3,9 +3,12 @@ using Mars.Numerics;
 
 namespace CitySim.Backend.Entity.Agents.Behavior;
 
+using Numpy;
+using World;
+
 public interface IMind
 {
-    ActionType GetNextActionType(PersonNeeds personNeeds, double k, double i);
+    ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState);
 }
 
 /// <summary>
@@ -29,13 +32,35 @@ public record PersonNeeds
         Sleepiness -= 0.01;
         Money -= 0.01;
     }
+
+    public double[] AsArray()
+    {
+        return new double[]{Sleepiness, Hunger, Money};
+    }
+
+    public NDarray<double> AsNdArray()
+    {
+        return new NDarray<double>(AsArray());
+    }
+
+    public double getWellBeing()
+    {
+        return AsArray().Sum();
+    }
 }
 
 public class MindMock : IMind
 {
-    public static readonly IMind Instance = new MindMock();
+    public static readonly IMind Instance = new MindMock(1, 1);
+    private double c, i;
 
-    public ActionType GetNextActionType(PersonNeeds personNeeds, double k, double i)
+    public MindMock(double collectiveFactor, double individualFactor)
+    {
+        c = collectiveFactor;
+        i = individualFactor;
+    }
+
+    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
         return Enum.GetValues<ActionType>()[
             new[] { personNeeds.Sleepiness, personNeeds.Hunger}.ArgMin()];

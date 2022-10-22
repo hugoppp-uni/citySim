@@ -1,21 +1,22 @@
-﻿using Raylib_CsLo;
+﻿using CitySim.Frontend;
+using Raylib_CsLo;
 using System.Numerics;
 using static Raylib_CsLo.Raylib;
 
-void MyDrawRect(int left, int top, int right, int bottom, Color color)
+void MyDrawRect(float left, float top, float right, float bottom, Color color)
 {
-    DrawRectangle(left, top, right - left, bottom - top, color);
+    DrawRectangleRec(new(left, top, right - left, bottom - top), color);
 }
 
-void MyDrawRoundedRect(int left, int top, int right, int bottom, float radius, Color color)
+void MyDrawRoundedRect(float left, float top, float right, float bottom, float radius, Color color)
 {
-    int width = right - left;
-    int height = bottom - top;
+    float width = right - left;
+    float height = bottom - top;
 
     //raylib decided to handle roundness in a pretty annoying way
     float roundness = radius / (Math.Min(width, height) / 2);
 
-    DrawRectangleRounded(new(left, top, width, height), roundness, 0,color);
+    DrawRectangleRounded(new(left, top, width, height), roundness, 6,color);
 }
 
 Console.WriteLine("Hello, World!");
@@ -47,26 +48,51 @@ Vector2 TEST_ISLAND_CENTER = new(
     (float)citySim.GridLayer.GridEnvironment.Centre.Y
     );
 
-Camera2D cam = new Camera2D
-{
-    target = TEST_ISLAND_CENTER*new Vector2(50,30),
-    offset = new Vector2(screenWidth/2,screenHeight/2),
-    zoom = 2
-};
-
-const int TILE_WIDTH = 50;
-const int TILE_HEIGHT = 30;
-
 
 SetTargetFPS(60);
 
 //var model = LoadModel("C:\\Users\\jupah\\source\\repos\\Veldrid.PBR\\modules\\glTF-Sample-Models\\2.0\\Duck\\glTF\\Duck.gltf");
+
+SpriteSheet terrainSheet = SpriteSheet.FromPNG_XML(
+    Path.Combine("Assets", "landscapeTiles_sheet.png"),
+    Path.Combine("Assets", "landscapeTiles_sheet.xml"));
+
+IsoMetricGrid grid = new IsoMetricGrid(128, 64, 32);
+
+Camera2D cam = new Camera2D
+{
+    target = grid.GetPosition2D(new Vector3(5,5,0)),
+    offset = new Vector2(screenWidth / 2, screenHeight / 2),
+    zoom = 1
+};
+
+Dictionary<byte, int> roadMap = new Dictionary<byte, int>()
+{
+    //connections bitfield: Y, X, -Y, -X
+    {0b_1010, 74},
+    {0b_0101, 82},
+    {0b_1111, 90},
+    {0b_1101, 89},
+    {0b_0111, 96},
+    {0b_1011, 97},
+    {0b_1110, 104},
+    {0b_0010, 105},
+    {0b_0001, 111},
+    {0b_1000, 112},
+    {0b_0100, 117},
+    {0b_0011, 123},
+    {0b_0110, 125},
+    {0b_1001, 126},
+    {0b_1100, 127},
+};
 
 // Main game loop
 while (!WindowShouldClose())
 {
     if(IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
         cam.target -= GetMouseDelta()/cam.zoom;
+
+    
 
     cam.zoom *= 1 + 0.1f * GetMouseWheelMove();
 
@@ -80,6 +106,16 @@ while (!WindowShouldClose())
     BeginDrawing();
 
     ClearBackground(new Color(10, 130, 255, 255));
+
+    void DrawTerrainTile(int tile, Vector2 bottomCenter)
+    {
+        string name = $"landscapeTiles_{tile:000}.png";
+        var rect = terrainSheet.Rects[name];
+        terrainSheet.DrawSprite(name,
+            bottomCenter-new Vector2(rect.width/2, rect.height-64));
+    }
+
+    
 
     bool InCityBounds(int tileX, int tileY) =>
         InCityBoundsX(tileX) &&
@@ -103,106 +139,56 @@ while (!WindowShouldClose())
 
     BeginMode2D(cam);
 
-    var topLeftWorld = GetScreenToWorld2D(new Vector2(), cam);
-    var bottomRightWorld = GetScreenToWorld2D(new Vector2(screenWidth, screenHeight), cam);
-
-    int leftTile = (int)(topLeftWorld.X / TILE_WIDTH)-1;
-    int topTile = (int)(topLeftWorld.Y / TILE_HEIGHT)-1;
-    int rightTile = (int)(bottomRightWorld.X / TILE_WIDTH)+1;
-    int bottomTile = (int)(bottomRightWorld.Y / TILE_HEIGHT)+1;
-
-    for (int x = leftTile; x < rightTile; x++)
+    foreach (var (cell_x, cell_y, position2d, cell_height) in grid.GetVisibleCells(cam))
     {
-        for (int y = topTile; y < bottomTile; y++)
+        if (!IsGround(cell_x, cell_y))
+            continue;
+
+        //connections bitfield: Y, X, -Y, -X
+
+        byte connections = 0;
+
+        if (IsRoad(cell_x, cell_y))
         {
-            int left = x * TILE_WIDTH;
-            int top = y * TILE_HEIGHT;
-            int right = left + TILE_WIDTH;
-            int bottom = top + TILE_HEIGHT;
+            if(IsRoad(cell_x, cell_y+1))
+                connections|=0b1000;
+            if (IsRoad(cell_x + 1, cell_y))
+                connections |= 0b0100;
+            if (IsRoad(cell_x, cell_y - 1))
+                connections |= 0b0010;
+            if (IsRoad(cell_x - 1, cell_y))
+                connections |= 0b0001;
 
-            Color color = new Color(30, 200, 0, 255);
+            DrawTerrainTile(roadMap[connections], position2d);
+        }
+        else
+            DrawTerrainTile(67, position2d);
 
-            if (!IsGround(x, y))
-            {
-                int borderWidth = 5;
+        if (citySim.GridLayer.GridEnvironment.Explore(cell_x, cell_y, 0).Any())
+        {
+            //string text = "P";
 
-                if (IsGround(x - 1, y))
-                    MyDrawRect(left, top, left + borderWidth, bottom, color);
-                if (IsGround(x + 1, y))
-                    MyDrawRect(right - borderWidth, top, right, bottom, color);
-                if (IsGround(x, y - 1))
-                    MyDrawRect(left, top, right, top + borderWidth, color);
-                if (IsGround(x, y + 1))
-                    MyDrawRect(left, bottom - borderWidth, right, bottom, color);
+            //int width = MeasureText(text, 40);
+            //DrawText(text, position2d.X - width-1, position2d.Y-40, 40, new Color(0,0,0,50));
+            //DrawText(text, position2d.X - width+0.5f, position2d.Y-40+0.5f, 40, WHITE);
 
-                if (IsGround(x - 1, y - 1))
-                    DrawCircleSector(new Vector2(left, top), borderWidth, 0, 90, 0, color);
-                if (IsGround(x + 1, y - 1))
-                    DrawCircleSector(new Vector2(right, top), borderWidth, -90, 0, 0, color);
-                if (IsGround(x - 1, y + 1))
-                    DrawCircleSector(new Vector2(left, bottom), borderWidth, 90, 180, 0, color);
-                if (IsGround(x + 1, y + 1))
-                    DrawCircleSector(new Vector2(right, bottom), borderWidth, 180, 270, 0, color);
-                continue;
-            }
+            Matrix4x4 modelView = RlGl.rlGetMatrixModelview();
 
-            MyDrawRect(left, top, right, bottom, color);
-            
-            color = new Color(50, 255, 0, 255);
-            MyDrawRoundedRect(
-                left + 1, top + 1,
-                right - 1, bottom - 1, 1,
-                color);
+            Vector2 pos = position2d - new Vector2(1, 1);
 
-            
+            MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, new Color(0, 0, 0, 50));
+            DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, new Color(0, 0, 0, 50));
 
-            if (IsRoad(x, y))
-            {
-                void DrawConnectedRoad(int indX, int indY, Color color)
-                {
-                    MyDrawRect(left + indX, top + indY, right - indX, bottom - indY, color);
+            pos = position2d;
 
-                    if (IsRoad(x - 1, y))
-                        MyDrawRect(left, top + indY, left + indX, bottom - indY, color);
-
-                    if (IsRoad(x + 1, y))
-                        MyDrawRect(right - indX, top + indY, right, bottom - indY, color);
-
-                    if (IsRoad(x, y - 1))
-                        MyDrawRect(left + indX, top, right - indX, top + indY, color);
-
-                    if (IsRoad(x, y + 1))
-                        MyDrawRect(left + indX, bottom - indY, right - indX, bottom, color);
-                }
-
-                DrawConnectedRoad(10, 5, new Color(150, 150, 150, 255));
-                DrawConnectedRoad(13, 7, new Color(90, 90, 90, 255));
-                
-            }
-            else if(InCityBounds(x,y))//building
-            {
-                
-
-                color = new Color(220, 220, 220, 255);
-                MyDrawRect(left + 10, top - 5, right - 10, bottom - 5, color);
-
-                color = RAYWHITE;
-                MyDrawRect(left + 10, top - 10, right - 10, top + 5, color);
-            }
-
-            var personOnCoord = citySim.GridLayer.GridEnvironment.Explore(x, y, 0).Any();
-
-            if (personOnCoord)
-            {
-                DrawEllipse((left + right) / 2, (top + bottom) / 2,
-                    (right - left) / 2 - 2,
-                    (bottom - top) / 2 - 2, YELLOW);
-            }
+            MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, WHITE);
+            DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, WHITE);
         }
     }
+
     EndMode2D();
 
-    
+
     {
         int width = MeasureText("CitySim", 60);
         DrawFPS(10, 10);

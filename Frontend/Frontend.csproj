@@ -21,6 +21,12 @@
     </ItemGroup>
     
     <ItemGroup>
+      <None Update="Assets\buildingTiles_sheet.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Assets\buildingTiles_sheet.xml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
       <None Update="Assets\landscapeTiles_sheet.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

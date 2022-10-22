@@ -14,7 +14,7 @@ namespace CitySim.Frontend
     {
         private readonly Backend.CitySim _model;
         private readonly SpriteSheet _terrainSheet;
-
+        private readonly SpriteSheet _buildingSheet;
         private static readonly Dictionary<byte, int> s_roadMap = new Dictionary<byte, int>()
         {
             //connections bitfield: Y, X, -Y, -X
@@ -43,6 +43,10 @@ namespace CitySim.Frontend
             Path.Combine("Assets", "landscapeTiles_sheet.png"),
             Path.Combine("Assets", "landscapeTiles_sheet.xml"));
 
+            _buildingSheet = SpriteSheet.FromPNG_XML(
+            Path.Combine("Assets", "buildingTiles_sheet.png"),
+            Path.Combine("Assets", "buildingTiles_sheet.xml"));
+
             Grid = new IsoMetricGrid(128, 64, 32);
             _model = model;
         }
@@ -54,6 +58,14 @@ namespace CitySim.Frontend
                 string name = $"landscapeTiles_{tile:000}.png";
                 var rect = _terrainSheet.Rects[name];
                 _terrainSheet.DrawSprite(name,
+                    bottomCenter - new Vector2(rect.width / 2, rect.height - 64));
+            }
+
+            void DrawBuildingTile(int tile, Vector2 bottomCenter)
+            {
+                string name = $"buildingTiles_{tile:000}.png";
+                var rect = _buildingSheet.Rects[name];
+                _buildingSheet.DrawSprite(name,
                     bottomCenter - new Vector2(rect.width / 2, rect.height - 64));
             }
 
@@ -101,8 +113,25 @@ namespace CitySim.Frontend
 
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
+                else if(InCityBounds(cell_x, cell_y))
+                {
+                    DrawBuildingTile(1, position2d);
+
+                    int height = (int)Math.Round(3 + Math.Sin(cell_x+3)+ Math.Sin(cell_y + 3));
+
+                    for (int i = 0; i < height; i++)
+                    {
+                        DrawBuildingTile(0, position2d - new Vector2(0, 
+                            cell_height * (2.3f + i)));
+                    }
+
+                    DrawBuildingTile(5, position2d - new Vector2(0,
+                            cell_height * (2.3f + height)));
+                }
                 else
+                {
                     DrawTerrainTile(67, position2d);
+                }
 
                 if (_model.GridLayer.GridEnvironment.Explore(cell_x, cell_y, 0).Any())
                 {

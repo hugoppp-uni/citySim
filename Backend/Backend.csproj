@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Keras.NET" Version="3.8.5" />
     <PackageReference Include="Mars.Life.Simulations" Version="4.4.0" />
     <PackageReference Include="NLog" Version="5.0.4" />
   </ItemGroup>

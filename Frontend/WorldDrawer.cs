@@ -7,6 +7,8 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity;
 
 namespace CitySim.Frontend
 {
@@ -75,8 +77,8 @@ namespace CitySim.Frontend
                 InCityBoundsX(tileX) &&
                 InCityBoundsY(tileY);
 
-            bool InCityBoundsX(int tileX) => tileX > 0 && tileX < _model!.GridLayer.GridEnvironment.DimensionX;
-            bool InCityBoundsY(int tileY) => tileY > 0 && tileY < _model!.GridLayer.GridEnvironment.DimensionY;
+            bool InCityBoundsX(int tileX) => tileX > 0 && tileX < _model!.WorldLayer.GridEnvironment.DimensionX;
+            bool InCityBoundsY(int tileY) => tileY > 0 && tileY < _model!.WorldLayer.GridEnvironment.DimensionY;
 
             bool IsGround(int tileX, int tileY)
             {
@@ -85,11 +87,17 @@ namespace CitySim.Frontend
                 return Vector2.Distance(pos, new Vector2(202, 40)) < 205;
             }
 
+            var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>().Select(p => (p.Position.X, p.Position.Y)).ToHashSet();
+            var buildingsByCoord =
+                _model.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
+
             bool IsRoad(int tileX, int tileY) => (
+                !buildingsByCoord.ContainsKey((tileX, tileY)) && (
                 (tileX % 4 == 0 && InCityBoundsX(tileX)) ||
                 (tileY % 3 == 0 && InCityBoundsY(tileY))
-                ) && IsGround(tileX, tileY);
+                )) && IsGround(tileX, tileY);
 
+            
 
             foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
             {
@@ -99,7 +107,6 @@ namespace CitySim.Frontend
                 //connections bitfield: Y, X, -Y, -X
 
                 byte connections = 0;
-
                 if (IsRoad(cell_x, cell_y))
                 {
                     if (IsRoad(cell_x, cell_y + 1))
@@ -113,7 +120,8 @@ namespace CitySim.Frontend
 
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
-                else if(InCityBounds(cell_x, cell_y))
+                else
+                if (buildingsByCoord.ContainsKey((cell_x, cell_y)))
                 {
                     DrawBuildingTile(1, position2d);
 
@@ -133,7 +141,7 @@ namespace CitySim.Frontend
                     DrawTerrainTile(67, position2d);
                 }
 
-                if (_model.GridLayer.GridEnvironment.Explore(cell_x, cell_y, 0).Any())
+                if (coordsWithPerson.Contains((cell_x, cell_y)))
                 {
                     //string text = "P";
 

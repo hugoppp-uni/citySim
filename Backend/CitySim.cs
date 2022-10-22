@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using CitySim.Backend.Agents;
+using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Util;
 using CitySim.Backend.World;
 using Mars.Components.Starter;
 using Mars.Core.Executor;
@@ -9,20 +10,22 @@ using Mars.Interfaces.Model;
 
 namespace CitySim.Backend;
 
+using Mars.Core.Simulation.Entities;
+
 public class CitySim
 {
-    public GridLayer GridLayer { get; }
+    public WorldLayer WorldLayer { get; }
     public IRuntimeModel Model => Simulation.WorkflowState.Model;
     private ISimulationContainer Application { get; }
     private ISimulation Simulation { get; }
     public SimulationController SimulationController { get; } = new();
 
-    public CitySim()
+    public CitySim(int maxTick = int.MaxValue)
     {
         var desc = new ModelDescription();
-        desc.AddLayer<GridLayer>();
+        desc.AddLayer<WorldLayer>();
         desc.AddLayer<FixedUpdateLayer>();
-        desc.AddAgent<Person, GridLayer>();
+        desc.AddAgent<Person, WorldLayer>();
 
         var config = new SimulationConfig
         {
@@ -30,31 +33,25 @@ public class CitySim
             ModelDescription = desc,
             Globals = new Globals
             {
-                StartPoint = DateTime.Now,
-                EndPoint = DateTime.Now.AddSeconds(30),
-                DeltaTUnit = TimeSpanUnit.Seconds,
                 ShowConsoleProgress = false,
                 OutputTarget = OutputTargetType.Csv,
-            }
+                Steps = maxTick
+            },
+            
         };
         Application = SimulationStarter.BuildApplication(desc, config);
         Simulation = Application.Resolve<ISimulation>();
         var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];
         fixedUpdateLayer.SimulationController = SimulationController;
-        GridLayer = (GridLayer)Model.Layers[new LayerType(typeof(GridLayer))];
+        WorldLayer = (WorldLayer)Model.Layers[new LayerType(typeof(WorldLayer))];
     }
 
 
-    public Task StartAsync()
+    public Task<SimulationWorkflowState> StartAsync()
     {
         var watch = new Stopwatch();
-        var task = Simulation.StartSimulationAsync();
+        var task = Task.Run(() => Simulation.StartSimulation());
         watch.Start();
-        task.ContinueWith(result =>
-        {
-            Console.WriteLine($"Simulation execution finished after {result.Result.Iterations} steps " +
-                              $"and took {watch.ElapsedMilliseconds}ms");
-        });
         return task;
     }
 

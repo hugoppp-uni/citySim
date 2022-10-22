@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace>NesScripts.Controls.PathFind</RootNamespace>
+    </PropertyGroup>
+
+</Project>

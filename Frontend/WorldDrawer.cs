@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity;
 using System.Reflection;
+using CitySim.Backend.Entity.Structures;
 
 namespace CitySim.Frontend
 {
@@ -137,16 +138,14 @@ namespace CitySim.Frontend
             var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
                 .ToDictionary(x=>x.Key, x=>x.Count());
-            var buildingsByCoord =
-                _model.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
+            var houseOnCoord =
+                _model.WorldLayer.GridEnvironment.Entities.OfType<House>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
+            var streetOnCoord =
+                _model.WorldLayer.GridEnvironment.Entities.OfType<Street>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
+            var restaurantOnCord = 
+                _model.WorldLayer.GridEnvironment.Entities.OfType<Street>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
 
-            bool IsRoad(int tileX, int tileY) => (
-                !buildingsByCoord.ContainsKey((tileX, tileY)) && (
-                (tileX % 4 == 0 && InCityBoundsX(tileX)) ||
-                (tileY % 3 == 0 && InCityBoundsY(tileY))
-                )) && IsGround(tileX, tileY);
-
-            
+            bool IsRoad(int tileX, int tileY) => streetOnCoord.ContainsKey((tileX, tileY));
 
             foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
             {
@@ -176,7 +175,7 @@ namespace CitySim.Frontend
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
                 else
-                if (buildingsByCoord.ContainsKey((cell_x, cell_y)))
+                if (houseOnCoord.ContainsKey((cell_x, cell_y)))
                 {
                     DrawBuildingTile(1, position2d);
 

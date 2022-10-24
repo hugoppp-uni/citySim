@@ -29,9 +29,13 @@ namespace CitySim.Frontend
                 0, 0);
 
             Matrix3x2.Invert(_transform, out _transformInv);
-
+            DiagSpanX = diagSpanX;
+            DiagSpanY = diagSpanY;
             _cellHeight = blockHeight;
         }
+
+        public float DiagSpanX { get; }
+        public float DiagSpanY { get; }
 
         public Vector2 GetPosition2D(Vector3 position)
         {

@@ -3,6 +3,7 @@ using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
+using Mars.Common.IO.Csv;
 using Mars.Components.Environments;
 using Mars.Components.Layers;
 using Mars.Core.Data;
@@ -20,8 +21,8 @@ public class WorldLayer : AbstractLayer
 
     public readonly List<Structure> Structures = new();
 
-    private const int MaxX = 10;
-    private const int MaxY = 10;
+    private const int MaxX = 20;
+    private const int MaxY = 20;
     private readonly float[,] _pathFindingTileMap = new float[MaxX, MaxY];
     private readonly PathFindingGrid _pathFindingGrid;
 
@@ -39,17 +40,8 @@ public class WorldLayer : AbstractLayer
         base.InitLayer(layerInitData, registerAgentHandle, unregisterAgentHandle);
 
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
-        
-        InsertStructure(new House { Position = new Position(6, 3) });
-        InsertStructure(new House { Position = new Position(5, 3) });
-        InsertStructure(new House { Position = new Position(3, 3) });
-        InsertStructure(new House { Position = new Position(2, 3) });
-        InsertStructure(new House { Position = new Position(2, 2) });
-        // InsertStructure(new House { Position = new Position(4, 3) });
-        
-        
-        InsertStructure(new Restaurant {Position = new Position(9,9)});
-        
+
+        SpawnBuildings();
 
         agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
 
@@ -67,6 +59,27 @@ public class WorldLayer : AbstractLayer
     {
         var random = RandomHelper.Random;
         return Position.CreatePosition(random.Next(MaxX - 1), random.Next(MaxY - 1));
+    }
+
+    private void SpawnBuildings()
+    {
+        var csv = File.ReadAllLines("Resources/Map.csv");
+        for (var x = 0; x < csv.Length; x++)
+        {
+            var strings = csv[x].Split(";");
+            for (var y = 0; y < strings.Length; y++)
+            {
+                char c = strings[y][0];
+                if (c == ' ') continue;
+
+                InsertStructure(c switch
+                {
+                    'R' => new Restaurant { Position = new(x, y) },
+                    'H' => new House { Position = new(x, y) },
+                    _ => throw new Exception()
+                });
+            }
+        }
     }
 
     public void InsertStructure(Structure structure)

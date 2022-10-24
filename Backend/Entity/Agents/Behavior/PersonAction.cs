@@ -1,21 +1,18 @@
-using Mars.Components.Services.Planning;
 using Mars.Interfaces.Environments;
 
 namespace CitySim.Backend.Entity.Agents.Behavior;
 
-public abstract class PersonAction : GoapAction
+public enum ActionType
 {
-    public abstract string DescriptionNoun { get; }
-    public abstract string DescriptionVerb { get; }
-    /**
-     * The acting person
-     */
-    protected readonly Person Person;
+    Sleep,
+    Eat,
+    BuildHouse,
+}
 
-    protected PersonAction(Person person, IGoapAgentStates agentStates, float cost = 0) : base(agentStates, cost)
+public record PersonAction(ActionType Type, Position TargetPosition, Person Person)
+{
+    public override string ToString()
     {
-        Person = person;
+        return $"{Type} at ({TargetPosition})";
     }
-
-    public abstract Position TargetPosition { get; }
 }

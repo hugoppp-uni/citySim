@@ -30,7 +30,7 @@ public class WorldLayer : AbstractLayer
     {
         for (int i = 0; i < MaxX; i++)
         for (int j = 0; j < MaxY; j++)
-            _pathFindingTileMap[i, j] = 1;
+            _pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
     }
 
@@ -76,6 +76,7 @@ public class WorldLayer : AbstractLayer
                 {
                     'R' => new Restaurant { Position = new(x, y) },
                     'H' => new House { Position = new(x, y) },
+                    '+' => new Street { Position = new(x, y) },
                     _ => throw new Exception()
                 });
             }
@@ -84,7 +85,10 @@ public class WorldLayer : AbstractLayer
 
     public void InsertStructure(Structure structure)
     {
-        _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 100000;
+        if (Structures.GetType() == typeof(Street))
+            _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 4;
+        else
+            _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 100000;
         lock (_pathFindingGrid)
             _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);

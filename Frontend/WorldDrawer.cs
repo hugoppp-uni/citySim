@@ -120,6 +120,12 @@ namespace CitySim.Frontend
                     if (IsRoad(cell_x - 1, cell_y))
                         connections |= 0b0001;
 
+                    if (connections == 0)
+                    {
+                        DrawTerrainTile(67, position2d);
+                        continue;
+                    }
+
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
                 else
@@ -127,11 +133,11 @@ namespace CitySim.Frontend
                 {
                     DrawBuildingTile(1, position2d);
 
-                    int height = (int)Math.Round(3 + Math.Sin(cell_x+3)+ Math.Sin(cell_y + 3));
+                    int height = (int)Math.Round(3 + Math.Sin(cell_x + 3) + Math.Sin(cell_y + 3));
 
                     for (int i = 0; i < height; i++)
                     {
-                        DrawBuildingTile(0, position2d - new Vector2(0, 
+                        DrawBuildingTile(0, position2d - new Vector2(0,
                             cell_height * (2.3f + i)));
                     }
 

@@ -88,7 +88,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private PersonAction PlanNextAction()
     {
-        var nextActionType = _mind.GetNextActionType(Needs, 0.5, 0.5);
+        var nextActionType = _mind.GetNextActionType(Needs, _worldLayer.GetGlobalState());
         Position? nearestActionPos = _recollection.ResolvePosition(nextActionType)
             .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray));
         if (nearestActionPos != null)

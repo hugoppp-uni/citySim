@@ -6,7 +6,7 @@ public enum ActionType
 {
     Sleep,
     Eat,
-    BuildHouse,
+    BuildHouse
 }
 
 public record PersonAction(ActionType Type, Position TargetPosition, Person Person)

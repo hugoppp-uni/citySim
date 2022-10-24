@@ -17,21 +17,23 @@ namespace CitySim.Backend.World;
 public class WorldLayer : AbstractLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
-        new(10, 10, true) { IsDiscretizePosition = true };
+        new(20, 20, true) { IsDiscretizePosition = true };
 
-    public readonly List<Structure> Structures = new();
+    public const int XSize = 20;
+    public const int YSize = 20;
+    public readonly BuildPositionEvaluator BuildPositionEvaluator;
 
-    private const int MaxX = 20;
-    private const int MaxY = 20;
-    private readonly float[,] _pathFindingTileMap = new float[MaxX, MaxY];
+    public readonly StructureCollection Structures = new(XSize, YSize);
+    private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
 
     public WorldLayer()
     {
-        for (int i = 0; i < MaxX; i++)
-        for (int j = 0; j < MaxY; j++)
+        for (int i = 0; i < XSize; i++)
+        for (int j = 0; j < YSize; j++)
             _pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
+        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -44,6 +46,10 @@ public class WorldLayer : AbstractLayer
         SpawnBuildings();
 
         agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
+
+
+        //todo this should be moved 
+        BuildPositionEvaluator.EvaluateHousingScore();
 
         return true;
     }
@@ -58,7 +64,7 @@ public class WorldLayer : AbstractLayer
     public Position RandomPosition()
     {
         var random = RandomHelper.Random;
-        return Position.CreatePosition(random.Next(MaxX - 1), random.Next(MaxY - 1));
+        return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
     }
 
     private void SpawnBuildings()
@@ -85,10 +91,12 @@ public class WorldLayer : AbstractLayer
 
     public void InsertStructure(Structure structure)
     {
-        if (Structures.GetType() == typeof(Street))
-            _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 4;
+        int x = (int)structure.Position.X;
+        int y = (int)structure.Position.Y;
+        if (structure.GetType() == typeof(Street))
+            _pathFindingTileMap[x, y] = 0.1f;
         else
-            _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 100000;
+            _pathFindingTileMap[x, y] = 100000;
         lock (_pathFindingGrid)
             _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);
@@ -108,9 +116,9 @@ public class WorldLayer : AbstractLayer
     public GlobalState GetGlobalState()
     {
         return new GlobalState(
-            this.GridEnvironment.Entities.Count((it) => it is Person),
-            Structures.Count((it) => it is House),
-            Structures.Count((it) => it is Restaurant)
+            GridEnvironment.Entities.Count((it) => it is Person),
+            Structures.OfType<House>().Count(),
+            Structures.OfType<Restaurant>().Count()
         );
     }
 }

@@ -28,18 +28,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private PersonAction? _plannedAction;
 
 
-    private static Queue<string> Names = new(new[]
-    {
-        "Peter",
-        "Bob",
-        "Micheal",
-        "Gunther"
-    });
-
     public Person()
     {
-        Names.TryDequeue(out var name);
-        Name = name ?? ":(";
         _mind = MindMock.Instance;
     }
 
@@ -49,8 +39,13 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         Position = _worldLayer.RandomPosition();
         _worldLayer.GridEnvironment.Insert(this);
 
-        var home = _worldLayer.Structures[^1];
-        _recollection.Add(ActionType.Sleep, home.Position);
+        lock (_worldLayer.Structures)
+        {
+            var home = _worldLayer.Structures.OfType<House>().First(house => house.FreeSpaces > 0);
+            home.FreeSpaces--;
+            _recollection.Add(ActionType.Sleep, home.Position);
+        }
+        _recollection.Add(ActionType.Eat , _worldLayer.Structures.OfType<Restaurant>().First().Position);
     }
 
     public void Tick()

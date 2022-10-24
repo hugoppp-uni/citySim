@@ -42,31 +42,16 @@ public class WorldLayer : AbstractLayer
         
         InsertStructure(new House { Position = new Position(6, 3) });
         InsertStructure(new House { Position = new Position(5, 3) });
-        // InsertStructure(new House { Position = new Position(4, 3) });
         InsertStructure(new House { Position = new Position(3, 3) });
-        InsertStructure(new House { Position = new Position(3, 4) });
-        InsertStructure(new House { Position = new Position(3, 5) });
-        InsertStructure(new House { Position = new Position(3, 6) });
-        InsertStructure(new House { Position = new Position(4, 5) });
-        InsertStructure(new House { Position = new Position(5, 5) });
-        InsertStructure(new House { Position = new Position(6, 0) });
-        InsertStructure(new House { Position = new Position(6, 1) });
-        InsertStructure(new House { Position = new Position(6, 2) });
+        InsertStructure(new House { Position = new Position(2, 3) });
+        InsertStructure(new House { Position = new Position(2, 2) });
+        // InsertStructure(new House { Position = new Position(4, 3) });
         
-        InsertStructure(new House { Position = new Position(8, 9) });
-        InsertStructure(new House { Position = new Position(8, 8) });
-        InsertStructure(new House { Position = new Position(8, 7) });
-        InsertStructure(new House { Position = new Position(8, 6) });
-        InsertStructure(new House { Position = new Position(8, 5) });
-        InsertStructure(new House { Position = new Position(8, 4) });
-        InsertStructure(new House { Position = new Position(8, 3) });
-        InsertStructure(new House { Position = new Position(8, 2) });
-        InsertStructure(new House { Position = new Position(8, 1) });
         
-        //last one will be sleep location for now
-        InsertStructure(new House { Position = new Position(9, 9) });
+        InsertStructure(new Restaurant {Position = new Position(9,9)});
+        
 
-        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
 
         return true;
     }

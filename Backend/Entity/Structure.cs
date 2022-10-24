@@ -15,7 +15,7 @@ public abstract class Structure : IPositionableEntity
         worldLayer.InsertStructure(this);
     }
 
-    protected WorldLayer WorldLayer { get; set; }
+    protected WorldLayer WorldLayer { get; set; } = null!; //Init()
 
     public Position Position { get; set; }
 

@@ -87,7 +87,9 @@ namespace CitySim.Frontend
                 return Vector2.Distance(pos, new Vector2(202, 40)) < 205;
             }
 
-            var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>().Select(p => (p.Position.X, p.Position.Y)).ToHashSet();
+            var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
+                .GroupBy(p => (p.Position.X, p.Position.Y))
+                .ToDictionary(x=>x.Key, x=>x.Count());
             var buildingsByCoord =
                 _model.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
 
@@ -141,13 +143,9 @@ namespace CitySim.Frontend
                     DrawTerrainTile(67, position2d);
                 }
 
-                if (coordsWithPerson.Contains((cell_x, cell_y)))
+                if (coordsWithPerson.TryGetValue((cell_x, cell_y), out int count))
                 {
-                    //string text = "P";
-
-                    //int width = MeasureText(text, 40);
-                    //DrawText(text, position2d.X - width-1, position2d.Y-40, 40, new Color(0,0,0,50));
-                    //DrawText(text, position2d.X - width+0.5f, position2d.Y-40+0.5f, 40, WHITE);
+                    
 
                     Matrix4x4 modelView = RlGl.rlGetMatrixModelview();
 
@@ -160,6 +158,13 @@ namespace CitySim.Frontend
 
                     MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, WHITE);
                     DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, WHITE);
+
+                    string text = count.ToString();
+
+                    int width = MeasureText(text, 20);
+                    DrawEllipse((int)pos.X, (int)pos.Y-50, 25, 15, ORANGE);
+                    DrawText(text, pos.X - width/2 - 1, pos.Y-50-10, 20, new Color(0, 0, 0, 255));
+                    //DrawText(text, position2d.X - width + 0.5f, position2d.Y - 40 + 0.5f, 40, WHITE);
                 }
             }
         }

@@ -1,9 +1,7 @@
-using CitySim.Backend.Util;
 using Mars.Numerics;
 
 namespace CitySim.Backend.Entity.Agents.Behavior;
 
-using Numpy;
 using World;
 
 public interface IMind
@@ -35,15 +33,15 @@ public record PersonNeeds
 
     public double[] AsArray()
     {
-        return new double[]{Sleepiness, Hunger, Money};
+        return new []{Normalize(Sleepiness), Normalize(Hunger), Normalize(Money)};
     }
-
-    public NDarray<double> AsNdArray()
+    
+    private static double Normalize(double x)
     {
-        return new NDarray<double>(AsArray());
+        return x * 2 - 1;
     }
 
-    public double getWellBeing()
+    public double GetWellBeing()
     {
         return AsArray().Sum();
     }

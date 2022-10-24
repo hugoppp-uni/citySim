@@ -10,6 +10,7 @@ using Mars.Interfaces.Data;
 using Mars.Interfaces.Environments;
 using Mars.Interfaces.Layers;
 using NesScripts.Controls.PathFind;
+using Tensorflow;
 
 namespace CitySim.Backend.World;
 
@@ -27,6 +28,9 @@ public class WorldLayer : AbstractLayer
 
     public WorldLayer()
     {
+        var t = new Tensorflow.NumPy.NDArray(new[] { 1.0 });
+        t[0] =  2.0;
+        Console.Out.WriteLine(((Tensor)t).ToArray<double>());
         for (int i = 0; i < MaxX; i++)
         for (int j = 0; j < MaxY; j++)
             _pathFindingTileMap[i, j] = 1;

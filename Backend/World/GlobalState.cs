@@ -1,33 +1,34 @@
 ﻿namespace CitySim.Backend.World;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Numpy;
 
 public class GlobalState
 {
     public double Hunger { get; set; }
     public double Housing { get; set; }
 
-    public GlobalState(int people, int units, int restaurants)
+    public GlobalState(int people, int units, int restaurantCapacity)
     {
-        Housing = Math.Log10(1.0*units /people) / 2;// div by 2 to change the limit to 1
-        Hunger = Math.Log10(5.0 * restaurants / people);// TODO: How to calculate
+        // Suggestion
+        // Map value to values between -1 and 1
+        Housing = Normalize(units - people);
+        Housing = Normalize(restaurantCapacity - people); 
+    }
+
+    /**
+     * Normalize a value by using fast sigmoid
+     */
+    private static double Normalize(int x)
+    {
+        return x * 1.0 / (1 + Math.Abs(x));
     }
 
     public double[] AsArray()
     {
-        return new double[] { Hunger, Housing };
+        return new [] { Hunger, Housing };
     }
 
-    public NDarray<double> AsNdArray()
-    {
-        return new NDarray<double>(AsArray());
-    }
-
-    public double getGlobalWellBeing()
+    public double GetGlobalWellBeing()
     {
         return AsArray().Sum();
     }

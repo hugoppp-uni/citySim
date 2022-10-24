@@ -1,6 +1,6 @@
-﻿using CitySim.Backend.Entity;
-using CitySim.Backend.Entity.Agents;
+﻿using CitySim.Frontend;
 using Raylib_CsLo;
+using System.Numerics;
 using static Raylib_CsLo.Raylib;
 
 Console.WriteLine("Hello, World!");
@@ -13,8 +13,8 @@ Console.WriteLine("Hello, World!");
 
 // Initialization
 //--------------------------------------------------------------------------------------
-const int screenWidth = 800;
-const int screenHeight = 450;
+const int screenWidth = 1400;
+const int screenHeight = 900;
 
 InitWindow(screenWidth, screenHeight, "CitySim");
 
@@ -28,39 +28,52 @@ var citySim = new CitySim.Backend.CitySim
 var simulationTask = citySim.StartAsync();
 
 
+
 SetTargetFPS(60);
+
+WorldDrawer worldDrawer = new(citySim);
+
+Camera2D cam = new()
+{
+    target = worldDrawer.Grid.GetPosition2D(new Vector3(5,5,0)),
+    offset = new Vector2(screenWidth / 2, screenHeight / 2),
+    zoom = 1
+};
 
 // Main game loop
 while (!WindowShouldClose())
 {
-    BeginDrawing(); 
+    #region camera controls
+    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        cam.target -= GetMouseDelta()/cam.zoom;
 
+    cam.zoom *= 1 + 0.1f * GetMouseWheelMove();
+
+    if (cam.zoom < 0.1f)
+        cam.zoom = 0.1f;
+
+    if (cam.zoom > 10f)
+        cam.zoom = 10f;
+    #endregion
+
+    BeginDrawing();
     ClearBackground(new Color(10, 130, 255, 255));
 
+    BeginMode2D(cam);
+    worldDrawer.Draw(cam);
+    EndMode2D();
 
-    var personOnCoord = citySim.WorldLayer.GridEnvironment.Entities.OfType<Person>().Select(p => (p.Position.X, p.Position.Y)).ToHashSet();
-    var buildingOnCoord =
-        citySim.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
-    
-    for (int x = 0; x < 10; x++)
+    #region HUD
     {
-        for (int y = 0; y < 10; y++)
-        {
-            Color color = personOnCoord.Contains((x,y)) ? new Color(50, 255, 0, 255) : 
-                buildingOnCoord.ContainsKey((x,y)) ? new Color(255, 255, 255, 255) :
-                new Color(50, 255, 255, 255);
-            DrawRectangleRounded(new Rectangle(x * 50 + 150, y * 30 + 100, 50 - 2, 30 - 2), 0.1f, 3,
-                color);
-        }
+        int width = MeasureText("CitySim", 60);
+        DrawFPS(10, 10);
+        DrawText("CitySim", screenWidth / 2 - width / 2 + 2, 22,
+            60, new Color(0, 0, 0, 100));
+
+        DrawText("CitySim", screenWidth / 2 - width / 2, 20,
+            60, RAYWHITE);
     }
-
-    int width = MeasureText("CitySim", 60);
-    DrawFPS(10, 10);
-    DrawText("CitySim", screenWidth / 2 - width / 2 + 2, 22,
-        60, new Color(0, 0, 0, 100));
-
-    DrawText("CitySim", screenWidth / 2 - width / 2, 20,
-        60, RAYWHITE);
+    #endregion
 
     EndDrawing();
 }

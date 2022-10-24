@@ -17,7 +17,7 @@ namespace CitySim.Backend.World;
 public class WorldLayer : AbstractLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
-        new(10, 10, true) { IsDiscretizePosition = true };
+        new(20, 20, true) { IsDiscretizePosition = true };
 
     public readonly List<Structure> Structures = new();
 
@@ -85,10 +85,12 @@ public class WorldLayer : AbstractLayer
 
     public void InsertStructure(Structure structure)
     {
-        if (Structures.GetType() == typeof(Street))
-            _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 4;
+        int x = (int)structure.Position.X;
+        int y = (int)structure.Position.Y;
+        if (structure.GetType() == typeof(Street))
+            _pathFindingTileMap[x, y] = 0.1f;
         else
-            _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 100000;
+            _pathFindingTileMap[x, y] = 100000;
         lock (_pathFindingGrid)
             _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);
@@ -108,9 +110,9 @@ public class WorldLayer : AbstractLayer
     public GlobalState GetGlobalState()
     {
         return new GlobalState(
-            this.GridEnvironment.Entities.Count((it) => it is Person),
-            Structures.Count((it) => it is House),
-            Structures.Count((it) => it is Restaurant)
+            GridEnvironment.Entities.Count((it) => it is Person),
+            Structures.OfType<House>().Count(),
+            Structures.OfType<Restaurant>().Count()
         );
     }
 }

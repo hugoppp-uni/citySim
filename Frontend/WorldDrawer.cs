@@ -138,14 +138,8 @@ namespace CitySim.Frontend
             var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
                 .ToDictionary(x=>x.Key, x=>x.Count());
-            var houseOnCoord =
-                _model.WorldLayer.GridEnvironment.Entities.OfType<House>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
-            var streetOnCoord =
-                _model.WorldLayer.GridEnvironment.Entities.OfType<Street>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
-            var restaurantOnCord = 
-                _model.WorldLayer.GridEnvironment.Entities.OfType<Street>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
 
-            bool IsRoad(int tileX, int tileY) => streetOnCoord.ContainsKey((tileX, tileY));
+            bool IsRoad(int tileX, int tileY) => _model.WorldLayer.Structures[tileX, tileY]?.GetType() == typeof(Street);
 
             foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
             {
@@ -175,7 +169,7 @@ namespace CitySim.Frontend
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
                 else
-                if (houseOnCoord.ContainsKey((cell_x, cell_y)))
+                if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(House))
                 {
                     DrawBuildingTile(1, position2d);
 

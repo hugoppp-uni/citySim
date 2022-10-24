@@ -19,17 +19,17 @@ public class WorldLayer : AbstractLayer
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
         new(20, 20, true) { IsDiscretizePosition = true };
 
-    public readonly List<Structure> Structures = new();
-
-    private const int MaxX = 20;
-    private const int MaxY = 20;
-    private readonly float[,] _pathFindingTileMap = new float[MaxX, MaxY];
+    public const int XSize = 20;
+    public const int YSize = 20;
+    
+    public readonly StructureCollection Structures = new(XSize, YSize);
+    private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
 
     public WorldLayer()
     {
-        for (int i = 0; i < MaxX; i++)
-        for (int j = 0; j < MaxY; j++)
+        for (int i = 0; i < XSize; i++)
+        for (int j = 0; j < YSize; j++)
             _pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
     }
@@ -45,6 +45,11 @@ public class WorldLayer : AbstractLayer
 
         agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
 
+        var buildPositionEvaluator = new BuildPositionEvaluator(Structures);
+        
+        //todo this should be moved 
+        buildPositionEvaluator.EvaluateHousingScore();
+
         return true;
     }
 
@@ -58,7 +63,7 @@ public class WorldLayer : AbstractLayer
     public Position RandomPosition()
     {
         var random = RandomHelper.Random;
-        return Position.CreatePosition(random.Next(MaxX - 1), random.Next(MaxY - 1));
+        return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
     }
 
     private void SpawnBuildings()

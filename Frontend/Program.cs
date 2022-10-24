@@ -40,6 +40,9 @@ Camera2D cam = new()
     zoom = 1
 };
 
+RayGui.GuiSetStyle((int)RaylibExtensions.GuiControl.DEFAULT, (int)RaylibExtensions.GuiControlProperty.TEXT_COLOR_NORMAL,
+    ColorToInt(WHITE));
+
 // Main game loop
 while (!WindowShouldClose())
 {
@@ -72,6 +75,25 @@ while (!WindowShouldClose())
 
         DrawText("CitySim", screenWidth / 2 - width / 2, 20,
             60, RAYWHITE);
+
+        RaylibExtensions.MyDrawRect(screenWidth - 210, 0, screenWidth, screenHeight, 
+            new Color(0, 0, 0, 100));
+
+
+        int currentY = 10;
+
+        for (int i = 0; i < worldDrawer.OverlayNames.Count; i++)
+        {
+            bool enabled = worldDrawer.IsOverlayEnabled(i);
+
+            enabled = RayGui.GuiCheckBox(
+                new Rectangle(screenWidth - 200, currentY, 20, 20),
+                worldDrawer.OverlayNames[i], enabled);
+
+            worldDrawer.ToggleOverlay(i, enabled);
+
+            currentY += 50;
+        }
     }
     #endregion
 

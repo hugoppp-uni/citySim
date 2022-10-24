@@ -25,5 +25,46 @@ namespace CitySim.Frontend
 
             DrawRectangleRounded(new(left, top, width, height), roundness, 6, color);
         }
+
+        public enum GuiControlProperty {
+            BORDER_COLOR_NORMAL = 0,
+            BASE_COLOR_NORMAL,
+            TEXT_COLOR_NORMAL,
+            BORDER_COLOR_FOCUSED,
+            BASE_COLOR_FOCUSED,
+            TEXT_COLOR_FOCUSED,
+            BORDER_COLOR_PRESSED,
+            BASE_COLOR_PRESSED,
+            TEXT_COLOR_PRESSED,
+            BORDER_COLOR_DISABLED,
+            BASE_COLOR_DISABLED,
+            TEXT_COLOR_DISABLED,
+            BORDER_WIDTH,
+            TEXT_PADDING,
+            TEXT_ALIGNMENT,
+            RESERVED
+        }
+
+        public enum GuiControl
+        {
+            // Default -> populates to all controls when set
+            DEFAULT = 0,
+            // Basic controls
+            LABEL,          // Used also for: LABELBUTTON
+            BUTTON,
+            TOGGLE,         // Used also for: TOGGLEGROUP
+            SLIDER,         // Used also for: SLIDERBAR
+            PROGRESSBAR,
+            CHECKBOX,
+            COMBOBOX,
+            DROPDOWNBOX,
+            TEXTBOX,        // Used also for: TEXTBOXMULTI
+            VALUEBOX,
+            SPINNER,        // Uses: BUTTON, VALUEBOX
+            LISTVIEW,
+            COLORPICKER,
+            SCROLLBAR,
+            STATUSBAR
+        }
     }
 }

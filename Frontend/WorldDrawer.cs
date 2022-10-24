@@ -120,14 +120,6 @@ namespace CitySim.Frontend
             }
 
 
-
-            bool InCityBounds(int tileX, int tileY) =>
-                InCityBoundsX(tileX) &&
-                InCityBoundsY(tileY);
-
-            bool InCityBoundsX(int tileX) => tileX > 0 && tileX < _model!.WorldLayer.GridEnvironment.DimensionX;
-            bool InCityBoundsY(int tileY) => tileY > 0 && tileY < _model!.WorldLayer.GridEnvironment.DimensionY;
-
             bool IsGround(int tileX, int tileY)
             {
                 Vector2 pos = new Vector2(tileX + 0.5f, tileY + 0.5f);

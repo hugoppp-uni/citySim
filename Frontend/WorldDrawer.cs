@@ -30,7 +30,6 @@ namespace CitySim.Frontend
             }
             return GenericEnum.ToString();
         }
-
     }
 
     internal class WorldDrawer
@@ -40,7 +39,9 @@ namespace CitySim.Frontend
             [System.ComponentModel.Description("Show Person Count")]
             PERSON_COUNT,
             [System.ComponentModel.Description("Show Grid Lines")]
-            GRID_LINES
+            GRID_LINES,
+            [System.ComponentModel.Description("Show Housing Score")]
+            HOUSING_SCORE
         }
 
         private readonly Backend.CitySim _model;
@@ -247,7 +248,20 @@ namespace CitySim.Frontend
                 }
             }
 
-
+            if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE])
+            {
+                foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
+                {
+                    var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
+                    if (d is null || _model.WorldLayer.Structures[cell_x, cell_y] is not null)
+                        continue;
+                    var co = ColorFromHSV((float)d * 180, 1f, 1f);
+                    co.a = 200;
+                    
+                    //todo proper draw
+                    DrawRectangle((int)position2d.X, (int)position2d.Y, 15, 15, co);
+                }
+            }
         }
     }
 }

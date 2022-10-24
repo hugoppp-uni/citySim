@@ -21,7 +21,8 @@ public class WorldLayer : AbstractLayer
 
     public const int XSize = 20;
     public const int YSize = 20;
-    
+    public readonly BuildPositionEvaluator BuildPositionEvaluator;
+
     public readonly StructureCollection Structures = new(XSize, YSize);
     private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
@@ -32,6 +33,7 @@ public class WorldLayer : AbstractLayer
         for (int j = 0; j < YSize; j++)
             _pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
+        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -45,10 +47,9 @@ public class WorldLayer : AbstractLayer
 
         agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
 
-        var buildPositionEvaluator = new BuildPositionEvaluator(Structures);
-        
+
         //todo this should be moved 
-        buildPositionEvaluator.EvaluateHousingScore();
+        BuildPositionEvaluator.EvaluateHousingScore();
 
         return true;
     }

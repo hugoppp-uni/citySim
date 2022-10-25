@@ -2,12 +2,10 @@
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using CitySim.Backend.World;
-using Mars.Common.Core.Collections;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
 using NLog;
-using ServiceStack.Script;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -18,7 +16,6 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private WorldLayer _worldLayer = null!; //Init()
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    public string Name { get; }
     private readonly IMind _mind;
     private readonly PersonRecollection _recollection = new();
 
@@ -55,10 +52,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             return;
 
         var personsInVicinity = _worldLayer.GridEnvironment
-            .Explore(Position, 2, predicate: person => person.ID != ID)
-            .Select(p => p switch { Person person => person.Name, _ => p.GetType().ToString() });
-        _logger.Trace(
-            $"{Name} (Hunger: {Needs}) {Position} can see: [{string.Join(',', personsInVicinity)}]");
+            .Explore(Position, 2, predicate: person => person.ID != ID);
 
         if (_plannedAction is null)
         {
@@ -76,8 +70,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             return;
         }
 
-        _logger.Trace($"{Name} is {_plannedAction}");
-        if (_plannedAction.Execute() == ActionExecuter.Result.Executed)
+        _logger.Trace($"{ID} is {_plannedAction}");
+        if (_plannedAction.Execute() == ActionResult.Executed)
             _plannedAction = null;
     }
 
@@ -103,7 +97,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         if (Needs.Hunger < 0)
         {
             Kill();
-            _logger.Trace($"{Name} DIED of starvation");
+            _logger.Trace($"{ID} DIED of starvation");
             return false;
         }
 

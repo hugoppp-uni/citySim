@@ -40,7 +40,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         Names.TryDequeue(out var name);
         Name = name ?? ":(";
-        _mind = MindMock.Instance;
+        _mind = new PersonMind(0.5);
     }
 
     public void Init(WorldLayer layer)

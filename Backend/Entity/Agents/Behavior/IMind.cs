@@ -31,7 +31,11 @@ public record PersonNeeds
         Money -= 0.01;
     }
 
-    public double[] AsArray()
+    /// <summary>
+    /// Returns the values of the personal needs as array.
+    /// The Values gets normalized to values between -1 and 1 
+    /// </summary>
+    public double[] AsNormalizedArray()
     {
         return new []{Normalize(Sleepiness), Normalize(Hunger), Normalize(Money)};
     }
@@ -43,7 +47,7 @@ public record PersonNeeds
 
     public double GetWellBeing()
     {
-        return AsArray().Sum();
+        return AsNormalizedArray().Sum();
     }
 }
 

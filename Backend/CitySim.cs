@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Util;
 using CitySim.Backend.World;
 using Mars.Components.Starter;
@@ -39,6 +40,7 @@ public class CitySim
             },
             
         };
+        PersonMind.Init("test");
         Application = SimulationStarter.BuildApplication(desc, config);
         Simulation = Application.Resolve<ISimulation>();
         var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];

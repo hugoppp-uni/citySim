@@ -1,7 +1,10 @@
-﻿using Tensorflow;
+﻿using System.ComponentModel.DataAnnotations;
+using Mars.Numerics;
+using Tensorflow;
 using Tensorflow.Keras.Engine;
 using Tensorflow.Keras.Layers;
 using Tensorflow.NumPy;
+using NLog;
 
 namespace CitySim.Backend.Entity.Agents.Behavior;
 
@@ -11,41 +14,59 @@ using World;
 
 public class PersonMind : IMind
 {
-    private const float LEARNING_RATE = 0.01f;
+    private const float LearningRate = 0.01f;
+    private const int CollectiveDecisionEvaluationDelay = 10;
     private static Model _model = null!;
-    private double _i, _c;
+    /// <summary>
+    ///   How much the person is an individualist or a collectivist.
+    ///   If the value is 0.5, the personal needs and the global state are handled exactly as the are.
+    /// </summary>
+    private readonly double _individualist;
     private PredictionData? _lastIndividualPrediction;
-    private readonly Queue<PredictionData> _lastCollectivePredictions = new();
+    private readonly Queue<PredictionData> _lastPredictions = new();
+    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     public static void Init(string weightsFile)
     {
         _model = BuildModel(weightsFile);
     }
-
-    public PersonMind(double i, double c)
+    
+    /// <param name="individualist">How much the person is an individualist or a collectivist.
+    /// If the value is 0.5, the personal needs and the global state are handled exactly as the are.
+    /// Has to be between 0 and 1.
+    /// </param>
+    /// <exception cref="InvalidOperationException">The static init has to be called first (once)</exception>
+    /// <exception cref="InvalidArgumentError"></exception>
+    public PersonMind([Range(0.0, 1.0)] double individualist)
     {
         if (_model == null)
         {
             throw new InvalidOperationException("PersonMind is not Initialized");
         }
 
-        _i = i;
-        _c = c;
+        if (individualist is < 0 or > 1)
+        {
+            throw new InvalidArgumentError("The param individualist has to be in the range [0,1]");
+        }
+
+        _individualist = individualist;
     }
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
-        if (_lastIndividualPrediction != null)
+        Evaluate(personNeeds, globalState);
+        var input = new Tensor(GetInputArray(personNeeds, globalState));
+        Tensors output;
+        
+        lock (_model)// a model is not thread safe
         {
-            Evaluate(personNeeds, globalState);
+            output = _model.predict(input);
         }
-
-        var input = new[] { personNeeds.AsArray(), globalState.AsArray() };
-        var output = _model.predict(new Tensor(input, new Shape(2)))[0];
         var data = new PredictionData(globalState, personNeeds, output);
-        _lastCollectivePredictions.Enqueue(data);
+        _lastPredictions.Enqueue(data);
         _lastIndividualPrediction = data;
-        var actionIndex = np.argmax(output.numpy());
+        var actionIndex = np.argmax(output[0].numpy());
+        _logger.Trace("Decided to do action: "+Enum.GetValues<ActionType>()[actionIndex]);
         return Enum.GetValues<ActionType>()[actionIndex];
     }
 
@@ -54,42 +75,88 @@ public class PersonMind : IMind
         GlobalState currentGlobalState
     )
     {
-        var expected = _lastIndividualPrediction!.Output;
+        if (_lastIndividualPrediction == null) { return; }
+        
+        void FinalEvaluate(PredictionData prediction, double wellBeingDelta)
+        {
+            var expected = prediction.Output.numpy();
+            var actionIndex = np.argmax( prediction.Output.numpy());
+            expected[actionIndex] = wellBeingDelta > 0 ? 1 : 0;
+            lock (_model)
+            {
+                _model.fit(GetInputArray(prediction.Needs, prediction.GlobalState), expected);
+            }
+
+            _logger.Trace(wellBeingDelta > 0
+                ? "An action was good for the individual"
+                : "An action wasn't good for the individual");
+        }
         var wellBeingDelta = currentPersonNeeds.GetWellBeing() - _lastIndividualPrediction.Needs.GetWellBeing();
-        var actionIndex = np.argmax(_lastIndividualPrediction.Output.numpy());
-        var newExpected = expected.numpy();
-        newExpected[actionIndex] = wellBeingDelta > 0 ? 1 : 0;
-        _model.fit(GetInputArray(_lastIndividualPrediction.Needs, _lastIndividualPrediction.GlobalState), newExpected);
+        FinalEvaluate(_lastIndividualPrediction, wellBeingDelta);
+
+        if (_lastPredictions.Count == CollectiveDecisionEvaluationDelay)
+        {
+            var data = _lastPredictions.Dequeue();
+            wellBeingDelta = currentGlobalState.GetGlobalWellBeing() - data.GlobalState.GetGlobalWellBeing();
+            FinalEvaluate(data, wellBeingDelta);
+        }
     }
 
-    private double[][] GetInputArray(PersonNeeds needs, GlobalState globalState)
+    /// <summary>
+    /// Creates the input for the neural network by combining the array values of the personal Needs and
+    /// the global state. During the creation, the<see cref="_individualist"/> gets considers and the needs gets
+    /// slightly dramatized or the global state value are considered better as they actually are.
+    /// </summary>
+    /// <param name="needs"></param>
+    /// <param name="globalState"></param>
+    /// <returns></returns>
+    private double[] GetInputArray(PersonNeeds needs, GlobalState globalState)
     {
-        return new[] { needs.AsArray(), globalState.AsArray() };
+        var needsAry = needs.AsNormalizedArray();
+        var globalStateAry = globalState.AsNormalizedArray();
+        if (_individualist < 0.5)
+        {
+            var goodWorldLensFactor = 1 - _individualist;
+            for (var i = 0; i < globalStateAry.Length; i++)
+            {
+                globalStateAry[i] += (1 - globalStateAry[i]) * (goodWorldLensFactor - 0.5);
+            }
+        }
+        else
+        {
+            var egoFactor = 0.5 - _individualist;
+            for (var i = 0; i < globalStateAry.Length; i++)
+            {
+                needsAry[i] -= needsAry[i] * needsAry[i] * egoFactor - egoFactor;
+            }
+        }
+
+        return new[] { globalStateAry, needsAry }.Flatten();
     }
 
     public static void SaveWeights(string weightsFile)
     {
-        _model.save_weights(weightsFile);
+        lock (_model)
+        {
+            _model.save_weights(weightsFile);
+        }
     }
 
     private static Model BuildModel(string weightsFile)
     {
         var layers = new LayersApi();
-        int cLength = new GlobalState(0, 0, 0).AsArray().Length;
-        int iLength = new PersonNeeds().AsArray().Length;
+        var cLength = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+        var iLength = new PersonNeeds().AsNormalizedArray().Length;
         var actions = new ActionType[Enum.GetValues(typeof(ActionType)).Length];
-        var iIn = KerasApi.keras.Input(new Shape(1));
-        var cIn = KerasApi.keras.Input(new Shape(1));
-        var denseC = layers.Dense(cLength, activation: "relu").Apply(cIn);
-        var denseI = layers.Dense(iLength, activation: "relu").Apply(iIn);
-        var concatenated = layers.Concatenate().Apply(new Tensors(denseC, denseI));
-        var output = layers.Dense(actions.Length, activation: "softMax").Apply(concatenated);
-        var model = KerasApi.keras.Model(new Tensors(cIn, iIn), output);
+        var inLayer = KerasApi.keras.Input(new Shape(iLength+cLength));
+        var dense = layers.Dense(iLength+cLength, activation: "relu").Apply(inLayer);
+        var output = layers.Dense(actions.Length, activation: "softmax").Apply(dense);
+        var model = KerasApi.keras.Model(new Tensors(inLayer), output);
         model.compile(
-            optimizer: KerasApi.keras.optimizers.SGD(LEARNING_RATE),
+            optimizer: KerasApi.keras.optimizers.SGD(LearningRate),
             loss: KerasApi.keras.losses.CategoricalCrossentropy()
         );
-
+        model.summary();
         if (File.Exists(weightsFile))
         {
             model.load_weights(weightsFile);

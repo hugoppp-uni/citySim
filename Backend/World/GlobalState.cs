@@ -1,18 +1,23 @@
-﻿namespace CitySim.Backend.World;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CitySim.Backend.World;
 using System;
 using System.Linq;
 
 public class GlobalState
 {
-    public double Hunger { get; set; }
-    public double Housing { get; set; }
+    /// <summary>
+    /// Summand in the denominator to stretch the normalization curve
+    /// </summary>
+    [Range(1,10)]
+    private const double NormalizationStretch = 3;
+    public int Hunger { get; }
+    public int Housing { get;  }
 
     public GlobalState(int people, int units, int restaurantCapacity)
     {
-        // Suggestion
-        // Map value to values between -1 and 1
-        Housing = Normalize(units - people);
-        Housing = Normalize(restaurantCapacity - people); 
+        Housing = units - people;
+        Housing = restaurantCapacity - people; 
     }
 
     /**
@@ -20,16 +25,20 @@ public class GlobalState
      */
     private static double Normalize(int x)
     {
-        return x * 1.0 / (1 + Math.Abs(x));
+        return x  / (NormalizationStretch + Math.Abs(x));
     }
 
-    public double[] AsArray()
+    /// <summary>
+    /// Returns the values of the personal needs as array.
+    /// The Values gets normalized to values between -1 and 1 
+    /// </summary>
+    public double[] AsNormalizedArray()
     {
-        return new [] { Hunger, Housing };
+        return new [] { Normalize(Hunger), Normalize(Housing) };
     }
 
     public double GetGlobalWellBeing()
     {
-        return AsArray().Sum();
+        return AsNormalizedArray().Sum();
     }
 }

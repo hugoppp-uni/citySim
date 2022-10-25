@@ -130,7 +130,7 @@ namespace CitySim.Frontend
 
             var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
-                .ToDictionary(x=>x.Key, x=>x.Count());
+                .ToDictionary(x => x.Key, x => x.Count());
 
             bool IsRoad(int tileX, int tileY) => _model.WorldLayer.Structures[tileX, tileY]?.GetType() == typeof(Street);
 
@@ -202,16 +202,6 @@ namespace CitySim.Frontend
                 {
                     unsafe
                     {
-                        var points = stackalloc Vector2[]
-                        {
-                            position2d,
-                            position2d + new Vector2(0, -Grid.DiagSpanY / 2),
-                            position2d + new Vector2(-Grid.DiagSpanX / 2, 0),
-                            position2d + new Vector2(0, Grid.DiagSpanY / 2),
-                        };
-
-                        //DrawTriangleFan(points, 4, GOLD);
-
                         var linePoints = stackalloc Vector2[]
                         {
                             position2d + new Vector2(-Grid.DiagSpanX / 2, 0),
@@ -247,11 +237,30 @@ namespace CitySim.Frontend
                     var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
                     if (d is null || _model.WorldLayer.Structures[cell_x, cell_y] is not null)
                         continue;
-                    var co = ColorFromHSV((float)d * 180, 1f, 1f);
-                    co.a = 200;
-                    
-                    //todo proper draw
-                    DrawRectangle((int)position2d.X, (int)position2d.Y, 15, 15, co);
+
+                    var val = (float)d.Value;
+
+
+                    var co = ColorFromHSV(val * 180, 1f, 1f);
+                    co.a = (byte)(100 * val);
+
+                    unsafe
+                    {
+                        var up = new Vector2(0, -Grid.DiagSpanY / 2);
+                        var down = new Vector2(0, Grid.DiagSpanY / 2);
+                        var left = new Vector2(-Grid.DiagSpanX / 2, 0);
+                        var right = new Vector2(Grid.DiagSpanX / 2, 0);
+
+                        var points = stackalloc Vector2[]
+                        {
+                            position2d + right * val,
+                            position2d + up * val,
+                            position2d + down * val,
+                            position2d + left * val,
+                        };
+
+                        DrawTriangleStrip(points, 4, co);
+                    }
                 }
             }
         }

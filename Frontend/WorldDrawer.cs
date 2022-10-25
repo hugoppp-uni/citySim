@@ -9,11 +9,41 @@ using System.Text;
 using System.Threading.Tasks;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity;
+using System.Reflection;
+using CitySim.Backend.Entity.Structures;
 
 namespace CitySim.Frontend
 {
+    public static class EnumExtensionMethods
+    {
+        public static string GetDescription(this Enum GenericEnum)
+        {
+            Type genericEnumType = GenericEnum.GetType();
+            MemberInfo[] memberInfo = genericEnumType.GetMember(GenericEnum.ToString());
+            if ((memberInfo != null && memberInfo.Length > 0))
+            {
+                var _Attribs = memberInfo[0].GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false);
+                if ((_Attribs != null && _Attribs.Count() > 0))
+                {
+                    return ((System.ComponentModel.DescriptionAttribute)_Attribs.ElementAt(0)).Description;
+                }
+            }
+            return GenericEnum.ToString();
+        }
+    }
+
     internal class WorldDrawer
     {
+        private enum Overlay
+        {
+            [System.ComponentModel.Description("Show Person Count")]
+            PERSON_COUNT,
+            [System.ComponentModel.Description("Show Grid Lines")]
+            GRID_LINES,
+            [System.ComponentModel.Description("Show Housing Score")]
+            HOUSING_SCORE
+        }
+
         private readonly Backend.CitySim _model;
         private readonly SpriteSheet _terrainSheet;
         private readonly SpriteSheet _buildingSheet;
@@ -37,9 +67,15 @@ namespace CitySim.Frontend
             {0b_1100, 127},
         };
 
+        private bool[] _overlaysEnabled;
+
+        private List<string> _overlayNames;
+
         public IsoMetricGrid Grid { get; }
 
-        public WorldDrawer(CitySim.Backend.CitySim model)
+        public IReadOnlyList<string> OverlayNames => _overlayNames;
+
+        public WorldDrawer(Backend.CitySim model)
         {
             _terrainSheet = SpriteSheet.FromPNG_XML(
             Path.Combine("Assets", "landscapeTiles_sheet.png"),
@@ -51,6 +87,19 @@ namespace CitySim.Frontend
 
             Grid = new IsoMetricGrid(128, 64, 32);
             _model = model;
+
+            _overlayNames = Enum.GetValues<Overlay>().Select(x => x.GetDescription()).ToList();
+            _overlaysEnabled = new bool[_overlayNames.Count];
+        }
+
+        public void ToggleOverlay(int overlay, bool enabled)
+        {
+            _overlaysEnabled[overlay] = enabled;
+        }
+
+        public bool IsOverlayEnabled(int overlay)
+        {
+            return _overlaysEnabled[overlay];
         }
 
         public void Draw(Camera2D camera)
@@ -72,14 +121,6 @@ namespace CitySim.Frontend
             }
 
 
-
-            bool InCityBounds(int tileX, int tileY) =>
-                InCityBoundsX(tileX) &&
-                InCityBoundsY(tileY);
-
-            bool InCityBoundsX(int tileX) => tileX > 0 && tileX < _model!.WorldLayer.GridEnvironment.DimensionX;
-            bool InCityBoundsY(int tileY) => tileY > 0 && tileY < _model!.WorldLayer.GridEnvironment.DimensionY;
-
             bool IsGround(int tileX, int tileY)
             {
                 Vector2 pos = new Vector2(tileX + 0.5f, tileY + 0.5f);
@@ -89,17 +130,9 @@ namespace CitySim.Frontend
 
             var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
-                .ToDictionary(x=>x.Key, x=>x.Count());
-            var buildingsByCoord =
-                _model.WorldLayer.GridEnvironment.Entities.OfType<Structure>().ToDictionary(structure => ((int)structure.Position.X, (int)structure.Position.Y));
+                .ToDictionary(x => x.Key, x => x.Count());
 
-            bool IsRoad(int tileX, int tileY) => (
-                !buildingsByCoord.ContainsKey((tileX, tileY)) && (
-                (tileX % 4 == 0 && InCityBoundsX(tileX)) ||
-                (tileY % 3 == 0 && InCityBoundsY(tileY))
-                )) && IsGround(tileX, tileY);
-
-            
+            bool IsRoad(int tileX, int tileY) => _model.WorldLayer.Structures[tileX, tileY]?.GetType() == typeof(Street);
 
             foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
             {
@@ -129,7 +162,7 @@ namespace CitySim.Frontend
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
                 else
-                if (buildingsByCoord.ContainsKey((cell_x, cell_y)))
+                if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(House))
                 {
                     DrawBuildingTile(1, position2d);
 
@@ -151,10 +184,6 @@ namespace CitySim.Frontend
 
                 if (coordsWithPerson.TryGetValue((cell_x, cell_y), out int count))
                 {
-                    
-
-                    Matrix4x4 modelView = RlGl.rlGetMatrixModelview();
-
                     Vector2 pos = position2d - new Vector2(1, 1);
 
                     MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, new Color(0, 0, 0, 50));
@@ -164,13 +193,74 @@ namespace CitySim.Frontend
 
                     MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, WHITE);
                     DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, WHITE);
+                }
+            }
+
+            if (_overlaysEnabled[(int)Overlay.GRID_LINES])
+            {
+                foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
+                {
+                    unsafe
+                    {
+                        var linePoints = stackalloc Vector2[]
+                        {
+                            position2d + new Vector2(-Grid.DiagSpanX / 2, 0),
+                            position2d + new Vector2(0, -Grid.DiagSpanY / 2),
+                            position2d + new Vector2(-Grid.DiagSpanX / 2, 0),
+                            position2d + new Vector2(0, Grid.DiagSpanY / 2),
+                            position2d + new Vector2(-Grid.DiagSpanX / 2, 0),
+                        };
+
+                        DrawLineStrip(linePoints, 5, new Color(0, 0, 0, 20));
+                    }
+                }
+            }
+
+            if (_overlaysEnabled[(int)Overlay.PERSON_COUNT])
+            {
+                foreach (var (coord, count) in coordsWithPerson)
+                {
+                    Vector2 pos = Grid.GetPosition2D(new Vector3((float)coord.X, (float)coord.Y, 0));
 
                     string text = count.ToString();
 
                     int width = MeasureText(text, 20);
-                    DrawEllipse((int)pos.X, (int)pos.Y-50, 25, 15, ORANGE);
-                    DrawText(text, pos.X - width/2 - 1, pos.Y-50-10, 20, new Color(0, 0, 0, 255));
-                    //DrawText(text, position2d.X - width + 0.5f, position2d.Y - 40 + 0.5f, 40, WHITE);
+                    DrawEllipse((int)pos.X, (int)pos.Y - 0, 25, 15, ORANGE);
+                    DrawText(text, pos.X - width / 2 - 1, pos.Y - 0 - 10, 20, new Color(0, 0, 0, 255));
+                }
+            }
+
+            if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE])
+            {
+                foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
+                {
+                    var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
+                    if (d is null || _model.WorldLayer.Structures[cell_x, cell_y] is not null)
+                        continue;
+
+                    var val = (float)d.Value;
+
+
+                    var co = ColorFromHSV(val * 180, 1f, 1f);
+                    co.a = (byte)(100 * val);
+
+                    unsafe
+                    {
+                        var up = new Vector2(0, -Grid.DiagSpanY / 2);
+                        var down = new Vector2(0, Grid.DiagSpanY / 2);
+                        var left = new Vector2(-Grid.DiagSpanX / 2, 0);
+                        var right = new Vector2(Grid.DiagSpanX / 2, 0);
+
+                        var points = stackalloc Vector2[]
+                        {
+                            position2d + right * val,
+                            position2d + up * val,
+                            position2d + down * val,
+                            position2d + left * val,
+                        };
+
+                        DrawTriangleStrip(points, 4, co);
+                    }
                 }
             }
         }

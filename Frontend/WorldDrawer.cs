@@ -161,8 +161,11 @@ namespace CitySim.Frontend
 
                     DrawTerrainTile(s_roadMap[connections], position2d);
                 }
-                else
-                if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(House))
+                else if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(Restaurant))
+                {
+                    DrawBuildingTile(4, position2d);
+                }
+                else if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(House))
                 {
                     DrawBuildingTile(1, position2d);
 

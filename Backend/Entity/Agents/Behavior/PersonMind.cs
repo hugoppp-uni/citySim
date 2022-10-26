@@ -14,9 +14,15 @@ using World;
 
 public class PersonMind : IMind
 {
-    private const float LearningRate = 0.01f;
+    private const float LearningRate = 0.2f;// the learning rate is high because the expected value is not changed directly to 0 or 1
+    private const double EgoScalar = 0.5;
+    private const double IgnoreOwnBodyScalar = 0.1;
+    private const double GoodWorldLensScalar = 0.8;
+    private const double BadWorldLensScalar = 0.3;
     private const int CollectiveDecisionEvaluationDelay = 10;
     private static Model _model = null!;
+    private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
+    private static readonly int GlobalStatesCount = new GlobalState(0,0,0).AsNormalizedArray().Length;
     /// <summary>
     ///   How much the person is an individualist or a collectivist.
     ///   If the value is 0.5, the personal needs and the global state are handled exactly as the are.
@@ -77,11 +83,19 @@ public class PersonMind : IMind
     {
         if (_lastIndividualPrediction == null) { return; }
         
-        void FinalEvaluate(PredictionData prediction, double wellBeingDelta)
+        void FinalEvaluate(PredictionData prediction,[Range(0,1)] double wellBeingDelta,[Range(0,1)] double evaluationFactor)
         {
             var expected = prediction.Output.numpy();
             var actionIndex = np.argmax( prediction.Output.numpy());
             expected[actionIndex] = wellBeingDelta > 0 ? 1 : 0;
+            if (wellBeingDelta > 0)
+            {
+                expected[actionIndex] = 1 - Math.Pow(1 - expected[actionIndex], 1 + 3 * evaluationFactor);
+            }
+            else
+            {
+                expected[actionIndex] = Math.Pow(1 + expected[actionIndex], 1 + 3 * evaluationFactor) - 1;
+            }
             lock (_model)
             {
                 _model.fit(GetInputArray(prediction.Needs, prediction.GlobalState), expected);
@@ -91,14 +105,20 @@ public class PersonMind : IMind
                 ? "An action was good for the individual"
                 : "An action wasn't good for the individual");
         }
-        var wellBeingDelta = currentPersonNeeds.GetWellBeing() - _lastIndividualPrediction.Needs.GetWellBeing();
-        FinalEvaluate(_lastIndividualPrediction, wellBeingDelta);
+        var wellBeingDelta = 
+            ApplyIndividualistFactorOnPersonalNeedsValues(currentPersonNeeds.AsNormalizedArray()).Sum() - 
+            ApplyIndividualistFactorOnPersonalNeedsValues(_lastIndividualPrediction.Needs.AsNormalizedArray()).Sum();
+        wellBeingDelta /= PersonalNeedsCount;
+        FinalEvaluate(_lastIndividualPrediction, wellBeingDelta, _individualist);
 
         if (_lastPredictions.Count == CollectiveDecisionEvaluationDelay)
         {
             var data = _lastPredictions.Dequeue();
-            wellBeingDelta = currentGlobalState.GetGlobalWellBeing() - data.GlobalState.GetGlobalWellBeing();
-            FinalEvaluate(data, wellBeingDelta);
+            wellBeingDelta = 
+                ApplyIndividualistFactorOnGlobalStateValues(currentGlobalState.AsNormalizedArray()).Sum() -
+                ApplyIndividualistFactorOnGlobalStateValues(data.GlobalState.AsNormalizedArray()).Sum();
+            wellBeingDelta /= GlobalStatesCount;
+            FinalEvaluate(data, wellBeingDelta, 1 - _individualist);
         }
     }
 
@@ -109,31 +129,72 @@ public class PersonMind : IMind
     /// </summary>
     /// <param name="needs"></param>
     /// <param name="globalState"></param>
-    /// <returns></returns>
+    /// <returns>A 2D array where the first array contains the values of the
+    /// needs and the second array the values of the global state</returns>
     private double[] GetInputArray(PersonNeeds needs, GlobalState globalState)
     {
         var needsAry = needs.AsNormalizedArray();
         var globalStateAry = globalState.AsNormalizedArray();
-        if (_individualist < 0.5)
+        ApplyIndividualistFactorOnGlobalStateValues(globalStateAry);
+        ApplyIndividualistFactorOnPersonalNeedsValues(needsAry);
+        return new[] { globalStateAry, needsAry }.Flatten();
+    }
+
+    /// <summary>
+    /// Improves or decrease the values of the global state based on <see cref="_individualist"/>
+    /// </summary>
+    /// <param name="globalStateValues"></param>
+    /// <returns>The passed array</returns>
+    private double[] ApplyIndividualistFactorOnGlobalStateValues(double[] globalStateValues)
+    {
+        if (_individualist > 0.5)
         {
             var goodWorldLensFactor = 1 - _individualist;
-            for (var i = 0; i < globalStateAry.Length; i++)
+            for (var i = 0; i < globalStateValues.Length; i++)
             {
-                globalStateAry[i] += (1 - globalStateAry[i]) * (goodWorldLensFactor - 0.5);
+                globalStateValues[i] += (1 - globalStateValues[i]) * (0.5 - goodWorldLensFactor) * GoodWorldLensScalar;
             }
         }
         else
         {
-            var egoFactor = 0.5 - _individualist;
-            for (var i = 0; i < globalStateAry.Length; i++)
+            var badWorldLensFactor = 1 - _individualist;
+            for (var i = 0; i < globalStateValues.Length; i++)
             {
-                needsAry[i] -= needsAry[i] * needsAry[i] * egoFactor - egoFactor;
+                globalStateValues[i] -= (-1 - globalStateValues[i]) * (badWorldLensFactor - 0.5) * BadWorldLensScalar;
             }
         }
 
-        return new[] { globalStateAry, needsAry }.Flatten();
+        return globalStateValues;
     }
 
+    /// <summary>
+    /// Improves or decrease the values of the personal needs based on <see cref="_individualist"/>
+    /// </summary>
+    /// <param name="personalNeedsValues"></param>
+    /// <returns>The passed array</returns>
+    private double[] ApplyIndividualistFactorOnPersonalNeedsValues(double[] personalNeedsValues)
+    {
+        var factor = 0.5 - _individualist;
+        if (_individualist > 0.5)
+        {
+            for (var i = 0; i < personalNeedsValues.Length; i++)
+            {
+                personalNeedsValues[i] -= EgoScalar * personalNeedsValues[i] * personalNeedsValues[i] *
+                    factor + EgoScalar * factor;
+            }
+        }
+        else
+        {
+            for (var i = 0; i < personalNeedsValues.Length; i++)
+            {
+                personalNeedsValues[i] += IgnoreOwnBodyScalar * personalNeedsValues[i] * personalNeedsValues[i] *
+                    factor - IgnoreOwnBodyScalar * factor;
+            }
+        }
+
+        return personalNeedsValues;
+    }
+    
     public static void SaveWeights(string weightsFile)
     {
         lock (_model)

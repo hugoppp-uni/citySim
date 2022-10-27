@@ -1,10 +1,8 @@
 ﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
-using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
-using Mars.Common.IO.Csv;
 using Mars.Components.Environments;
 using Mars.Components.Layers;
 using Mars.Core.Data;
@@ -15,7 +13,7 @@ using NesScripts.Controls.PathFind;
 
 namespace CitySim.Backend.World;
 
-public class WorldLayer : AbstractLayer, ISteppedActiveLayer
+public class WorldLayer : AbstractLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
         new(20, 20, true) { IsDiscretizePosition = true };
@@ -29,6 +27,7 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
     private readonly PathFindingGrid _pathFindingGrid;
     
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
+    public static long CurrentTick => Instance.Context.CurrentTick;
 
     public WorldLayer()
     {
@@ -51,10 +50,6 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
         SpawnBuildings();
 
         agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
-
-
-        //todo this should be moved 
-        BuildPositionEvaluator.EvaluateHousingScore();
 
         return true;
     }
@@ -125,21 +120,5 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
             Structures.OfType<House>().Count(),
             Structures.OfType<Restaurant>().Count()
         );
-    }
-
-    public void Tick()
-    {
-    }
-
-    public void PreTick()
-    {
-    }
-
-    public void PostTick()
-    {
-        foreach (var structure in Structures)
-        {
-            structure.PostTick();
-        }
     }
 }

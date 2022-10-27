@@ -35,7 +35,7 @@ public record PersonNeeds
 
     public double[] AsArray()
     {
-        return new double[]{Sleepiness, Hunger, Money};
+        return new double[] { Sleepiness, Hunger, Money };
     }
 
     public NDarray<double> AsNdArray()
@@ -62,7 +62,8 @@ public class MindMock : IMind
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
-        return Enum.GetValues<ActionType>()[
-            new[] { personNeeds.Sleepiness, personNeeds.Hunger}.ArgMin()];
+        return Random.Shared.Next(100) == 0
+            ? ActionType.BuildHouse
+            : Enum.GetValues<ActionType>()[new[] { personNeeds.Sleepiness, personNeeds.Hunger }.ArgMin()];
     }
 }

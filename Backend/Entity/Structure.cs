@@ -10,9 +10,4 @@ public abstract class Structure : IPositionableEntity
 
     public Guid ID { get; set; }
 
-    public virtual void PostTick()
-    {
-        
-    }
-
 }

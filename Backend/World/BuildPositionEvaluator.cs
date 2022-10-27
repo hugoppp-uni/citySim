@@ -3,6 +3,7 @@ using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using Mars.Common;
 using Mars.Common.Collections;
+using Mars.Interfaces.Environments;
 using Mars.Numerics;
 
 namespace CitySim.Backend.World;
@@ -10,10 +11,12 @@ namespace CitySim.Backend.World;
 public class BuildPositionEvaluator
 {
     private readonly StructureCollection _structureCollection;
-    
+
     private double[,] _housingScore;
-    public Safe2DArrayView<double> HousingScore => new (_housingScore);
-    
+    public Safe2DArrayView<double> HousingScore => new(_housingScore);
+
+    private long lastEvalutedTick = 0;
+
 
     public BuildPositionEvaluator(StructureCollection structureCollection)
     {
@@ -21,8 +24,10 @@ public class BuildPositionEvaluator
         _housingScore = new double[structureCollection.XSize, structureCollection.YSize];
     }
 
-    public void EvaluateHousingScore()
+    private void EvaluateHousingScore()
     {
+        lastEvalutedTick = WorldLayer.CurrentTick;
+
         for (int x = 0; x < _structureCollection.XSize; x++)
         for (int y = 0; y < _structureCollection.YSize; y++)
         {
@@ -48,11 +53,23 @@ public class BuildPositionEvaluator
             _housingScore[x, y] = buildingsNearbyCount - manhattanDistanceToRestaurant;
         }
 
-        var argMax = _housingScore.ArgMax();
-
         var min = _housingScore.Min();
         _housingScore = _housingScore.Subtract(min);
         var max = _housingScore.Max();
         _housingScore = _housingScore.Divide(max);
+    }
+
+    public Position GetNextBuildPos()
+    {
+        lock (this)
+        {
+            //todo roads
+            if (lastEvalutedTick != WorldLayer.CurrentTick)
+                EvaluateHousingScore();
+
+            var (x, y) = _housingScore.ArgMax();
+            _housingScore[x, y] = 0;
+            return new Position(x, y);
+        }
     }
 }

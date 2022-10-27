@@ -62,7 +62,7 @@ public class MindMock : IMind
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
-        return Random.Shared.Next(100) == 0
+        return Random.Shared.Next(5) == 0
             ? ActionType.BuildHouse
             : Enum.GetValues<ActionType>()[new[] { personNeeds.Sleepiness, personNeeds.Hunger }.ArgMin()];
     }

@@ -5,6 +5,7 @@ using CitySim.Backend.World;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
+using NesScripts.Controls.PathFind;
 using NLog;
 
 namespace CitySim.Backend.Entity.Agents;

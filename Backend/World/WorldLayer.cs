@@ -22,7 +22,7 @@ public class WorldLayer : AbstractLayer
     public const int YSize = 20;
     public readonly BuildPositionEvaluator BuildPositionEvaluator;
 
-    public readonly StructureCollection Structures = new(XSize, YSize);
+    public readonly Grid2D<Structure> Structures = new(XSize, YSize);
     private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
     
@@ -32,7 +32,7 @@ public class WorldLayer : AbstractLayer
     public WorldLayer()
     {
         Instance = this;
-        
+
         for (int i = 0; i < XSize; i++)
         for (int j = 0; j < YSize; j++)
             _pathFindingTileMap[i, j] = 1; //walkable
@@ -48,6 +48,7 @@ public class WorldLayer : AbstractLayer
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
 
         SpawnBuildings();
+        BuildPositionEvaluator.EvaluateHousingScore();
 
         agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
 
@@ -96,20 +97,25 @@ public class WorldLayer : AbstractLayer
         if (structure.GetType() == typeof(Street))
             _pathFindingTileMap[x, y] = 0.1f;
         else
-            _pathFindingTileMap[x, y] = 100000;
+            _pathFindingTileMap[x, y] = 100;
         lock (_pathFindingGrid)
             _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);
         Structures.Add(structure);
     }
 
-    public PathFindingRoute FindRoute(Position position, Position plannedActionTargetPosition)
+    public PathFindingRoute FindRoute(Position position, Position destination)
+    {
+        return FindRoute(
+            (int)position.X, (int)position.Y,
+            (int)destination.X, (int)destination.Y
+        );
+    }
+
+    public PathFindingRoute FindRoute(int x, int y, int x1, int y1)
     {
         lock (_pathFindingGrid)
-            return new PathFindingRoute(_pathFindingGrid.FindPath(
-                new PathFindingPoint((int)position.X, (int)position.Y),
-                new PathFindingPoint((int)plannedActionTargetPosition.X, (int)plannedActionTargetPosition.Y),
-                Pathfinding.DistanceType.Manhattan));
+            return _pathFindingGrid.FindPath(new PathFindingPoint(x, y), new PathFindingPoint(x1, y1));
     }
 
 

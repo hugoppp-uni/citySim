@@ -1,6 +1,7 @@
 using System.Collections;
 using CitySim.Backend.Entity;
 using Mars.Common.Collections;
+using Mars.Interfaces.Environments;
 
 namespace CitySim.Backend.World;
 
@@ -31,6 +32,11 @@ public class StructureCollection : IEnumerable<Structure>
                 return null;
             return _array[x, y];
         }
+    }
+
+    public Structure? this[Position position]
+    {
+        get => this[(int)position.X, (int)position.Y];
     }
 
 

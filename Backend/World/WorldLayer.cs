@@ -1,5 +1,6 @@
 ﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
@@ -14,7 +15,7 @@ using NesScripts.Controls.PathFind;
 
 namespace CitySim.Backend.World;
 
-public class WorldLayer : AbstractLayer
+public class WorldLayer : AbstractLayer, ISteppedActiveLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
         new(20, 20, true) { IsDiscretizePosition = true };
@@ -26,9 +27,13 @@ public class WorldLayer : AbstractLayer
     public readonly StructureCollection Structures = new(XSize, YSize);
     private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
+    
+    public static WorldLayer Instance { get; private set; } = null!; //Ctor
 
     public WorldLayer()
     {
+        Instance = this;
+        
         for (int i = 0; i < XSize; i++)
         for (int j = 0; j < YSize; j++)
             _pathFindingTileMap[i, j] = 1; //walkable
@@ -45,7 +50,7 @@ public class WorldLayer : AbstractLayer
 
         SpawnBuildings();
 
-        agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
 
 
         //todo this should be moved 
@@ -120,5 +125,21 @@ public class WorldLayer : AbstractLayer
             Structures.OfType<House>().Count(),
             Structures.OfType<Restaurant>().Count()
         );
+    }
+
+    public void Tick()
+    {
+    }
+
+    public void PreTick()
+    {
+    }
+
+    public void PostTick()
+    {
+        foreach (var structure in Structures)
+        {
+            structure.PostTick();
+        }
     }
 }

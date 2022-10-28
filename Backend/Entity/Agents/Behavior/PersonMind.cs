@@ -11,6 +11,7 @@ namespace CitySim.Backend.Entity.Agents.Behavior;
 using System;
 using System.Collections.Generic;
 using World;
+using static KerasApi;
 
 public class PersonMind : IMind
 {
@@ -20,7 +21,7 @@ public class PersonMind : IMind
     private const double GoodWorldLensScalar = 0.8;
     private const double BadWorldLensScalar = 0.3;
     private const int CollectiveDecisionEvaluationDelay = 10;
-    private static Model _model = null!;
+    private static Model? _model;
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
     private static readonly int GlobalStatesCount = new GlobalState(0,0,0).AsNormalizedArray().Length;
     /// <summary>
@@ -34,7 +35,7 @@ public class PersonMind : IMind
 
     public static void Init(string weightsFile)
     {
-        _model = BuildModel(weightsFile);
+        
     }
     
     /// <param name="individualist">How much the person is an individualist or a collectivist.
@@ -47,9 +48,9 @@ public class PersonMind : IMind
     {
         if (_model == null)
         {
-            throw new InvalidOperationException("PersonMind is not Initialized");
+         //   throw new InvalidOperationException("PersonMind is not Initialized");
         }
-
+        
         if (individualist is < 0 or > 1)
         {
             throw new InvalidArgumentError("The param individualist has to be in the range [0,1]");
@@ -60,10 +61,13 @@ public class PersonMind : IMind
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
+        if (_model == null)
+        {
+            _model = BuildModel("weightsFile");
+        }
         Evaluate(personNeeds, globalState);
-        var input = new Tensor(GetInputArray(personNeeds, globalState));
+        var input = GetInputArray(personNeeds, globalState);
         Tensors output;
-        
         lock (_model)// a model is not thread safe
         {
             output = _model.predict(input);
@@ -131,13 +135,16 @@ public class PersonMind : IMind
     /// <param name="globalState"></param>
     /// <returns>A 2D array where the first array contains the values of the
     /// needs and the second array the values of the global state</returns>
-    private double[] GetInputArray(PersonNeeds needs, GlobalState globalState)
+    private NDArray GetInputArray(PersonNeeds needs, GlobalState globalState)
     {
         var needsAry = needs.AsNormalizedArray();
         var globalStateAry = globalState.AsNormalizedArray();
         ApplyIndividualistFactorOnGlobalStateValues(globalStateAry);
         ApplyIndividualistFactorOnPersonalNeedsValues(needsAry);
-        return new[] { globalStateAry, needsAry }.Flatten();
+        var ary = new[] { globalStateAry, needsAry }.Flatten().ToList()
+            .ConvertAll(it => (float) it)
+            .ToArray();
+        return np.stack(new NDArray(ary,shape:ary.Length));
     }
 
     /// <summary>
@@ -194,7 +201,7 @@ public class PersonMind : IMind
 
         return personalNeedsValues;
     }
-    
+
     public static void SaveWeights(string weightsFile)
     {
         lock (_model)
@@ -209,15 +216,16 @@ public class PersonMind : IMind
         var cLength = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
         var iLength = new PersonNeeds().AsNormalizedArray().Length;
         var actions = new ActionType[Enum.GetValues(typeof(ActionType)).Length];
-        var inLayer = KerasApi.keras.Input(new Shape(iLength+cLength));
+        var inLayer = keras.Input((iLength+cLength),name:"feeling");
         var dense = layers.Dense(iLength+cLength, activation: "relu").Apply(inLayer);
         var output = layers.Dense(actions.Length, activation: "softmax").Apply(dense);
-        var model = KerasApi.keras.Model(new Tensors(inLayer), output);
-        model.compile(
-            optimizer: KerasApi.keras.optimizers.SGD(LearningRate),
-            loss: KerasApi.keras.losses.CategoricalCrossentropy()
-        );
+        var model = keras.Model(inLayer, output);
         model.summary();
+        model.compile(
+            optimizer: keras.optimizers.SGD(LearningRate),
+            loss: keras.losses.CategoricalCrossentropy(from_logits: true)
+        );
+        
         if (File.Exists(weightsFile))
         {
             model.load_weights(weightsFile);

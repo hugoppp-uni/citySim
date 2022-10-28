@@ -70,7 +70,7 @@ public class WorldLayer : AbstractLayer
         //last one will be sleep location for now
         InsertStructure(new House { Position = new Position(9, 9) });
 
-        agentManager.Spawn<Person, WorldLayer>().Take(1).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(3).ToList();
 
         return true;
     }

@@ -11,6 +11,7 @@ using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity;
 using System.Reflection;
 using CitySim.Backend.Entity.Structures;
+using static ServiceStack.Script.Lisp;
 
 namespace CitySim.Frontend
 {
@@ -102,6 +103,15 @@ namespace CitySim.Frontend
             return _overlaysEnabled[overlay];
         }
 
+        private static Vector3 GetPersonPosition(Person person)
+        {
+            int hash = person.GetHashCode();
+            float xoff = (uint)hash % 1000 / 1000f - 0.5f;
+            float yoff = (uint)(hash * 15485863) % 1000 / 1000f - 0.5f;
+
+            return new((float)person.Position.X + xoff, (float)person.Position.Y + yoff, 0);
+        }
+
         public void Draw(Camera2D camera)
         {
             void DrawTerrainTile(int tile, Vector2 bottomCenter)
@@ -130,7 +140,7 @@ namespace CitySim.Frontend
 
             var coordsWithPerson = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
-                .ToDictionary(x => x.Key, x => x.Count());
+                .ToDictionary(x => x.Key, x => x);
 
             bool IsRoad(int tileX, int tileY) => _model.WorldLayer.Structures[tileX, tileY]?.GetType() == typeof(Street);
 
@@ -185,17 +195,28 @@ namespace CitySim.Frontend
                     DrawTerrainTile(67, position2d);
                 }
 
-                if (coordsWithPerson.TryGetValue((cell_x, cell_y), out int count))
+
+                //Draw persons
+                if (coordsWithPerson.TryGetValue((cell_x, cell_y), out IGrouping<(double, double), Person>? persons))
                 {
-                    Vector2 pos = position2d - new Vector2(1, 1);
+                    foreach (var person in persons)
+                    {
+                        Vector2 _position2d = Grid.GetPosition2D(GetPersonPosition(person));
 
-                    MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, new Color(0, 0, 0, 50));
-                    DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, new Color(0, 0, 0, 50));
+                        Vector2 pos = _position2d - new Vector2(1, 1);
 
-                    pos = position2d;
+                        MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, new Color(0, 0, 0, 50));
+                        DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, new Color(0, 0, 0, 50));
 
-                    MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, WHITE);
-                    DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, WHITE);
+                        pos = _position2d;
+
+                        int hash = person.GetHashCode();
+                        Color col = ColorFromHSV((uint)hash % 360, 70, 100);
+
+                        MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, col);
+                        DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, WHITE);
+                    }
+                    
                 }
             }
 
@@ -221,11 +242,11 @@ namespace CitySim.Frontend
 
             if (_overlaysEnabled[(int)Overlay.PERSON_COUNT])
             {
-                foreach (var (coord, count) in coordsWithPerson)
+                foreach (var (coord, persons) in coordsWithPerson)
                 {
                     Vector2 pos = Grid.GetPosition2D(new Vector3((float)coord.X, (float)coord.Y, 0));
 
-                    string text = count.ToString();
+                    string text = persons.Count().ToString();
 
                     int width = MeasureText(text, 20);
                     DrawEllipse((int)pos.X, (int)pos.Y - 0, 25, 15, ORANGE);

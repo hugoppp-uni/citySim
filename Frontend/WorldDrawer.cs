@@ -103,6 +103,8 @@ namespace CitySim.Frontend
 
         public IsoMetricGrid Grid { get; }
 
+        public Person? HoveredPerson { get; private set; }
+
         public IReadOnlyList<string> OverlayNames => _overlayNames;
 
         public WorldDrawer(Backend.CitySim model)
@@ -159,27 +161,62 @@ namespace CitySim.Frontend
 
         private static bool IsGround(int tileX, int tileY)
         {
-            Vector2 pos = new Vector2(tileX + 0.5f, tileY + 0.5f);
+            var pos = new Vector2(tileX + 0.5f, tileY + 0.5f);
 
             return Vector2.Distance(pos, new Vector2(202, 40)) < 205;
         }
 
         private bool IsRoad(int tileX, int tileY) => _model.WorldLayer.Structures[tileX, tileY] is Street;
 
-        private static void DrawPerson(Person person, Vector2 position2d)
+        private static void DrawPerson(Person person, Vector2 position2d, Color? highlight)
         {
             Vector2 pos = position2d - new Vector2(1, 1);
 
-            MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, new Color(0, 0, 0, 50));
-            DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, new Color(0, 0, 0, 50));
+            //shadow
+            Color col = highlight ?? new Color(0, 0, 0, 50);
+
+            MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, col);
+            DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, col);
 
             pos = position2d;
 
+            //color
             int hash = person.GetHashCode();
-            Color col = ColorFromHSV((uint)hash % 360, 70, 100);
+            col = ColorFromHSV((uint)hash % 360, 70, 100);
+
+            if(highlight is not null)
+                col = new Color(
+                    (int)(255 * (col.r / 255f * 0.7f + highlight.Value.r / 255f * 0.3f)),
+                    (int)(255 * (col.g / 255f * 0.7f + highlight.Value.g / 255f * 0.3f)),
+                    (int)(255 * (col.b / 255f * 0.7f + highlight.Value.b / 255f * 0.3f)), 
+                    col.a);
 
             MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, col);
-            DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, WHITE);
+
+            col = WHITE;
+
+            if (highlight is not null)
+                col = new Color(
+                    (int)(255 * (col.r / 255f * 0.7f + highlight.Value.r / 255f * 0.3f)),
+                    (int)(255 * (col.g / 255f * 0.7f + highlight.Value.g / 255f * 0.3f)),
+                    (int)(255 * (col.b / 255f * 0.7f + highlight.Value.b / 255f * 0.3f)),
+                    255);
+
+            DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, col);
+        }
+
+        private static bool HitTestPerson(Vector2 position2d, Vector2 hitPoint)
+        {
+            Vector2 pos = position2d;
+
+            bool isHitHead = Vector2.Distance(pos + new Vector2(0, -40), hitPoint) < 10;
+
+            bool isHitBody = Vector2.Distance(new Vector2(
+                Math.Clamp(hitPoint.X, pos.X - 5, pos.X + 5),
+                Math.Clamp(hitPoint.Y, pos.Y - 20, pos.Y - 5)
+                ), hitPoint) < 5;
+
+            return isHitHead || isHitBody;
         }
 
         private void DrawBuilding(Vector2 position2d, float cell_height, int stories)
@@ -198,6 +235,7 @@ namespace CitySim.Frontend
 
         public void Draw(Camera2D camera)
         {
+            Person? newHoveredPerson = null;
 
             var personsGroupedByCoord = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
@@ -247,7 +285,10 @@ namespace CitySim.Frontend
                     foreach (var person in persons)
                     {
                         Vector2 _position2d = Grid.GetPosition2D(GetPersonPosition(person));
-                        DrawPerson(person, _position2d);
+                        DrawPerson(person, _position2d, HoveredPerson==person?BLUE:null);
+
+                        if(HitTestPerson(_position2d, GetScreenToWorld2D(GetMousePosition(), camera)))
+                            newHoveredPerson = person;
                     }
 
                 }
@@ -320,6 +361,13 @@ namespace CitySim.Frontend
                     }
                 }
             }
+
+            if(newHoveredPerson is null)
+                SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
+            else
+                SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+            HoveredPerson = newHoveredPerson;
         }
     }
 }

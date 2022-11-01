@@ -8,16 +8,19 @@ using System.Threading.Tasks;
 using static Raylib_CsLo.Raylib;
 using static Raylib_CsLo.RayGui;
 using CitySim.Backend.Entity.Agents;
+using System.Runtime.InteropServices;
 
 namespace CitySim.Frontend
 {
-    internal class CitySimView
+    internal unsafe class CitySimView
     {
         private WorldDrawer _worldDrawer;
         private Camera2D _cam;
         private readonly Backend.CitySim _model;
 
         private Person? _selectedPerson = null;
+
+        private Vector2* _infoPanelScroll;
 
         public CitySimView(Backend.CitySim model)
         {
@@ -55,31 +58,67 @@ namespace CitySim.Frontend
 
         private void DrawHud(int screenWidth, int screenHeight)
         {
-            int width = MeasureText("CitySim", 60);
             DrawFPS(10, 10);
-            DrawText("CitySim", screenWidth / 2 - width / 2 + 2, 22,
-                60, new Color(0, 0, 0, 100));
 
-            DrawText("CitySim", screenWidth / 2 - width / 2, 20,
-                60, RAYWHITE);
-
-            RaylibExtensions.MyDrawRect(screenWidth - 210, 0, screenWidth, screenHeight,
-                new Color(0, 0, 0, 100));
-
-
-            int currentY = 10;
-
-            for (int i = 0; i < _worldDrawer.OverlayNames.Count; i++)
             {
-                bool enabled = _worldDrawer.IsOverlayEnabled(i);
+                //Title
+                int width = MeasureText("CitySim", 60);
+                DrawText("CitySim", screenWidth / 2 - width / 2 + 2, 22,
+                    60, new Color(0, 0, 0, 100));
 
-                enabled = GuiCheckBox(
-                    new Rectangle(screenWidth - 200, currentY, 20, 20),
-                    _worldDrawer.OverlayNames[i], enabled);
+                DrawText("CitySim", screenWidth / 2 - width / 2, 20,
+                    60, RAYWHITE);
+            }
 
-                _worldDrawer.ToggleOverlay(i, enabled);
+            int optionsPanelWidth = 210;
+            int infoPanelHeight = 200;
 
-                currentY += 50;
+            Color panelColor = new Color(0, 0, 0, 100);
+
+            {
+                //Options panel
+                
+
+                RaylibExtensions.MyDrawRect(screenWidth - optionsPanelWidth, 0, screenWidth, screenHeight,
+                    panelColor);
+
+                int currentY = 10;
+
+                for (int i = 0; i < _worldDrawer.OverlayNames.Count; i++)
+                {
+                    bool enabled = _worldDrawer.IsOverlayEnabled(i);
+
+                    enabled = GuiCheckBox(
+                        new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, 20, 20),
+                        _worldDrawer.OverlayNames[i], enabled);
+
+                    _worldDrawer.ToggleOverlay(i, enabled);
+
+                    currentY += 50;
+                }
+            }
+
+            if (_selectedPerson is not null)
+            {
+                //Selected person info panel
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth-optionsPanelWidth+2, infoPanelHeight);
+
+                DrawRectangleRec(bounds, panelColor);
+
+                string infoText = @"Info about Person:
+
+Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime mollitia,
+molestiae quas vel sint commodi repudiandae consequuntur voluptatum laborum
+numquam blanditiis harum quisquam eius sed odit fugiat iusto fuga praesentium
+optio, eaque rerum! Provident similique accusantium nemo autem. Veritatis
+obcaecati tenetur iure eius earum ut molestias architecto voluptate aliquam
+nihil, eveniet aliquid culpa officia aut! Impedit sit sunt quaerat, odit,
+tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
+
+                float x = bounds.x+10;
+                float y = bounds.y;
+
+                DrawText(infoText, x, y, 20, WHITE);
             }
         }
 
@@ -118,23 +157,21 @@ namespace CitySim.Frontend
 
                 var col = ColorFromHSV(190 - (float)Math.Sin(GetTime() * 2) * 10, 1, 1);
 
-                unsafe
-                {
-                    var _pos = pos + new Vector2(2, 2);
-                    DrawTriangle(
-                        _pos+new Vector2( 15, -20),
-                        _pos+new Vector2(-15, -20),
-                        _pos,
-                        new Color(0, 0, 0, 150)
-                        );
-                    _pos = pos;
-                    DrawTriangle(
-                        _pos + new Vector2(15, -20),
-                        _pos + new Vector2(-15, -20),
-                        _pos,
-                        col
-                        );
-                }
+
+                var _pos = pos + new Vector2(2, 2);
+                DrawTriangle(
+                    _pos+new Vector2( 15, -20),
+                    _pos+new Vector2(-15, -20),
+                    _pos,
+                    new Color(0, 0, 0, 150)
+                    );
+                _pos = pos;
+                DrawTriangle(
+                    _pos + new Vector2(15, -20),
+                    _pos + new Vector2(-15, -20),
+                    _pos,
+                    col
+                    );
             }
 
 

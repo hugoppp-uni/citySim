@@ -255,7 +255,7 @@ namespace CitySim.Frontend
                     cell_height * (2.3f + stories)));
         }
 
-        public void Draw(Camera2D camera)
+        public void Draw(Camera2D camera, bool isHovered)
         {
             Person? newHoveredPerson = null;
 
@@ -317,6 +317,9 @@ namespace CitySim.Frontend
             }
 
             DrawOverlays(camera, personsGroupedByCoord);
+
+            if (!isHovered)
+                newHoveredPerson = null;
 
             if (newHoveredPerson is null)
                 SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);

@@ -62,7 +62,7 @@ public class CitySim
         return task;
     }
 
-    public void cancel()
+    public void Cancel()
     {
         Simulation.AbortSimulation();
         Simulation.Dispose();

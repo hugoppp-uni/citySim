@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using CitySim.Backend.Entity.Agents;
-using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Util;
 using CitySim.Backend.World;
 using Mars.Components.Starter;
@@ -8,6 +7,7 @@ using Mars.Core.Executor;
 using Mars.Core.Simulation;
 using Mars.Interfaces;
 using Mars.Interfaces.Model;
+using Tensorflow;
 
 namespace CitySim.Backend;
 
@@ -40,7 +40,7 @@ public class CitySim
             },
             
         };
-        PersonMind.Init("test");
+        Binding.tf.enable_eager_execution();
         Application = SimulationStarter.BuildApplication(desc, config);
         Simulation = Application.Resolve<ISimulation>();
         var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];
@@ -51,8 +51,13 @@ public class CitySim
 
     public Task<SimulationWorkflowState> StartAsync()
     {
+        ModelWorker.Start(null, null);
         var watch = new Stopwatch();
         var task = Task.Run(() => Simulation.StartSimulation());
+        task.ContinueWith(_ =>
+        {
+            ModelWorker.End();
+        });
         watch.Start();
         return task;
     }

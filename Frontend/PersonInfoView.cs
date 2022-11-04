@@ -61,7 +61,9 @@ tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
 
                 Text(font, 30, x, "Info about Person\n", WHITE);
 
-                Text(font, 20, x, "Hunger: *", GREEN);
+                Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
+                Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger,2)}", GREEN);
+                Text(font, 20, x, $"Sleepiness: {Math.Round(Person.Needs.Sleepiness, 2)}", GREEN);
 
                 Text(font, 20, x, infoText, new Color(200,200,200,255));
 

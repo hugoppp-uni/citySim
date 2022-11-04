@@ -38,6 +38,7 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
             _pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
         BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
+        Instance = this;
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -49,7 +50,7 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
 
         SpawnBuildings();
 
-        agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
+        agentManager.Spawn<Person, WorldLayer>().Take(10).ToList();
 
 
         //todo this should be moved 

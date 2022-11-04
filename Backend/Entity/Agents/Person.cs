@@ -27,7 +27,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public Person()
     {
-        _mind = new PersonMind(0.5);
+        _mind = MindMock.Instance;// new PersonMind(0.5);
     }
 
     public void Init(WorldLayer layer)
@@ -43,6 +43,11 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             _recollection.Add(ActionType.Sleep, home.Position);
         }
         _recollection.Add(ActionType.Eat , _worldLayer.Structures.OfType<Restaurant>().First().Position);
+    }
+
+    public ActionType? GetNextAction()
+    {
+        return _plannedAction?.Type;
     }
 
     public void Tick()

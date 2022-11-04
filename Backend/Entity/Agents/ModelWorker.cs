@@ -12,7 +12,7 @@ using static KerasApi;
 public static class ModelWorker
 {
     private const float LearningRate = 0.2f;// the learning rate is high because the expected value is not changed directly to 0 or 1
-    private static readonly BlockingQueue<ModelTask> TaskQueue = new BlockingQueue<ModelTask>();
+    private static readonly BlockingQueue<ModelTask> TaskQueue = new();
     private static bool _running = true;
     private static Model? _model;
 

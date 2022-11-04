@@ -1,10 +1,8 @@
 ﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
-using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
-using Mars.Common.IO.Csv;
 using Mars.Components.Environments;
 using Mars.Components.Layers;
 using Mars.Core.Data;
@@ -12,7 +10,6 @@ using Mars.Interfaces.Data;
 using Mars.Interfaces.Environments;
 using Mars.Interfaces.Layers;
 using NesScripts.Controls.PathFind;
-using Tensorflow;
 
 namespace CitySim.Backend.World;
 

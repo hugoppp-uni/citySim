@@ -1,13 +1,7 @@
 ﻿using CitySim.Backend.Entity.Agents;
 using Raylib_CsLo;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using static Raylib_CsLo.Raylib;
-using static Raylib_CsLo.RayGui;
 
 namespace CitySim.Frontend
 {

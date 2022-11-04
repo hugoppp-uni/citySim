@@ -27,7 +27,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public Person()
     {
-        _mind = MindMock.Instance;// new PersonMind(0.5);
+        _mind = new PersonMind(0.5);
     }
 
     public void Init(WorldLayer layer)

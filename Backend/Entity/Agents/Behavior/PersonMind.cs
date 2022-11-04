@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Mars.Numerics;
 using Tensorflow;
-using Tensorflow.Keras.Engine;
-using Tensorflow.Keras.Layers;
 using Tensorflow.NumPy;
 using NLog;
 
@@ -11,8 +9,6 @@ namespace CitySim.Backend.Entity.Agents.Behavior;
 using System;
 using System.Collections.Generic;
 using World;
-using static KerasApi;
-
 public class PersonMind : IMind
 {
     private const double EgoScalar = 0.5;

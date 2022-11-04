@@ -12,9 +12,12 @@ using static KerasApi;
 public static class ModelWorker
 {
     private const float LearningRate = 0.2f;// the learning rate is high because the expected value is not changed directly to 0 or 1
+    private const int TrainingBatchSize = 5;
     private static readonly BlockingQueue<ModelTask> TaskQueue = new();
     private static bool _running = true;
     private static Model? _model;
+    private static List<NDArray> _trainingBatchInput = new(TrainingBatchSize);
+    private static List<NDArray> _trainingBatchExpected = new(TrainingBatchSize);
 
     public static void Queue(ModelTask task)
     {
@@ -47,7 +50,17 @@ public static class ModelWorker
             Monitor.Enter(task);
             if (task.Output.size != 0)
             {
-                _model.fit(task.Input, task.Output);
+                _trainingBatchInput.Add(task.Input);
+                _trainingBatchExpected.Add(task.Output);
+                if (_trainingBatchInput.Count == TrainingBatchSize)
+                {
+                    var input = np.stack(_trainingBatchInput.ToArray());
+                    var expected = np.stack(_trainingBatchExpected.ToArray());
+                    _model.fit(input, expected, batch_size: TrainingBatchSize);
+                    _trainingBatchInput.Clear();
+                    _trainingBatchExpected.Clear();
+                }
+               
             }
             else
             {

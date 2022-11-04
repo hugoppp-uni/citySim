@@ -27,7 +27,11 @@ public class CitySim
         desc.AddLayer<WorldLayer>();
         desc.AddLayer<FixedUpdateLayer>();
         desc.AddAgent<Person, WorldLayer>();
-
+        ModelWorker.RegisterInstance(new ModelWorker(new ModelWorkerConfiguration(type: ModelType.PersonAction)
+            {
+                BatchSize = 10
+            }),
+            nameof(Person));
         var config = new SimulationConfig
         {
             SimulationIdentifier = "CitySim",
@@ -44,6 +48,13 @@ public class CitySim
                 {
                     Name = nameof(Person),
                     InstanceCount = 30,
+                    IndividualMapping =
+                    {
+                        new IndividualMapping
+                        {
+                            ParameterName = "ModelWorkerKey", Value = nameof(Person)
+                        }
+                    }
                 }
             }
             
@@ -59,12 +70,13 @@ public class CitySim
 
     public Task<SimulationWorkflowState> StartAsync()
     {
-        ModelWorker.Start(null, null);
+        
+        ModelWorker.StartAll();
         var watch = new Stopwatch();
         var task = Task.Run(() => Simulation.StartSimulation());
         task.ContinueWith(_ =>
         {
-            ModelWorker.End();
+            ModelWorker.TerminateAll();
         });
         watch.Start();
         return task;

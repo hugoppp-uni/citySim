@@ -19,6 +19,7 @@ public class PersonMind : IMind
 
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
     private static readonly int GlobalStatesCount = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+    private readonly ModelWorker _modelWorker;
 
     /// <summary>
     ///   How much the person is an individualist or a collectivist.
@@ -34,9 +35,12 @@ public class PersonMind : IMind
     /// If the value is 0.5, the personal needs and the global state are handled exactly as the are.
     /// Has to be between 0 and 1.
     /// </param>
+    /// /// <param name="modelWorker">The Worker to run the neural network model operations on
+    /// </param>
     /// <exception cref="InvalidArgumentError"></exception>
-    public PersonMind([Range(0.0, 1.0)] double individualist)
+    public PersonMind([Range(0.0, 1.0)] double individualist, ModelWorker modelWorker)
     {
+        _modelWorker = modelWorker;
         if (individualist is < 0 or > 1)
         {
             throw new InvalidArgumentError("The param individualist has to be in the range [0,1]");
@@ -54,7 +58,7 @@ public class PersonMind : IMind
         ApplyIndividualistFactorOnGlobalStateValues(globalStateAry);
         var task = new ModelTask(GetInputArray(needsAry, globalStateAry));
         Monitor.Enter(task);
-        ModelWorker.Queue(task);
+        _modelWorker.Queue(task);
         Monitor.Wait(task);
         Monitor.Exit(task);
         var data = new PredictionData((double[])globalStateAry.Clone(),(double[])needsAry.Clone(), task.Output);
@@ -95,7 +99,7 @@ public class PersonMind : IMind
             newExpected = np.stack(newExpected);
             var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState), newExpected);
             Monitor.Enter(task);
-            ModelWorker.Queue(task);
+            _modelWorker.Queue(task);
             Monitor.Wait(task);
             Monitor.Exit(task);
             _logger.Trace(wellBeingDelta > 0

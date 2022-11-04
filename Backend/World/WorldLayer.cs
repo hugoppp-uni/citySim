@@ -1,8 +1,10 @@
 ﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
+using Mars.Common.IO.Csv;
 using Mars.Components.Environments;
 using Mars.Components.Layers;
 using Mars.Core.Data;
@@ -14,27 +16,28 @@ using Tensorflow;
 
 namespace CitySim.Backend.World;
 
-public class WorldLayer : AbstractLayer
+public class WorldLayer : AbstractLayer, ISteppedActiveLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
-        new(10, 10, true) { IsDiscretizePosition = true };
+        new(20, 20, true) { IsDiscretizePosition = true };
 
-    public readonly List<Structure> Structures = new();
+    public const int XSize = 20;
+    public const int YSize = 20;
+    public readonly BuildPositionEvaluator BuildPositionEvaluator;
 
-    private const int MaxX = 10;
-    private const int MaxY = 10;
-    private readonly float[,] _pathFindingTileMap = new float[MaxX, MaxY];
+    public readonly StructureCollection Structures = new(XSize, YSize);
+    private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
+    
+    public static WorldLayer Instance { get; private set; } = null!; //Ctor
 
     public WorldLayer()
     {
-        var t = new Tensorflow.NumPy.NDArray(new[] { 1.0 });
-        t[0] =  2.0;
-        Console.Out.WriteLine(((Tensor)t).ToArray<double>());
-        for (int i = 0; i < MaxX; i++)
-        for (int j = 0; j < MaxY; j++)
-            _pathFindingTileMap[i, j] = 1;
+        for (int i = 0; i < XSize; i++)
+        for (int j = 0; j < YSize; j++)
+            _pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
+        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -43,34 +46,14 @@ public class WorldLayer : AbstractLayer
         base.InitLayer(layerInitData, registerAgentHandle, unregisterAgentHandle);
 
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
-        
-        InsertStructure(new House { Position = new Position(6, 3) });
-        InsertStructure(new House { Position = new Position(5, 3) });
-        // InsertStructure(new House { Position = new Position(4, 3) });
-        InsertStructure(new House { Position = new Position(3, 3) });
-        InsertStructure(new House { Position = new Position(3, 4) });
-        InsertStructure(new House { Position = new Position(3, 5) });
-        InsertStructure(new House { Position = new Position(3, 6) });
-        InsertStructure(new House { Position = new Position(4, 5) });
-        InsertStructure(new House { Position = new Position(5, 5) });
-        InsertStructure(new House { Position = new Position(6, 0) });
-        InsertStructure(new House { Position = new Position(6, 1) });
-        InsertStructure(new House { Position = new Position(6, 2) });
-        
-        InsertStructure(new House { Position = new Position(8, 9) });
-        InsertStructure(new House { Position = new Position(8, 8) });
-        InsertStructure(new House { Position = new Position(8, 7) });
-        InsertStructure(new House { Position = new Position(8, 6) });
-        InsertStructure(new House { Position = new Position(8, 5) });
-        InsertStructure(new House { Position = new Position(8, 4) });
-        InsertStructure(new House { Position = new Position(8, 3) });
-        InsertStructure(new House { Position = new Position(8, 2) });
-        InsertStructure(new House { Position = new Position(8, 1) });
-        
-        //last one will be sleep location for now
-        InsertStructure(new House { Position = new Position(9, 9) });
 
-        agentManager.Spawn<Person, WorldLayer>().Take(3).ToList();
+        SpawnBuildings();
+
+        agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
+
+
+        //todo this should be moved 
+        BuildPositionEvaluator.EvaluateHousingScore();
 
         return true;
     }
@@ -85,12 +68,39 @@ public class WorldLayer : AbstractLayer
     public Position RandomPosition()
     {
         var random = RandomHelper.Random;
-        return Position.CreatePosition(random.Next(MaxX - 1), random.Next(MaxY - 1));
+        return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
+    }
+
+    private void SpawnBuildings()
+    {
+        var csv = File.ReadAllLines("Resources/Map.csv");
+        for (var x = 0; x < csv.Length; x++)
+        {
+            var strings = csv[x].Split(";");
+            for (var y = 0; y < strings.Length; y++)
+            {
+                char c = strings[y][0];
+                if (c == ' ') continue;
+
+                InsertStructure(c switch
+                {
+                    'R' => new Restaurant { Position = new(x, y) },
+                    'H' => new House { Position = new(x, y) },
+                    '+' => new Street { Position = new(x, y) },
+                    _ => throw new Exception()
+                });
+            }
+        }
     }
 
     public void InsertStructure(Structure structure)
     {
-        _pathFindingTileMap[(int)structure.Position.X, (int)structure.Position.Y] = 100000;
+        int x = (int)structure.Position.X;
+        int y = (int)structure.Position.Y;
+        if (structure.GetType() == typeof(Street))
+            _pathFindingTileMap[x, y] = 0.1f;
+        else
+            _pathFindingTileMap[x, y] = 100000;
         lock (_pathFindingGrid)
             _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
         GridEnvironment.Insert(structure);
@@ -110,9 +120,25 @@ public class WorldLayer : AbstractLayer
     public GlobalState GetGlobalState()
     {
         return new GlobalState(
-            this.GridEnvironment.Entities.Count((it) => it is Person),
-            Structures.Count((it) => it is House),
-            Structures.Count((it) => it is Restaurant)
+            GridEnvironment.Entities.Count((it) => it is Person),
+            Structures.OfType<House>().Count(),
+            Structures.OfType<Restaurant>().Count()
         );
+    }
+
+    public void Tick()
+    {
+    }
+
+    public void PreTick()
+    {
+    }
+
+    public void PostTick()
+    {
+        foreach (var structure in Structures)
+        {
+            structure.PostTick();
+        }
     }
 }

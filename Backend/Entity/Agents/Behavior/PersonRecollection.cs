@@ -13,8 +13,6 @@ public class PersonRecollection
             _actionPosition[actionType] = new();
         }
 
-        _actionPosition[ActionType.Eat].Add(new Position(1, 1));
-        // _actionPosition[ActionType.Sleep].Add(new Position(9, 9));
     }
 
     public IEnumerable<Position> ResolvePosition(ActionType nextActionType)

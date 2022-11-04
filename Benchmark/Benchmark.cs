@@ -10,8 +10,13 @@ public class Benchmark
 
     private static CitySim.Backend.CitySim CreateCitySim()
     {
-        var citySim = new CitySim.Backend.CitySim(10);
-        citySim.SimulationController.TicksPerSecond = Int32.MaxValue;
+        var citySim = new CitySim.Backend.CitySim(10)
+        {
+            SimulationController =
+            {
+                TicksPerSecond = Int32.MaxValue
+            }
+        };
         return citySim;
     }
 

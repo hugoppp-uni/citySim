@@ -19,7 +19,7 @@ public class CitySim
     public IRuntimeModel Model => Simulation.WorkflowState.Model;
     private ISimulationContainer Application { get; }
     private ISimulation Simulation { get; }
-    public SimulationController SimulationController { get; } = new();
+    public readonly SimulationController SimulationController = new();
 
     public CitySim(int maxTick = int.MaxValue)
     {
@@ -38,6 +38,14 @@ public class CitySim
                 OutputTarget = OutputTargetType.Csv,
                 Steps = maxTick
             },
+            AgentMappings =
+            {
+                new AgentMapping
+                {
+                    Name = nameof(Person),
+                    InstanceCount = 30,
+                }
+            }
             
         };
         Binding.tf.enable_eager_execution();

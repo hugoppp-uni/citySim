@@ -45,5 +45,5 @@ while (!WindowShouldClose())
     view.UpdateAndDraw(GetScreenWidth(), GetScreenHeight());
     EndDrawing();
 }
-
+citySim.cancel();
 CloseWindow();

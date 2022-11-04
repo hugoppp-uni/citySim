@@ -37,6 +37,14 @@ public class CitySim
                 OutputTarget = OutputTargetType.Csv,
                 Steps = maxTick
             },
+            AgentMappings =
+            {
+                new AgentMapping
+                {
+                    Name = nameof(Person),
+                    InstanceCount = 30,
+                }
+            }
             
         };
         Application = SimulationStarter.BuildApplication(desc, config);

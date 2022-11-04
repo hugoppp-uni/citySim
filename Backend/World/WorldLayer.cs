@@ -50,7 +50,7 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
 
         SpawnBuildings();
 
-        agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
+        agentManager.Spawn<Person, WorldLayer>().ToList();
 
 
         //todo this should be moved 

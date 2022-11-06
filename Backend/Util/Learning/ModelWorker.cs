@@ -45,7 +45,7 @@ public class ModelWorker
         }
         else
         {
-            if (Monitor.IsEntered(task))
+            if (!Monitor.IsEntered(task))
             {
                 throw new SynchronizationLockException("If the task is not locked while queuing, the task may " +
                                                        "already be completed before the caller waits for the notify");

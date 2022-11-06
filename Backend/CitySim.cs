@@ -20,7 +20,7 @@ public class CitySim
     private ISimulation Simulation { get; }
     public SimulationController SimulationController { get; } = new();
 
-    public CitySim(int maxTick = int.MaxValue)
+    public CitySim(int maxTick = int.MaxValue, int personCount = 30)
     {
         var desc = new ModelDescription();
         desc.AddLayer<WorldLayer>();
@@ -42,7 +42,7 @@ public class CitySim
                 new AgentMapping
                 {
                     Name = nameof(Person),
-                    InstanceCount = 30,
+                    InstanceCount = personCount,
                 }
             }
             

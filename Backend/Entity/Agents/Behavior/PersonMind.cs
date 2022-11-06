@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CitySim.Backend.Util.Learning;
 using Mars.Numerics;
 using Tensorflow;
 using Tensorflow.NumPy;
@@ -9,6 +10,7 @@ namespace CitySim.Backend.Entity.Agents.Behavior;
 using System;
 using System.Collections.Generic;
 using World;
+
 public class PersonMind : IMind
 {
     private const double EgoScalar = 0.5;
@@ -20,6 +22,11 @@ public class PersonMind : IMind
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
     private static readonly int GlobalStatesCount = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
     private readonly ModelWorker _modelWorker;
+    private readonly Random _random = new();
+    /// <summary>
+    /// The exploration rate in percent
+    /// </summary>
+    public static int ExplorationRate { get; set; }= 7;
 
     /// <summary>
     ///   How much the person is an individualist or a collectivist.
@@ -51,6 +58,10 @@ public class PersonMind : IMind
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
+        if (ExplorationRate is < 0 or > 100)
+        {
+            throw new InvalidArgumentError("The ExplorationRate has to be in the range [0,100]");
+        }
         Evaluate(personNeeds, globalState);
         var needsAry = personNeeds.AsNormalizedArray();
         var globalStateAry = globalState.AsNormalizedArray();
@@ -61,10 +72,15 @@ public class PersonMind : IMind
         _modelWorker.Queue(task);
         Monitor.Wait(task);
         Monitor.Exit(task);
-        var data = new PredictionData((double[])globalStateAry.Clone(),(double[])needsAry.Clone(), task.Output);
+        var actionIndex = (int) np.argmax(task.Output);
+        if (_random.Next(100) < ExplorationRate)
+        {
+            actionIndex = _random.Next(Enum.GetValues<ActionType>().Length);
+        }
+        var data = new PredictionData((double[])globalStateAry.Clone(), (double[])needsAry.Clone(), task.Output,
+            actionIndex);
         _lastPredictions.Enqueue(data);
         _lastIndividualPrediction = data;
-        var actionIndex = np.argmax(task.Output);
         _logger.Trace("Decided to do action: " + Enum.GetValues<ActionType>()[actionIndex]);
         return Enum.GetValues<ActionType>()[actionIndex];
     }
@@ -82,7 +98,7 @@ public class PersonMind : IMind
         void FinalEvaluate(PredictionData prediction, [Range(0, 1)] double wellBeingDelta,
             [Range(0, 1)] double evaluationFactor)
         {
-            var actionIndex = (int)np.argmax(prediction.Output);
+            var actionIndex = prediction.SelectedActionIndex;
             var expected = prediction.Output.ToArray<float>();
             if (wellBeingDelta >= 0)
             {
@@ -97,7 +113,8 @@ public class PersonMind : IMind
 
             var newExpected = new NDArray(expected);
             newExpected = np.stack(newExpected);
-            var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState), newExpected);
+            var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState),
+                newExpected);
             Monitor.Enter(task);
             _modelWorker.Queue(task);
             Monitor.Wait(task);
@@ -198,4 +215,5 @@ public class PersonMind : IMind
     }
 }
 
-internal record PredictionData(double[] NormalizedGlobalState, double[] NormalizedNeeds, NDArray Output);
+internal record PredictionData(double[] NormalizedGlobalState, double[] NormalizedNeeds, NDArray Output,
+    int SelectedActionIndex);

@@ -17,7 +17,7 @@ SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_MSAA_4X_HINT
 InitWindow(screenWidth, screenHeight, "CitySim");
 
 var personMindFileName = "./ModelWeights/personMind.hdf5";
-var citySim = new CitySim.Backend.CitySim(10, personMindWeightsFileToLoad: personMindFileName,
+var citySim = new CitySim.Backend.CitySim(personMindWeightsFileToLoad: personMindFileName,
     newSaveLocationForPersonMindWeights: personMindFileName)
 {
     SimulationController =

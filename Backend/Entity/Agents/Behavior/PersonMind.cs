@@ -116,15 +116,15 @@ public class PersonMind : IMind
             var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState),
                 newExpected);
             _modelWorker.Queue(task);
-            _logger.Trace(wellBeingDelta > 0
-                ? "An action was good for the individual"
-                : "An action wasn't good for the individual");
         }
 
         var wellBeingDelta =
             ApplyIndividualistFactorOnPersonalNeedsValues(currentPersonNeeds.AsNormalizedArray()).Sum() -
             _lastIndividualPrediction.NormalizedNeeds.Sum();
         wellBeingDelta /= PersonalNeedsCount;
+        _logger.Trace(wellBeingDelta > 0
+            ? "An action was good for the individual"
+            : "An action wasn't good for the individual");
         FinalEvaluate(_lastIndividualPrediction, wellBeingDelta, _individualist);
 
         if (_lastPredictions.Count == CollectiveDecisionEvaluationDelay)
@@ -134,6 +134,9 @@ public class PersonMind : IMind
                 ApplyIndividualistFactorOnGlobalStateValues(currentGlobalState.AsNormalizedArray()).Sum() -
                 data.NormalizedGlobalState.Sum();
             wellBeingDelta /= GlobalStatesCount;
+            _logger.Trace(wellBeingDelta > 0
+                ? "An action was good for the collective"
+                : "An action wasn't good for the collective");
             return;
             FinalEvaluate(data, wellBeingDelta, 1 - _individualist);
         }

@@ -22,10 +22,7 @@ public class CitySim
     private ISimulationContainer Application { get; }
     private ISimulation Simulation { get; }
     public SimulationController SimulationController { get; } = new();
-
-    /// <summary>
-    /// 
-    /// </summary>
+    
     /// <param name="maxTick">The maximum ticks to be simulated</param>
     /// <param name="personCount">The number of persons to be spawned at the beginning of the simulation</param>
     /// <param name="training">Whether the evaluation of the persons' actions should be used to train the model</param>
@@ -46,7 +43,7 @@ public class CitySim
         desc.AddLayer<FixedUpdateLayer>();
         desc.AddAgent<Person, WorldLayer>();
         PersonMind.ExplorationRate = personActionExplorationRate;
-        ModelWorker.RegisterInstance(new ModelWorker(new ModelWorkerConfiguration(type: ModelType.PersonAction)
+        ModelWorker.RegisterInstance(new ModelWorker(new ModelWorkerConfiguration(useCase: ModelUseCase.PersonAction)
             {
                 BatchSize = personMindBatchSize,
                 WeightsFileToLoad = personMindWeightsFileToLoad,

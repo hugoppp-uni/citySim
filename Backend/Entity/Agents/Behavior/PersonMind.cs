@@ -115,10 +115,7 @@ public class PersonMind : IMind
             newExpected = np.stack(newExpected);
             var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState),
                 newExpected);
-            Monitor.Enter(task);
             _modelWorker.Queue(task);
-            Monitor.Wait(task);
-            Monitor.Exit(task);
             _logger.Trace(wellBeingDelta > 0
                 ? "An action was good for the individual"
                 : "An action wasn't good for the individual");

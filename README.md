@@ -2,6 +2,17 @@
 
 We're simulating a city!
 
+## Unterprojekte
+
+Das Projekt besteht aus den folgenden Unterprojekten:
+
+| Name        | Beschreibung                                                                                                                                                                                                                                                              |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Backend     | Klassenbibliothek, die das eigentliche Spiels / die eigentliche Simulation ohne Visualisierung bereitstellt.<br/>Durch das Erzeugen einer CitySim Instanz und anschließendem Aufruf der Methode StartAsync kann die Simulation in einem anderem Projekt gestartet werden. |
+| Frontend    | Ausführbarer Visualisierungswrapper um das Backend-Projekt.                                                                                                                                                                                                               |
+| Benchmark   | Laufzeitanalysen                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                         |
+| PathFinding | Eine auf 2D-Kacheln basierende Wegfindungsbibliothek von RonenNess: https://github.com/RonenNess/UnityUtils/tree/master/Controls/PathFinding/2dTileBasedPathFinding.                                                                                                      |                                                                                               |
+
 ## Team
 
 | Kennung | Name              | Relevante Skills                                                                                                   |
@@ -35,4 +46,4 @@ We're simulating a city!
 2. Neuen Branch erstellen und Ticket bearbeiten
 3. MR erstellen
    1. Review anfordern falls nötig
-   2. Merge in master
+   2. Merge in main

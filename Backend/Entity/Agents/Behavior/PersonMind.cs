@@ -214,6 +214,15 @@ public class PersonMind : IMind
 
         return personalNeedsValues;
     }
+
+    public double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)
+    {
+        var global = globalState.AsNormalizedArray();
+        var personal = personNeeds.AsNormalizedArray();
+        var sum = ApplyIndividualistFactorOnPersonalNeedsValues(personal).Sum() +
+                  ApplyIndividualistFactorOnGlobalStateValues(global).Sum();
+        return sum / (personal.Length + global.Length);
+    }
 }
 
 internal record PredictionData(double[] NormalizedGlobalState, double[] NormalizedNeeds, NDArray Output,

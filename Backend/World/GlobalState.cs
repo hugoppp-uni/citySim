@@ -36,9 +36,4 @@ public class GlobalState
     {
         return new [] { Normalize(Hunger), Normalize(Housing) };
     }
-
-    public double GetGlobalWellBeing()
-    {
-        return AsNormalizedArray().Sum();
-    }
 }

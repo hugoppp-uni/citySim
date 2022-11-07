@@ -15,4 +15,10 @@
       <ProjectReference Include="..\Backend\Backend.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <None Update="ModelWeights\personMind.hdf5">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

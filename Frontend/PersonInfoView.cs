@@ -1,13 +1,7 @@
 ﻿using CitySim.Backend.Entity.Agents;
 using Raylib_CsLo;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using static Raylib_CsLo.Raylib;
-using static Raylib_CsLo.RayGui;
 
 namespace CitySim.Frontend
 {
@@ -61,7 +55,9 @@ tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
 
                 Text(font, 30, x, "Info about Person\n", WHITE);
 
-                Text(font, 20, x, "Hunger: *", GREEN);
+                Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
+                Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger,2)}", GREEN);
+                Text(font, 20, x, $"Sleepiness: {Math.Round(Person.Needs.Sleepiness, 2)}", GREEN);
 
                 Text(font, 20, x, infoText, new Color(200,200,200,255));
 

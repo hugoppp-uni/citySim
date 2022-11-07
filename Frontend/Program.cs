@@ -1,11 +1,8 @@
 ﻿using CitySim.Frontend;
 using Raylib_CsLo;
-using System.Numerics;
 using static Raylib_CsLo.Raylib;
 
 Console.WriteLine("Hello, World!");
-
-
 
 
 //change simulation speed
@@ -19,8 +16,9 @@ const int screenHeight = 900;
 SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_MSAA_4X_HINT);
 InitWindow(screenWidth, screenHeight, "CitySim");
 
-
-var citySim = new CitySim.Backend.CitySim
+var personMindFileName = "./ModelWeights/personMind.hdf5";
+var citySim = new CitySim.Backend.CitySim(personMindWeightsFileToLoad: personMindFileName,
+    newSaveLocationForPersonMindWeights: personMindFileName)
 {
     SimulationController =
     {
@@ -28,7 +26,6 @@ var citySim = new CitySim.Backend.CitySim
     }
 };
 var simulationTask = citySim.StartAsync();
-
 
 
 SetTargetFPS(60);
@@ -46,4 +43,5 @@ while (!WindowShouldClose())
     EndDrawing();
 }
 
+citySim.Abort();
 CloseWindow();

@@ -1,8 +1,10 @@
 ﻿using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
+using CitySim.Backend.Util.Learning;
 using CitySim.Backend.World;
 using Mars.Interfaces.Agents;
+using Mars.Interfaces.Annotations;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
 using NLog;
@@ -16,22 +18,18 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private WorldLayer _worldLayer = null!; //Init()
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    private readonly IMind _mind;
+    private IMind _mind = null!;
     private readonly PersonRecollection _recollection = new();
 
     public PersonNeeds Needs { get; } = new();
 
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
-
-
-    public Person()
-    {
-        _mind = MindMock.Instance;
-    }
-
+    [PropertyDescription] public string ModelWorkerKey { get; set; }
+    
     public void Init(WorldLayer layer)
     {
+        _mind = new PersonMind(0.5, ModelWorker.GetInstance(ModelWorkerKey));
         _worldLayer = layer;
         Position = _worldLayer.RandomPosition();
         _worldLayer.GridEnvironment.Insert(this);
@@ -43,6 +41,11 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             _recollection.Add(ActionType.Sleep, home.Position);
         }
         _recollection.Add(ActionType.Eat , _worldLayer.Structures.OfType<Restaurant>().First().Position);
+    }
+
+    public ActionType? GetNextAction()
+    {
+        return _plannedAction?.Type;
     }
 
     public void Tick()

@@ -2,9 +2,6 @@
 using Raylib_CsLo;
 using static Raylib_CsLo.Raylib;
 
-Console.WriteLine("Hello, World!");
-
-
 //change simulation speed
 
 

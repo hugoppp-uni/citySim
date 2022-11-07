@@ -18,6 +18,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pathfinding", "Pathfinding\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{7B0AA7DE-8D7E-4898-832A-13572440F0B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainingVersion", "TrainingVersion\TrainingVersion.csproj", "{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,10 @@ Global
 		{7B0AA7DE-8D7E-4898-832A-13572440F0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B0AA7DE-8D7E-4898-832A-13572440F0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B0AA7DE-8D7E-4898-832A-13572440F0B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

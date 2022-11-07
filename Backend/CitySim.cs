@@ -100,4 +100,10 @@ public class CitySim
     {
         Simulation.PauseSimulation();
     }
+
+    public void Abort()
+    {
+        Simulation.AbortSimulation();
+        ModelWorker.TerminateAll();
+    }
 }

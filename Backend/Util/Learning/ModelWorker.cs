@@ -62,7 +62,6 @@ public class ModelWorker
     public void End()
     {
         _cancellationTokenSource.Cancel();
-        _thread?.Join();
     }
     private readonly  ModelWorkerConfiguration _configuration;
     public ModelWorker(ModelWorkerConfiguration configuration)
@@ -83,15 +82,15 @@ public class ModelWorker
     private void WorkOnModel()
     {
         _model = BuildModel(_configuration.UseCase, _configuration.WeightsFileToLoad);
-        while (!_cancellationToken.IsCancellationRequested)
+        while (!_cancellationToken.IsCancellationRequested || _taskQueue.Count != 0)
         {
             try
             {
                 ModelTask task = _taskQueue.Dequeue(_cancellationToken);
                 if (task.Output.size != 0)
                 {
-                    // there is no need to wa
-                    if (_configuration.Training)
+                    // there is no need to wait
+                    if (_configuration.Training && !_cancellationToken.IsCancellationRequested)
                     {
                         _trainingBatchInput.Add(task.Input);
                         _trainingBatchExpected.Add(task.Output);
@@ -119,6 +118,8 @@ public class ModelWorker
                 //ignore    
             }
         }
+        
+        
 
         if (_configuration.WeightsFileToSave != null)
         {

@@ -43,4 +43,5 @@ while (!WindowShouldClose())
     EndDrawing();
 }
 
+citySim.Abort();
 CloseWindow();

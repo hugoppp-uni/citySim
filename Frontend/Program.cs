@@ -18,7 +18,7 @@ InitWindow(screenWidth, screenHeight, "CitySim");
 
 var personMindFileName = "./ModelWeights/personMind.hdf5";
 var citySim = new CitySim.Backend.CitySim(personMindWeightsFileToLoad: personMindFileName,
-    newSaveLocationForPersonMindWeights: personMindFileName)
+    newSaveLocationForPersonMindWeights: personMindFileName, personCount: 10)
 {
     SimulationController =
     {

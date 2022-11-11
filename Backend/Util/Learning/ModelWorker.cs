@@ -1,4 +1,5 @@
-﻿using CitySim.Backend.Entity.Agents.Behavior;
+﻿using System.Diagnostics;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.World;
 using MQTTnet.Internal;
 using NLog;
@@ -19,7 +20,6 @@ using static KerasApi;
 /// </summary>
 public class ModelWorker
 {
-    private const float LearningRate = 0.2f;// the learning rate is high because the expected value is not changed directly to 0 or 1
     private readonly BlockingQueue<ModelTask> _taskQueue = new();
     private Model? _model;
     private readonly List<NDArray> _trainingBatchInput = new();
@@ -27,6 +27,10 @@ public class ModelWorker
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly  ModelWorkerConfiguration _configuration;
+    private int _fitCalls = 0;
+    public long AverageFitDuration { get; private set; }
+    private readonly Stopwatch _stopwatch = new();
     
     /// <summary>
     /// Queues an <see cref="ModelTask"/>. Use <code>Monitor.Wait(task)</code> to proceed with the result
@@ -63,7 +67,7 @@ public class ModelWorker
     {
         _cancellationTokenSource.Cancel();
     }
-    private readonly  ModelWorkerConfiguration _configuration;
+    
     public ModelWorker(ModelWorkerConfiguration configuration)
     {
         _configuration = configuration;
@@ -79,14 +83,18 @@ public class ModelWorker
         _thread = new Thread(WorkOnModel);
         _thread.Start();
     }
+
+    private int _epoch = -1;
     private void WorkOnModel()
     {
-        _model = BuildModel(_configuration.UseCase, _configuration.WeightsFileToLoad);
+        _model = BuildModel(_configuration.UseCase, _configuration.WeightsFileToLoad, _configuration.LearningRate);
         while (!_cancellationToken.IsCancellationRequested || _taskQueue.Count != 0)
         {
             try
             {
-                ModelTask task = _taskQueue.Dequeue(_cancellationToken);
+                ModelTask task;
+                task = _cancellationToken.IsCancellationRequested ?
+                    _taskQueue.RemoveFirst() : _taskQueue.Dequeue(_cancellationToken);
                 if (task.Output.size != 0)
                 {
                     // there is no need to wait
@@ -98,9 +106,21 @@ public class ModelWorker
                         {
                             var input = np.stack(_trainingBatchInput.ToArray());
                             var expected = np.stack(_trainingBatchExpected.ToArray());
+                            _stopwatch.Start();
                             _model.fit(input, expected, batch_size: _configuration.BatchSize);
+                            _stopwatch.Stop();
+                            AverageFitDuration = (AverageFitDuration * _fitCalls++ + _stopwatch.ElapsedMilliseconds) /
+                                                 _fitCalls;
+                            _stopwatch.Reset();
                             _trainingBatchInput.Clear();
                             _trainingBatchExpected.Clear();
+                            _epoch++;
+                            if (_configuration.GenerateInsights &&  _epoch % 20 == 0)
+                            {
+                                ModelVisualisation.SaveInsight(_model, 0.08m,
+                                    $"{_configuration.UseCase.ToString()}-Epoch {_epoch}");
+                            }
+                            
                         }
                     }
                 }
@@ -108,6 +128,8 @@ public class ModelWorker
                 {
                     Monitor.Enter(task);
                     task.Output = _model.predict(task.Input)[0].numpy()[0];
+                    _logger.Trace($"The input {task.Input.JoinDataToString()} generated the" +
+                                  $" prediction {task.Output.JoinDataToString()} in epoch {_epoch}");
                     Monitor.Pulse(task);
                     Monitor.Exit(task);
                 }
@@ -128,12 +150,12 @@ public class ModelWorker
         
     }
 
-    private static Model BuildModel(ModelUseCase useCase, string? weightsFile)
+    private static Model BuildModel(ModelUseCase useCase, string? weightsFile, float learningRate)
     {
         Model model = null!;
         if (useCase == ModelUseCase.PersonAction)
         {
-            model = BuildPersonActionModel();
+            model = BuildPersonActionModel(learningRate);
         }
         if (weightsFile != null)
         {
@@ -142,7 +164,7 @@ public class ModelWorker
         return model;
     }
     
-    private static Model BuildPersonActionModel()
+    private static Model BuildPersonActionModel(float learningRate)
     {
         var layers = new LayersApi();
         var cLength = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
@@ -154,14 +176,14 @@ public class ModelWorker
         var model = keras.Model(inLayer, output);
         model.summary();
         model.compile(
-            optimizer: keras.optimizers.SGD(LearningRate),
+            optimizer: keras.optimizers.SGD(learningRate),
             loss: keras.losses.CategoricalCrossentropy(from_logits: true),
             metrics: Array.Empty<string>()
         );
-
+        
         return model;
     }
-
+    
     private static readonly Dictionary<string, ModelWorker> Instances = new();
     
     /// <returns> the registered instance for the given key</returns>

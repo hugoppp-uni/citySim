@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CitySim.Backend.Util;
 using CitySim.Backend.Util.Learning;
 using Mars.Numerics;
 using Tensorflow;
@@ -17,17 +18,18 @@ public class PersonMind : IMind
     private const double IgnoreOwnBodyScalar = 0.1;
     private const double GoodWorldLensScalar = 0.8;
     private const double BadWorldLensScalar = 0.3;
-    private const double BasisEvaluationFactor = 1.5;
+    private const double BasisEvaluationFactor = 1.7;
     private const int CollectiveDecisionEvaluationDelay = 10;
 
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
     private static readonly int GlobalStatesCount = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
     private readonly ModelWorker _modelWorker;
     private readonly Random _random = new();
+    
     /// <summary>
     /// The exploration rate in percent
     /// </summary>
-    public static int ExplorationRate { get; set; }= 7;
+    public static int ExplorationRate { get; set; } = 7;
 
     /// <summary>
     ///   How much the person is an individualist or a collectivist.
@@ -38,6 +40,7 @@ public class PersonMind : IMind
     private PredictionData? _lastIndividualPrediction;
     private readonly Queue<PredictionData> _lastPredictions = new();
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly Logger _evaluationLogger = LogManager.GetLogger("ActionEvaluation");
 
     /// <param name="individualist">How much the person is an individualist or a collectivist.
     /// If the value is 0.5, the personal needs and the global state are handled exactly as the are.
@@ -82,7 +85,7 @@ public class PersonMind : IMind
             actionIndex);
         _lastPredictions.Enqueue(data);
         _lastIndividualPrediction = data;
-        _logger.Trace("Decided to do action: " + Enum.GetValues<ActionType>()[actionIndex]);
+        _logger.Trace($"Decided to do action: {Enum.GetValues<ActionType>()[actionIndex]} based on {task.Output.JoinDataToString()}");
         return Enum.GetValues<ActionType>()[actionIndex];
     }
 
@@ -112,8 +115,21 @@ public class PersonMind : IMind
                     (float)(0.9 * Math.Pow((double)expected[actionIndex], BasisEvaluationFactor + 3 * evaluationFactor));
             }
 
+            var diff = (float)prediction.Output[actionIndex] - expected[actionIndex];
+            for (var i = 0; i < expected.Length; i++)
+            {
+                if (i != actionIndex)
+                {
+                    expected[i] += diff / (expected.Length - 1);
+                }
+            }
             var newExpected = new NDArray(expected);
             newExpected = np.stack(newExpected);
+            _evaluationLogger.Trace((wellBeingDelta > 0
+                                        ? $"Action {actionIndex} was good with a delta of {wellBeingDelta}."
+                                        : $"Action {actionIndex} wasn't good with a delta of {wellBeingDelta}.")+
+                                    $"Adjust the output {string.Join(",",prediction.Output.ToArray<float>())} to " +
+                                    $"the new expected {string.Join(",",expected)} for the input {string.Join(",",prediction.NormalizedNeeds)}");
             var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState),
                 newExpected);
             _modelWorker.Queue(task);
@@ -123,9 +139,9 @@ public class PersonMind : IMind
             ApplyIndividualistFactorOnPersonalNeedsValues(currentPersonNeeds.AsNormalizedArray()).Sum() -
             _lastIndividualPrediction.NormalizedNeeds.Sum();
         wellBeingDelta /= PersonalNeedsCount;
-        _logger.Trace(wellBeingDelta > 0
-            ? "An action was good for the individual"
-            : "An action wasn't good for the individual");
+        _evaluationLogger.Trace(wellBeingDelta > 0
+            ? $"Action {_lastIndividualPrediction.SelectedActionIndex} was good for the individual with a delta of {wellBeingDelta}."
+            : $"Action {_lastIndividualPrediction.SelectedActionIndex} wasn't good for the individual with a delta of {wellBeingDelta}.");
         FinalEvaluate(_lastIndividualPrediction, wellBeingDelta, _individualist);
 
         if (_lastPredictions.Count == CollectiveDecisionEvaluationDelay)

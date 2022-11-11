@@ -32,11 +32,15 @@ public class CitySim
     /// If null, the trained model does not gets saved</param>
     /// <param name="personMindBatchSize">The batch size of a PersonMind training.</param>
     /// <param name="personActionExplorationRate">The exploration rate in percent used for the action of the persons.</param>
+    /// <param name="personMindLearningRate">The learning rate used for the model for the actions of the persons.</param>
+    /// <param name="generateInsightData">If set, data will be generated to visualize the outputs of the neural networks based on all inputs .</param>
     public CitySim(int maxTick = int.MaxValue, int personCount = 30, bool training = true,
         string? personMindWeightsFileToLoad = null, 
         string? newSaveLocationForPersonMindWeights = null, 
         int personMindBatchSize = 15,
-        int personActionExplorationRate = 7)
+        int personActionExplorationRate = 7,
+        float personMindLearningRate = 0.05f,
+        bool generateInsightData = false)
     {
         var desc = new ModelDescription();
         desc.AddLayer<WorldLayer>();
@@ -48,7 +52,9 @@ public class CitySim
                 BatchSize = personMindBatchSize,
                 WeightsFileToLoad = personMindWeightsFileToLoad,
                 WeightsFileToSave = training ? newSaveLocationForPersonMindWeights : null,
-                Training = training
+                Training = training,
+                LearningRate = personMindLearningRate,
+                GenerateInsights = generateInsightData
             }),
             nameof(Person));
         var config = new SimulationConfig

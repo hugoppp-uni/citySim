@@ -13,9 +13,14 @@ const int screenHeight = 900;
 SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_MSAA_4X_HINT);
 InitWindow(screenWidth, screenHeight, "CitySim");
 
-var personMindFileName = "./ModelWeights/personMind.hdf5";
-var citySim = new CitySim.Backend.CitySim(personMindWeightsFileToLoad: personMindFileName,
-    newSaveLocationForPersonMindWeights: personMindFileName)
+string? personMindFileName = "./ModelWeights/personMind2Hidden.hdf5";
+var citySim = new CitySim.Backend.CitySim(
+    personMindWeightsFileToLoad: personMindFileName,
+    newSaveLocationForPersonMindWeights: personMindFileName,
+    personCount: 20,
+    personMindBatchSize: 10,
+    generateInsightData: true
+)
 {
     SimulationController =
     {

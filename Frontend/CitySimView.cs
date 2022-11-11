@@ -1,14 +1,9 @@
 ﻿using Raylib_CsLo;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using static Raylib_CsLo.Raylib;
 using static Raylib_CsLo.RayGui;
 using CitySim.Backend.Entity.Agents;
-using System.Runtime.InteropServices;
+using CitySim.Backend.Util.Learning;
 
 namespace CitySim.Frontend
 {
@@ -63,6 +58,8 @@ namespace CitySim.Frontend
         private void DrawHud(int screenWidth, int screenHeight, ref object? newHoveredElement)
         {
             DrawFPS(10, 10);
+            DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
+                10, 25,15, BLACK);
 
             {
                 //Title

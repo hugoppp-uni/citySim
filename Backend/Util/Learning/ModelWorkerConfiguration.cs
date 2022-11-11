@@ -34,4 +34,14 @@ public class ModelWorkerConfiguration
     /// if set to false, all training tasks are ignored
     /// </summary>
     public bool Training = true;
+
+    /// <summary>
+    /// The Learning rate of the model
+    /// </summary>
+    public float LearningRate = 0.01f;
+
+    /// <summary>
+    /// If set, data will be generated to visualize the outputs based on all inputs
+    /// </summary>
+    public bool GenerateInsights = false;
 }

@@ -28,12 +28,13 @@ public class Program
             var citySim = new CitySim.Backend.CitySim(
                 personMindWeightsFileToLoad: PersonMindFileName,
                 newSaveLocationForPersonMindWeights: PersonMindFileName,
-                personCount: 45,
-                maxTick: 250,
-                personMindBatchSize: 50,
-                personActionExplorationRate: 15,
+                personCount: 40,
+                maxTick: 500,
+                personMindBatchSize: 25,
+                personActionExplorationRate: 20,
+                personMindLearningRate: 0.01f,
                 training: true,
-                generateInsightData: false
+                generateInsightInterval: 50
             )
             {
                 SimulationController =

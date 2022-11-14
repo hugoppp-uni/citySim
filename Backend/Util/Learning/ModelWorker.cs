@@ -115,7 +115,8 @@ public class ModelWorker
                             _trainingBatchInput.Clear();
                             _trainingBatchExpected.Clear();
                             _epoch++;
-                            if (_configuration.GenerateInsights &&  _epoch % 20 == 0)
+                            if (_configuration.GenerateInsightsInterval != null && 
+                                _epoch % _configuration.GenerateInsightsInterval == 0)
                             {
                                 ModelVisualisation.SaveInsight(_model, 0.08m,
                                     $"{_configuration.UseCase.ToString()}-Epoch {_epoch}");

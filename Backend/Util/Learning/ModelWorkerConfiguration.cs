@@ -41,7 +41,7 @@ public class ModelWorkerConfiguration
     public float LearningRate = 0.01f;
 
     /// <summary>
-    /// If set, data will be generated to visualize the outputs based on all inputs
+    /// If set, data will be generated to visualize the outputs based on all inputs every x epoch
     /// </summary>
-    public bool GenerateInsights = false;
+    public int? GenerateInsightsInterval = null;
 }

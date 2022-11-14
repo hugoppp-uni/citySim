@@ -1,11 +1,10 @@
 ﻿using CitySim.Frontend;
 using Raylib_CsLo;
 using System.Numerics;
+using System.Security.Policy;
 using static Raylib_CsLo.Raylib;
 
 Console.WriteLine("Hello, World!");
-
-
 
 
 //change simulation speed
@@ -16,88 +15,103 @@ Console.WriteLine("Hello, World!");
 const int screenWidth = 1400;
 const int screenHeight = 900;
 
+SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_MSAA_4X_HINT);
 InitWindow(screenWidth, screenHeight, "CitySim");
 
-var citySim = new CitySim.Backend.CitySim
+var personMindFileName = "./ModelWeights/personMind.hdf5";
+var citySim = new CitySim.Backend.CitySim(personMindWeightsFileToLoad: personMindFileName,
+    newSaveLocationForPersonMindWeights: personMindFileName)
 {
     SimulationController =
     {
         TicksPerSecond = 2
     }
 };
-var simulationTask = citySim.StartAsync();
 
-
+Task simulationTask;
+bool isSimulationRunning = false;
 
 SetTargetFPS(60);
 
-WorldDrawer worldDrawer = new(citySim);
-
-Camera2D cam = new()
-{
-    target = worldDrawer.Grid.GetPosition2D(new Vector3(5,5,0)),
-    offset = new Vector2(screenWidth / 2, screenHeight / 2),
-    zoom = 1
-};
+CitySimView view = new(citySim);
 
 RayGui.GuiSetStyle((int)RaylibExtensions.GuiControl.DEFAULT, (int)RaylibExtensions.GuiControlProperty.TEXT_COLOR_NORMAL,
     ColorToInt(WHITE));
 
+Camera2D cam = new Camera2D()
+{
+    zoom = 4
+};
+
+double startTime = GetTime();
+
 // Main game loop
 while (!WindowShouldClose())
 {
-    #region camera controls
-    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-        cam.target -= GetMouseDelta()/cam.zoom;
-
-    cam.zoom *= 1 + 0.1f * GetMouseWheelMove();
-
-    if (cam.zoom < 0.1f)
-        cam.zoom = 0.1f;
-
-    if (cam.zoom > 10f)
-        cam.zoom = 10f;
-    #endregion
-
     BeginDrawing();
-    ClearBackground(new Color(10, 130, 255, 255));
 
-    BeginMode2D(cam);
-    worldDrawer.Draw(cam);
-    EndMode2D();
+    double time = GetTime() - startTime;
 
-    #region HUD
+    float splitProgress = Math.Clamp((float)time, 0, 1.6f) / 1.6f;
+
+    float jumpProgress = Math.Clamp((float)time - 1.6f, 0, 0.4f) / 0.4f;
+
+    float textFade = Math.Clamp((float)time - 1.8f, 0, 0.6f) / 0.6f;
+    
+    float finalWipe = Math.Clamp((float)time - 2.4f, 0, 0.8f) / 0.8f;
+
+
+    if (finalWipe == 1 && !isSimulationRunning)
     {
-        int width = MeasureText("CitySim", 60);
-        DrawFPS(10, 10);
-        DrawText("CitySim", screenWidth / 2 - width / 2 + 2, 22,
-            60, new Color(0, 0, 0, 100));
-
-        DrawText("CitySim", screenWidth / 2 - width / 2, 20,
-            60, RAYWHITE);
-
-        RaylibExtensions.MyDrawRect(screenWidth - 210, 0, screenWidth, screenHeight, 
-            new Color(0, 0, 0, 100));
-
-
-        int currentY = 10;
-
-        for (int i = 0; i < worldDrawer.OverlayNames.Count; i++)
-        {
-            bool enabled = worldDrawer.IsOverlayEnabled(i);
-
-            enabled = RayGui.GuiCheckBox(
-                new Rectangle(screenWidth - 200, currentY, 20, 20),
-                worldDrawer.OverlayNames[i], enabled);
-
-            worldDrawer.ToggleOverlay(i, enabled);
-
-            currentY += 50;
-        }
+        citySim.StartAsync();
+        isSimulationRunning = true;
     }
-    #endregion
+
+    if (finalWipe > 0)
+        view.UpdateAndDraw(GetScreenWidth(), GetScreenHeight());
+
+    cam.offset = new Vector2(GetScreenWidth(), GetScreenHeight()) / 2;
+
+
+
+
+    float t3 = jumpProgress;
+
+    float y_offset = (-(t3 * t3) + 2 * t3) * -15;
+
+    var posAStart = new Vector2(0, 10);
+    var posAEnd = new Vector2(-20, 10 + y_offset);
+
+    var posBStart = new Vector2(0, 10);
+    var posBEnd = new Vector2(20, 10 + y_offset);
+
+    BeginScissorMode(0, 0, (int)(GetScreenWidth() * (1 - finalWipe * finalWipe * finalWipe)), GetScreenHeight());
+    ClearBackground(BLACK);
+    BeginMode2D(cam);
+
+
+
+    //Fading in CitySim text
+    {
+        Font font = GetFontDefault();
+
+        float fontSize = 30;
+
+        var size = MeasureTextEx(font, "CitySim", fontSize, fontSize / font.baseSize);
+
+        var col = ColorAlpha(WHITE, textFade);
+
+        DrawText("CitySim", 0 - size.X / 2, 20 - size.Y / 2, fontSize, col);
+    }
+
+    SplittingPersonDrawer.Draw(splitProgress, posAStart, posAEnd, WHITE, WHITE,
+                                              posBStart, posBEnd, WHITE, WHITE);
+
+    EndMode2D();
+    EndScissorMode();
 
     EndDrawing();
 }
 
+citySim.Abort();
 CloseWindow();

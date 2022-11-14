@@ -13,6 +13,7 @@ using NesScripts.Controls.PathFind;
 
 namespace CitySim.Backend.World;
 
+public delegate void TwoPersonEventHandler(Person personA, Person personB);
 public class WorldLayer : AbstractLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
@@ -27,6 +28,8 @@ public class WorldLayer : AbstractLayer
 
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
     public static long CurrentTick => Instance.Context.CurrentTick;
+
+    public event TwoPersonEventHandler? PersonCellDivision;
 
     public WorldLayer()
     {
@@ -50,7 +53,7 @@ public class WorldLayer : AbstractLayer
         BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
         BuildPositionEvaluator.EvaluateHousingScore();
 
-        agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();
+        agentManager.Spawn<Person, WorldLayer>().ToList();
 
         return true;
     }

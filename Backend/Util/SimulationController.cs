@@ -1,3 +1,5 @@
+using CitySim.Backend.Entity.Agents;
+
 namespace CitySim.Backend.Util;
 
 public class SimulationController

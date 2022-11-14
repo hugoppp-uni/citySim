@@ -15,6 +15,7 @@ public class Program
         const string PersonMindFileName = "./ModelWeights/personMind.hdf5";
         _logger.Debug(Binding.tf.config.list_physical_devices("GPU"));
         var g = Binding.tf.config.list_physical_devices("GPU");
+        var cancellationTokenSource = new CancellationTokenSource();
         var iterationCount = 5;
         CitySim.Backend.CitySim? citySim = null;
         if (args.Length > 0)
@@ -26,8 +27,8 @@ public class Program
         void OnConsoleOnCancelKeyPress(object? _, ConsoleCancelEventArgs e)
         {
             citySim.Abort();
-            Console.WriteLine($"Iteration count now: {iteration}");
             iteration = iterationCount + 1;
+            cancellationTokenSource.Cancel();
         }
         Binding.tf_output_redirect = TextWriter.Null;
         for (; iteration <= iterationCount; iteration++)
@@ -54,7 +55,15 @@ public class Program
             _logger.Trace($"Prepare Iteration {iteration}");
             var task = citySim.StartAsync();
             Console.CancelKeyPress += OnConsoleOnCancelKeyPress;
-            await task;
+            try
+            {
+                await task.WaitAsync(cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException e)
+            {
+                Console.WriteLine("Training canceled");
+            }
+            //await task;
             Console.CancelKeyPress -= OnConsoleOnCancelKeyPress;
             _logger.Debug($"The training took in average {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration}");
         }

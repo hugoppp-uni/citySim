@@ -137,21 +137,22 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
     {
     }
 
-    Random _rng = new Random();
-
     public void PostTick()
     {
         foreach (var structure in Structures)
         {
             structure.PostTick();
         }
+        
+        
+    }
 
-        //just for testing, please remove once splitting is implemented in the backend
-        if (_rng.Next() < int.MaxValue / 4)
-        {
-            var persons = GridEnvironment.Entities.OfType<Person>().ToList();
+    public void CellDevision(Person p1, Person p2)
+    {
+        PostTick();
+        
+        var persons = GridEnvironment.Entities.OfType<Person>().ToList();
 
-            PersonCellDivision?.Invoke(persons[_rng.Next(persons.Count - 1)], persons[_rng.Next(persons.Count - 1)]);
-        }
+        PersonCellDivision?.Invoke(p1, p2);
     }
 }

@@ -132,16 +132,18 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1)  * 50;// 0 to 100
         var reproductionRate = (generalNeed * Random.Shared.NextDouble()) + Random.Shared.Next(0, 30);
 
-        if (_tickAge > 0 && reproductionRate > 90)
+        if (_tickAge > 0 && reproductionRate > 80)
         {
             Reproduce();
         }
     }
 
-    private Person Reproduce()
+    private void Reproduce()
     {
-        _logger.Trace($"{ID}ZELLTEILUNG");
+        _logger.Trace($"{ID} ZELLTEILUNG");
+        Position position = this.Position.Copy();
         Person p = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
-        return p;
+        p.Position = position;
+        _worldLayer.CellDevision(this, p);
     }
 }

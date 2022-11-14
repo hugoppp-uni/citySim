@@ -1,8 +1,25 @@
 stages:
   - build
+  - simulate
 
 Build:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:6.0
   script:
     - dotnet build
+  artifacts:
+      expire_in: 1 day
+      paths:
+        - TrainingVersion/bin
+        - Frontend/bin
+        - Benchmark/bin
+
+Run:
+    stage: simulate
+    image: mcr.microsoft.com/dotnet/sdk:6.0
+    script:
+      - cd TrainingVersion/bin/Debug/net6.0
+      - dotnet TrainingVersion.dll
+    artifacts:
+      untracked: true
+      expire_in: 1 day

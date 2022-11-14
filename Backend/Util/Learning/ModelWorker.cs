@@ -92,8 +92,7 @@ public class ModelWorker
         {
             try
             {
-                ModelTask task;
-                task = _cancellationToken.IsCancellationRequested ?
+                var task = _cancellationToken.IsCancellationRequested ?
                     _taskQueue.RemoveFirst() : _taskQueue.Dequeue(_cancellationToken);
                 if (task.Output.size != 0)
                 {
@@ -119,7 +118,7 @@ public class ModelWorker
                                 _epoch % _configuration.GenerateInsightsInterval == 0)
                             {
                                 await ModelVisualisation.SaveInsight(_model, 0.08m,
-                                    $"{_configuration.UseCase.ToString()}-Epoch {_epoch}", _cancellationToken);
+                                    $"{_configuration.UseCase}-Epoch {_epoch}", _cancellationToken);
                             }
                             
                         }

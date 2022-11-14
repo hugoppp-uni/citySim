@@ -41,5 +41,7 @@ public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
         {
             _stopwatch.Start();
         }
+
+        Console.WriteLine($"Tick {Context.CurrentTick} done");
     }
 }

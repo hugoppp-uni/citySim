@@ -17,14 +17,16 @@ string? personMindFileName = "./ModelWeights/personMind2Hidden.hdf5";
 var citySim = new CitySim.Backend.CitySim(
     personMindWeightsFileToLoad: personMindFileName,
     newSaveLocationForPersonMindWeights: personMindFileName,
-    personCount: 20,
-    personMindBatchSize: 10,
-    generateInsightData: true
+    personCount: 40,
+    personMindBatchSize: 25,
+    personMindLearningRate: 0.01f,
+    generateInsightInterval: 40,
+    training: true
 )
 {
     SimulationController =
     {
-        TicksPerSecond = 2
+        TicksPerSecond = 10
     }
 };
 var simulationTask = citySim.StartAsync();

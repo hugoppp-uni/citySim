@@ -128,8 +128,10 @@ public class PersonMind : IMind
             _evaluationLogger.Trace((wellBeingDelta > 0
                                         ? $"Action {actionIndex} was good with a delta of {wellBeingDelta}."
                                         : $"Action {actionIndex} wasn't good with a delta of {wellBeingDelta}.")+
-                                    $"Adjust the output {string.Join(",",prediction.Output.ToArray<float>())} to " +
-                                    $"the new expected {string.Join(",",expected)} for the input {string.Join(",",prediction.NormalizedNeeds)}");
+                                    $"Adjust the output {string.Join(", ",prediction.Output.ToArray<float>())} to " +
+                                    $"the new expected {string.Join(", ",expected)} for the input " +
+                                    $"{string.Join(", ",prediction.NormalizedNeeds)}. The new needs are " +
+                                    $"{string.Join(", ", currentPersonNeeds.AsNormalizedArray())}");
             var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState),
                 newExpected);
             _modelWorker.Queue(task);

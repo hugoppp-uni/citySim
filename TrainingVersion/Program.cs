@@ -10,22 +10,31 @@ public class Program
     
     
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         const string PersonMindFileName = "./ModelWeights/personMind.hdf5";
         _logger.Debug(Binding.tf.config.list_physical_devices("GPU"));
         var g = Binding.tf.config.list_physical_devices("GPU");
-        var iterationCount = 1;
+        var iterationCount = 5;
+        CitySim.Backend.CitySim? citySim = null;
         if (args.Length > 0)
         {
             iterationCount = int.Parse(args[0]);
         }
-        Binding.tf_output_redirect = TextWriter.Null;
-        for (var iteration = 1; iteration <= iterationCount; iteration++)
+
+        var iteration = 1;
+        void OnConsoleOnCancelKeyPress(object? _, ConsoleCancelEventArgs e)
         {
-           Console.Out.WriteLine($"Prepare Iteration {iteration}");
+            citySim.Abort();
+            iteration = iterationCount + 1; 
+            e.Cancel = citySim != null;
+        }
+        Binding.tf_output_redirect = TextWriter.Null;
+        for (; iteration <= iterationCount; iteration++)
+        {
+            await Console.Out.WriteLineAsync($"Prepare Iteration {iteration}");
             _logger.Trace($"Prepare Iteration {iteration}");
-            var citySim = new CitySim.Backend.CitySim(
+            citySim = new CitySim.Backend.CitySim(
                 personMindWeightsFileToLoad: PersonMindFileName,
                 newSaveLocationForPersonMindWeights: PersonMindFileName,
                 personCount: 40,
@@ -43,7 +52,9 @@ public class Program
                 }
             };
             _logger.Trace($"Prepare Iteration {iteration}");
-            citySim.StartAsync().Wait();
+            Console.CancelKeyPress += OnConsoleOnCancelKeyPress;
+            await citySim.StartAsync();
+            Console.CancelKeyPress -= OnConsoleOnCancelKeyPress;
             _logger.Debug($"The training took in average {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration}");
         }
     }

@@ -39,7 +39,7 @@ public class CitySim
         string? newSaveLocationForPersonMindWeights = null, 
         int personMindBatchSize = 15,
         int personActionExplorationRate = 7,
-        float personMindLearningRate = 0.05f,
+        float personMindLearningRate = 0.01f,
         int? generateInsightInterval = null)
     {
         var desc = new ModelDescription();

@@ -132,4 +132,11 @@ public class WorldLayer : AbstractLayer
             Structures.OfType<Restaurant>().Count()
         );
     }
+
+    public void CellDevision(Person p1, Person p2)
+    {
+        var persons = GridEnvironment.Entities.OfType<Person>().ToList();
+
+        PersonCellDivision?.Invoke(p1, p2);
+    }
 }

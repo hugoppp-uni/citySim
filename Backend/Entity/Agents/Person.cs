@@ -3,18 +3,22 @@ using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using CitySim.Backend.Util.Learning;
 using CitySim.Backend.World;
+using Mars.Components.Services;
+using Mars.Core.Data;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Annotations;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
 using NesScripts.Controls.PathFind;
 using NLog;
+using NLog.Fluent;
 
 namespace CitySim.Backend.Entity.Agents;
 
 public class Person : IAgent<WorldLayer>, IPositionableEntity
 {
     public Guid ID { get; set; }
+    private const int ReproductionRate = 20;
     public Position Position { get; set; } = null!; //Init()
     private WorldLayer _worldLayer = null!; //Init()
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -27,7 +31,9 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
     [PropertyDescription] public string ModelWorkerKey { get; set; }
-    
+
+    private int _tickAge = 0;
+
     public void Init(WorldLayer layer)
     {
         _mind = new PersonMind(0.5, ModelWorker.GetInstance(ModelWorkerKey));
@@ -52,6 +58,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public void Tick()
     {
+        _tickAge++;
         if (!ApplyGameRules())
             //return value is false if the agent died, hacky for now
             return;
@@ -82,7 +89,11 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private PersonAction PlanNextAction()
     {
-        var nextActionType = _mind.GetNextActionType(Needs, _worldLayer.GetGlobalState());
+        var nextActionType = _mind.GetNextActionType(
+            Needs,
+            _worldLayer.GetGlobalState(),
+            new Distances(this, _worldLayer)
+        );
 
         Position? GetPosition() => nextActionType switch
         {
@@ -114,11 +125,40 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             return false;
         }
 
+        if (Needs.Sleepiness < -3)
+        {
+            Kill();
+            _logger.Trace($"{ID} DIED of sleepiness");
+            return false;
+        }
+        
+        ReproductionNeeds();
         return true;
     }
 
     private void Kill()
     {
         _worldLayer.Kill(this);
+    }
+
+    private void ReproductionNeeds()
+    {
+        Needs.Tick();
+        var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1)  * 50;// 0 to 100
+        var reproductionRate = (generalNeed * Random.Shared.NextDouble()) + Random.Shared.Next(0, 30);
+        
+        if (_tickAge > 0 && reproductionRate > 100 - ReproductionRate)
+        {
+            Reproduce();
+        }
+    }
+
+    private void Reproduce()
+    {
+        _logger.Trace($"{ID} ZELLTEILUNG");
+        Position position = this.Position.Copy();
+        Person p = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
+        p.Position = position;
+        _worldLayer.CellDevision(this, p);
     }
 }

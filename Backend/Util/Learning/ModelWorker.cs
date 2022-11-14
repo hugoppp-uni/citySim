@@ -168,11 +168,12 @@ public class ModelWorker
     private static Model BuildPersonActionModel(float learningRate)
     {
         var layers = new LayersApi();
-        var cLength = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
-        var iLength = new PersonNeeds().AsNormalizedArray().Length;
+        var lenght = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+        lenght += new PersonNeeds().AsNormalizedArray().Length;
+        lenght += Distances.Count;
         var actions = new ActionType[Enum.GetValues(typeof(ActionType)).Length];
-        var inLayer = keras.Input((iLength+cLength), name:"status");
-        var dense = layers.Dense(iLength+cLength, activation: "relu").Apply(inLayer);
+        var inLayer = keras.Input((lenght), name:"status");
+        var dense = layers.Dense(lenght, activation: "relu").Apply(inLayer);
         var output = layers.Dense(actions.Length, activation: "softmax").Apply(dense);
         var model = keras.Model(inLayer, output);
         model.summary();

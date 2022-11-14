@@ -72,14 +72,16 @@ public class PersonMind : IMind
         _individualist = individualist;
     }
 
-    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
+    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
     {
         Evaluate(personNeeds, globalState);
         var needsAry = personNeeds.AsNormalizedArray();
         var globalStateAry = globalState.AsNormalizedArray();
+        var distancesAry = distances.AsNormalizedArray();
+        //var distancesAry=
         ApplyIndividualistFactorOnPersonalNeedsValues(needsAry);
+        var task = new ModelTask(GetInputArray(needsAry, globalStateAry, distancesAry));
         ApplyIndividualistFactorOnGlobalStateValues(globalStateAry);
-        var task = new ModelTask(GetInputArray(needsAry, globalStateAry));
         Monitor.Enter(task);
         _modelWorker.Queue(task);
         Monitor.Wait(task);
@@ -89,7 +91,7 @@ public class PersonMind : IMind
         {
             actionIndex = _random.Next(Enum.GetValues<ActionType>().Length);
         }
-        var data = new PredictionData((double[])globalStateAry.Clone(), (double[])needsAry.Clone(), task.Output,
+        var data = new PredictionData((double[])globalStateAry.Clone(), (double[])needsAry.Clone(), (double[])distancesAry.Clone(), task.Output,
             actionIndex);
         _lastPredictions.Enqueue(data);
         _lastIndividualPrediction = data;
@@ -140,7 +142,7 @@ public class PersonMind : IMind
                                     $"the new expected {string.Join(", ",expected)} for the input " +
                                     $"{string.Join(", ",prediction.NormalizedNeeds)}. The new needs are " +
                                     $"{string.Join(", ", currentPersonNeeds.AsNormalizedArray())}");
-            var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState),
+            var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState, prediction.Distances),
                 newExpected);
             _modelWorker.Queue(task);
         }
@@ -164,7 +166,6 @@ public class PersonMind : IMind
             _logger.Trace(wellBeingDelta > 0
                 ? "An action was good for the collective"
                 : "An action wasn't good for the collective");
-            return;
             FinalEvaluate(historicPrediction, wellBeingDelta, 1 - _individualist);
         }
     }
@@ -174,13 +175,11 @@ public class PersonMind : IMind
     /// the global state. During the creation, the<see cref="_individualist"/> gets considers and the needs gets
     /// slightly dramatized or the global state value are considered better as they actually are.
     /// </summary>
-    /// <param name="needs"></param>
-    /// <param name="globalState"></param>
     /// <returns>A 2D array where the first array contains the values of the
     /// needs and the second array the values of the global state</returns>
-    private static NDArray GetInputArray(double[] needs, double[] globalState)
+    private static NDArray GetInputArray(double[] needs, double[] globalState, double[] distances)
     {
-        var ary = globalState.concat(needs)
+        var ary = globalState.concat(needs).concat(distances)
             .Select(it => (float)it)
             .ToArray();
         return np.stack(new NDArray(ary, shape: ary.Length));
@@ -249,5 +248,5 @@ public class PersonMind : IMind
     }
 }
 
-internal record PredictionData(double[] NormalizedGlobalState, double[] NormalizedNeeds, NDArray Output,
+internal record PredictionData(double[] NormalizedGlobalState, double[] NormalizedNeeds, double[] Distances, NDArray Output,
     int SelectedActionIndex);

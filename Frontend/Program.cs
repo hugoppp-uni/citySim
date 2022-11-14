@@ -26,7 +26,7 @@ var citySim = new CitySim.Backend.CitySim(
 {
     SimulationController =
     {
-        TicksPerSecond = 10
+        TicksPerSecond = 2
     }
 };
 

@@ -2,7 +2,6 @@
 
 namespace CitySim.Backend.World;
 using System;
-using System.Linq;
 
 public class GlobalState
 {

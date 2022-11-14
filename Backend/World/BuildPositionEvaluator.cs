@@ -15,7 +15,6 @@ public class BuildPositionEvaluator
 
     private double[,] _housingScore;
     private double[,] _housingScoreBuffer;
-    float[,] tilesCosts = new float[WorldLayer.XSize, WorldLayer.YSize];
     public Safe2DArrayView<double> HousingScore => new(_housingScore);
 
     private long _lastEvalutedTick = 0;
@@ -29,6 +28,7 @@ public class BuildPositionEvaluator
         _housingScore = new double[structures.XSize, structures.YSize];
         _housingScoreBuffer = new double[structures.XSize, structures.YSize];
 
+        float[,] tilesCosts = new float[WorldLayer.XSize, WorldLayer.YSize];
         for (int i = 0; i < WorldLayer.XSize; i++)
         for (int j = 0; j < WorldLayer.YSize; j++)
             tilesCosts[i, j] = 100;
@@ -103,14 +103,11 @@ public class BuildPositionEvaluator
                 PathFindingRoute streetRoute;
                 streetRoute = _pathFindingGrid.FindPath(new PathFindingPoint(x, y),
                     new PathFindingPoint((int)x2, (int)y2));
-                Thread.Sleep(10);
 
-                if (!streetRoute.Completed)
-                    BuildStreet(streetRoute);
-                _pathFindingGrid.UpdateGrid(tilesCosts);
+                BuildStreet(streetRoute);
             }
 
-            tilesCosts[x, y] = 0;
+            _pathFindingGrid.nodes[x, y].Update(false, x, y);
             return new Position(x, y);
         }
     }
@@ -122,28 +119,8 @@ public class BuildPositionEvaluator
             if (WorldLayer.Instance.Structures[x, y] != null) break;
             WorldLayer.Instance.InsertStructure(new Street { Position = new Position(x, y) });
             _housingScore[x, y] = 0;
-            tilesCosts[x, y] = 0;
+            _pathFindingGrid.nodes[x, y].price = 0.1f;
         }
     }
 
-    public static void Print2DArray<T>(T[,] matrix, PathFindingRoute route)
-    {
-        var pathFindingPoints = route.RemainingPath.ToHashSet();
-        for (int i = 0; i < matrix.GetLength(0); i++)
-        {
-            for (int j = 0; j < matrix.GetLength(1); j++)
-            {
-                if (pathFindingPoints.Contains(new PathFindingPoint(i, j)))
-                    Console.BackgroundColor = ConsoleColor.DarkRed;
-                else
-                {
-                    Console.ResetColor();
-                }
-
-                Console.Write(matrix[i, j] + "\t");
-            }
-
-            Console.WriteLine();
-        }
-    }
 }

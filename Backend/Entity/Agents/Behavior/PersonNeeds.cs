@@ -8,19 +8,14 @@ namespace CitySim.Backend.Entity.Agents.Behavior;
 /// </summary>
 public record PersonNeeds
 {
-    public double Sleepiness { get; set; }
-    public double Hunger { get; set; }
-    public double Money { get; set; }
-
-    public PersonNeeds()
-    {
-        Hunger = Sleepiness = Money = 1;
-    }
+    public double Sleepiness { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
+    public double Hunger { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
+    public double Money { get; set; } = 1;//0.4 + Random.Shared.NextDouble() * 0.6;
 
     public void Tick()
     {
-        Hunger -= 0.01;
-        Sleepiness -= 0.01;
+        Hunger -= 0.02;
+        Sleepiness -= 0.02;
         //Money -= 0.01;
     }
 

@@ -24,8 +24,8 @@ namespace CitySim.Frontend
                 throw new ArgumentException("Value smaller or equal 0", nameof(diagSpanY));
 
             _transform = new Matrix3x2(
-                 diagSpanX / 2, -diagSpanY / 2,
-                -diagSpanX / 2, -diagSpanY / 2,
+                diagSpanX / 2, diagSpanY / 2,
+                diagSpanX / 2, -diagSpanY / 2,
                 0, 0);
 
             Matrix3x2.Invert(_transform, out _transformInv);
@@ -47,12 +47,12 @@ namespace CitySim.Frontend
             int screenWidth = GetScreenWidth();
             int screenHeight = GetScreenHeight();
 
-            int maxX = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(screenWidth, 0), cam), _transformInv).X+2;
-            int maxY = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(0, 0), cam), _transformInv).Y+2;
-            int minX = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(0, screenHeight), cam), _transformInv).X-1;
-            int minY = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(screenWidth, screenHeight), cam), _transformInv).Y-1;
+            int maxX = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(screenWidth, screenHeight), cam), _transformInv).X+2;
+            int maxY = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(screenWidth, 0), cam), _transformInv).Y+2;
+            int minX = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(0, 0), cam), _transformInv).X-1;
+            int minY = (int)Vector2.Transform(GetScreenToWorld2D(new Vector2(0, screenHeight), cam), _transformInv).Y-1;
 
-            for (int x = maxX - 1; x >= minX; x--)
+            for (int x = minX; x < maxX; x++)
             {
                 for (int y = maxY - 1; y >= minY; y--)
                 {

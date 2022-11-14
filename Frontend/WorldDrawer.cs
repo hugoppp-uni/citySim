@@ -319,10 +319,10 @@ namespace CitySim.Frontend
                 if (IsRoad(cell_x, cell_y))
                 {
                     if (TryGetRoadConnectionTile(
+                        IsRoad(cell_x - 1, cell_y),
                         IsRoad(cell_x, cell_y + 1),
                         IsRoad(cell_x + 1, cell_y),
                         IsRoad(cell_x, cell_y - 1),
-                        IsRoad(cell_x - 1, cell_y),
                         out int tile))
                     {
                         DrawTerrainTile(tile, position2d);

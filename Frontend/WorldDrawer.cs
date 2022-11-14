@@ -169,7 +169,7 @@ namespace CitySim.Frontend
                 {
                     DrawBuildingTile(1, position2d);
 
-                    int height = (int)Math.Round(3 + Math.Sin(cell_x + 3) + Math.Sin(cell_y + 3));
+                    int height = 1;
 
                     for (int i = 0; i < height; i++)
                     {

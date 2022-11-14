@@ -37,7 +37,6 @@ public class WorldLayer : AbstractLayer
         for (int j = 0; j < YSize; j++)
             pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(pathFindingTileMap);
-        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -48,6 +47,7 @@ public class WorldLayer : AbstractLayer
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
 
         SpawnBuildings();
+        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
         BuildPositionEvaluator.EvaluateHousingScore();
 
         agentManager.Spawn<Person, WorldLayer>().Take(30).ToList();

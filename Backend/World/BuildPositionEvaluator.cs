@@ -14,6 +14,7 @@ public class BuildPositionEvaluator
     private readonly Grid2D<Structure> _structures;
 
     private double[,] _housingScore;
+    private double[,] _housingScoreBuffer;
     public Safe2DArrayView<double> HousingScore => new(_housingScore);
 
     private long _lastEvalutedTick = 0;
@@ -23,6 +24,7 @@ public class BuildPositionEvaluator
     {
         _structures = structures;
         _housingScore = new double[structures.XSize, structures.YSize];
+        _housingScoreBuffer = new double[structures.XSize, structures.YSize];
     }
 
     public void EvaluateHousingScore()
@@ -46,13 +48,16 @@ public class BuildPositionEvaluator
             IList<K2dTreeNode<Structure>>? buildingsNearby =
                 _structures.Kd.InsideRegion(new Hyperrectangle(x - width / 2, y - width / 2, width, height));
             var buildingsNearbyCount = buildingsNearby.Select(node => node.Value).OfType<House>().Count();
-            _housingScore[x, y] = buildingsNearbyCount - manhattanDistanceToRestaurant;
+            _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToRestaurant;
         }
 
-        var min = _housingScore.Min();
-        _housingScore = _housingScore.Subtract(min);
-        var max = _housingScore.Max();
-        _housingScore = _housingScore.Divide(max);
+        var min = _housingScoreBuffer.Min();
+        _housingScoreBuffer = _housingScoreBuffer.Subtract(min);
+        var max = _housingScoreBuffer.Max();
+        _housingScoreBuffer = _housingScoreBuffer.Divide(max);
+        
+        Buffer.BlockCopy(_housingScoreBuffer, 0,_housingScore,0,
+            sizeof(double) * _housingScore.GetLength(0) * _housingScore.GetLength(1));
     }
 
     private Structure NearestRestaurant(double[] pos)

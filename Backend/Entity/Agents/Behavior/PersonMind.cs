@@ -23,13 +23,25 @@ public class PersonMind : IMind
 
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
     private static readonly int GlobalStatesCount = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+    private static int _explorationRate = 7;
     private readonly ModelWorker _modelWorker;
-    private readonly Random _random = new();
-    
+    private readonly Random _random = new(Random.Shared.Next());
+
     /// <summary>
     /// The exploration rate in percent
     /// </summary>
-    public static int ExplorationRate { get; set; } = 7;
+    public static int ExplorationRate
+    {
+        get => _explorationRate;
+        set
+        {
+            if (ExplorationRate is < 0 or > 100)
+            {
+                throw new InvalidArgumentError("The ExplorationRate has to be in the range [0,100]");
+            }
+            _explorationRate = value;
+        }
+    }
 
     /// <summary>
     ///   How much the person is an individualist or a collectivist.
@@ -62,10 +74,6 @@ public class PersonMind : IMind
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
     {
-        if (ExplorationRate is < 0 or > 100)
-        {
-            throw new InvalidArgumentError("The ExplorationRate has to be in the range [0,100]");
-        }
         Evaluate(personNeeds, globalState);
         var needsAry = personNeeds.AsNormalizedArray();
         var globalStateAry = globalState.AsNormalizedArray();
@@ -148,16 +156,16 @@ public class PersonMind : IMind
 
         if (_lastPredictions.Count == CollectiveDecisionEvaluationDelay)
         {
-            var data = _lastPredictions.Dequeue();
+            var historicPrediction = _lastPredictions.Dequeue();
             wellBeingDelta =
                 ApplyIndividualistFactorOnGlobalStateValues(currentGlobalState.AsNormalizedArray()).Sum() -
-                data.NormalizedGlobalState.Sum();
+                historicPrediction.NormalizedGlobalState.Sum();
             wellBeingDelta /= GlobalStatesCount;
             _logger.Trace(wellBeingDelta > 0
                 ? "An action was good for the collective"
                 : "An action wasn't good for the collective");
             return;
-            FinalEvaluate(data, wellBeingDelta, 1 - _individualist);
+            FinalEvaluate(historicPrediction, wellBeingDelta, 1 - _individualist);
         }
     }
 
@@ -172,8 +180,8 @@ public class PersonMind : IMind
     /// needs and the second array the values of the global state</returns>
     private static NDArray GetInputArray(double[] needs, double[] globalState)
     {
-        var ary = new[] { globalState, needs }.Flatten().ToList()
-            .ConvertAll(it => (float)it)
+        var ary = globalState.concat(needs)
+            .Select(it => (float)it)
             .ToArray();
         return np.stack(new NDArray(ary, shape: ary.Length));
     }
@@ -235,11 +243,9 @@ public class PersonMind : IMind
 
     public double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)
     {
-        var global = globalState.AsNormalizedArray();
-        var personal = personNeeds.AsNormalizedArray();
-        var sum = ApplyIndividualistFactorOnPersonalNeedsValues(personal).Sum() +
-                  ApplyIndividualistFactorOnGlobalStateValues(global).Sum();
-        return sum / (personal.Length + global.Length);
+        var sum = ApplyIndividualistFactorOnPersonalNeedsValues(personNeeds.AsNormalizedArray()).Sum() +
+                  ApplyIndividualistFactorOnGlobalStateValues(globalState.AsNormalizedArray()).Sum();
+        return sum / (PersonalNeedsCount + GlobalStatesCount);
     }
 }
 

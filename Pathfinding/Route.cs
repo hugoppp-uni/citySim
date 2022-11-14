@@ -1,6 +1,9 @@
-using NesScripts.Controls.PathFind;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace CitySim.Backend.Util;
+namespace NesScripts.Controls.PathFind;
 
 public class PathFindingRoute
 {
@@ -10,7 +13,7 @@ public class PathFindingRoute
     private int _alreadyVisited;
     public bool Completed => _alreadyVisited == _path.Count;
 
-    public PathFindingRoute(List<PathFindingPoint> path)
+    internal PathFindingRoute(List<PathFindingPoint> path)
     {
         _path = path;
     }

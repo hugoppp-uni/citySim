@@ -197,8 +197,8 @@ namespace NesScripts.Controls.PathFind
             return null;
         }
 
-        public List<PathFindingPoint> FindPath(PathFindingPoint startPos,
-            PathFindingPoint targetPos, Pathfinding.DistanceType distance = Pathfinding.DistanceType.Euclidean,
+        public PathFindingRoute FindPath(PathFindingPoint startPos,
+            PathFindingPoint targetPos, Pathfinding.DistanceType distance = Pathfinding.DistanceType.Manhattan,
             bool ignorePrices = false) =>
             Pathfinding.FindPath(this, startPos, targetPos, distance, ignorePrices);
     }

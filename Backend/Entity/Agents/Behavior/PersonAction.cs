@@ -29,7 +29,7 @@ public record PersonAction(ActionType Type, Position TargetPosition, Person Pers
         {
             ActionType.Eat => Eat(Person, TargetPosition),
             ActionType.Sleep => Sleep(Person, TargetPosition),
-            ActionType.BuildHouse => throw new NotImplementedException(),
+            ActionType.BuildHouse => BuildHouse(Person, TargetPosition),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -52,5 +52,11 @@ public record PersonAction(ActionType Type, Position TargetPosition, Person Pers
         }
 
         return ActionResult.WaitingInQueue;
+    }
+
+    private ActionResult BuildHouse(Person person, Position targetPosition)
+    {
+        WorldLayer.Instance.InsertStructure(new House{Position = targetPosition});
+        return ActionResult.Executed;
     }
 }

@@ -13,30 +13,33 @@ using NesScripts.Controls.PathFind;
 
 namespace CitySim.Backend.World;
 
-public class WorldLayer : AbstractLayer, ISteppedActiveLayer
+public delegate void TwoPersonEventHandler(Person personA, Person personB);
+public class WorldLayer : AbstractLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
         new(20, 20, true) { IsDiscretizePosition = true };
 
     public const int XSize = 20;
     public const int YSize = 20;
-    public readonly BuildPositionEvaluator BuildPositionEvaluator;
+    public BuildPositionEvaluator BuildPositionEvaluator;
 
-    public readonly StructureCollection Structures = new(XSize, YSize);
-    private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
+    public readonly Grid2D<Structure> Structures = new(XSize, YSize);
     private readonly PathFindingGrid _pathFindingGrid;
-    
+
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
+    public static long CurrentTick => Instance.Context.CurrentTick;
+
+    public event TwoPersonEventHandler? PersonCellDivision;
 
     public WorldLayer()
     {
         Instance = this;
-        
+
+        float[,] pathFindingTileMap = new float[XSize, YSize];
         for (int i = 0; i < XSize; i++)
         for (int j = 0; j < YSize; j++)
-            _pathFindingTileMap[i, j] = 1; //walkable
-        _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
-        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
+            pathFindingTileMap[i, j] = 1; //walkable
+        _pathFindingGrid = new PathFindingGrid(pathFindingTileMap);
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -47,12 +50,10 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
 
         SpawnBuildings();
+        BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
+        BuildPositionEvaluator.EvaluateHousingScore();
 
         agentManager.Spawn<Person, WorldLayer>().ToList();
-
-
-        //todo this should be moved 
-        BuildPositionEvaluator.EvaluateHousingScore();
 
         return true;
     }
@@ -96,23 +97,30 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
     {
         int x = (int)structure.Position.X;
         int y = (int)structure.Position.Y;
-        if (structure.GetType() == typeof(Street))
-            _pathFindingTileMap[x, y] = 0.1f;
-        else
-            _pathFindingTileMap[x, y] = 100000;
         lock (_pathFindingGrid)
-            _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
+        {
+            if (structure.GetType() == typeof(Street))
+                _pathFindingGrid.nodes[x, y].price = 0.1f;
+            else
+                _pathFindingGrid.nodes[x, y].price = 100;
+        }
+
         GridEnvironment.Insert(structure);
         Structures.Add(structure);
     }
 
-    public PathFindingRoute FindRoute(Position position, Position plannedActionTargetPosition)
+    public PathFindingRoute FindRoute(Position position, Position destination)
+    {
+        return FindRoute(
+            (int)position.X, (int)position.Y,
+            (int)destination.X, (int)destination.Y
+        );
+    }
+
+    public PathFindingRoute FindRoute(int x, int y, int x1, int y1)
     {
         lock (_pathFindingGrid)
-            return new PathFindingRoute(_pathFindingGrid.FindPath(
-                new PathFindingPoint((int)position.X, (int)position.Y),
-                new PathFindingPoint((int)plannedActionTargetPosition.X, (int)plannedActionTargetPosition.Y),
-                Pathfinding.DistanceType.Manhattan));
+            return _pathFindingGrid.FindPath(new PathFindingPoint(x, y), new PathFindingPoint(x1, y1));
     }
 
 
@@ -123,21 +131,5 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
             Structures.OfType<House>().Count(),
             Structures.OfType<Restaurant>().Count()
         );
-    }
-
-    public void Tick()
-    {
-    }
-
-    public void PreTick()
-    {
-    }
-
-    public void PostTick()
-    {
-        foreach (var structure in Structures)
-        {
-            structure.PostTick();
-        }
     }
 }

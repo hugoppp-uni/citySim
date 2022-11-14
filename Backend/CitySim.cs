@@ -97,9 +97,9 @@ public class CitySim
         ModelWorker.StartAll();
         var watch = new Stopwatch();
         var task = Task.Run(() => Simulation.StartSimulation());
-        task.ContinueWith(_ =>
-        {
+        task = task.ContinueWith(state => { 
             ModelWorker.TerminateAll();
+            return state.Result;
         });
         watch.Start();
         return task;

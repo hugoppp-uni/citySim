@@ -117,10 +117,11 @@ namespace CitySim.Frontend
                 var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
                 const int padding = 10;
 
+                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
+                    bounds.width - 2 * padding, bounds.height - 2 * padding);
+
                 if (_personInfoView?.Person != _selectedPerson)
                 {
-                    var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
-                    bounds.width - 2 * padding, bounds.height - 2 * padding);
                     _personInfoView = new PersonInfoView(_selectedPerson, (0, 0), viewBounds);
                 }
 
@@ -128,6 +129,8 @@ namespace CitySim.Frontend
                     newHoveredElement = _personInfoView;
 
                 DrawRectangleRec(bounds, panelColor);
+
+                _personInfoView.ViewBounds = viewBounds;
 
                 _personInfoView.UpdateAndDraw(_hoveredElement == _personInfoView);
             }

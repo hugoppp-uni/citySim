@@ -20,7 +20,6 @@ var citySim = new CitySim.Backend.CitySim(
     personCount: 40,
     personMindBatchSize: 25,
     personMindLearningRate: 0.01f,
-    generateInsightInterval: 40,
     training: true
 )
 {

@@ -7,6 +7,7 @@ using Mars.Interfaces.Agents;
 using Mars.Interfaces.Annotations;
 using Mars.Interfaces.Environments;
 using Mars.Numerics;
+using NesScripts.Controls.PathFind;
 using NLog;
 
 namespace CitySim.Backend.Entity.Agents;
@@ -40,7 +41,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             home.FreeSpaces--;
             _recollection.Add(ActionType.Sleep, home.Position);
         }
-        _recollection.Add(ActionType.Eat , _worldLayer.Structures.OfType<Restaurant>().First().Position);
+
+        _recollection.Add(ActionType.Eat, _worldLayer.Structures.OfType<Restaurant>().First().Position);
     }
 
     public ActionType? GetNextAction()
@@ -81,11 +83,19 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private PersonAction PlanNextAction()
     {
         var nextActionType = _mind.GetNextActionType(Needs, _worldLayer.GetGlobalState());
-        Position? nearestActionPos = _recollection.ResolvePosition(nextActionType)
-            .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray));
-        if (nearestActionPos != null)
+
+        Position? GetPosition() => nextActionType switch
         {
-            return new PersonAction(nextActionType, nearestActionPos, this);
+            ActionType.BuildHouse => _worldLayer.BuildPositionEvaluator.GetNextBuildPos(),
+            _ => _recollection.ResolvePosition(nextActionType)
+                .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray))
+        };
+
+
+        var actionPosition = GetPosition();
+        if (actionPosition != null)
+        {
+            return new PersonAction(nextActionType, actionPosition, this);
         }
         else
         {

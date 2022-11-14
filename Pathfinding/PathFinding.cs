@@ -6,6 +6,7 @@
  * Since: 2016. 
 */
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NesScripts.Controls.PathFind
 {
@@ -43,21 +44,14 @@ namespace NesScripts.Controls.PathFind
         /// <param name="distance">The type of distance, Euclidean or Manhattan.</param>
         /// <param name="ignorePrices">If true, will ignore tile price (how much it "cost" to walk on).</param>
         /// <returns>List of points that represent the path to walk.</returns>
-		public static List<PathFindingPoint> FindPath(PathFindingGrid pathFindingGrid, PathFindingPoint startPos, PathFindingPoint targetPos, DistanceType distance = DistanceType.Euclidean, bool ignorePrices = false)
+		public static PathFindingRoute FindPath(PathFindingGrid pathFindingGrid, PathFindingPoint startPos, PathFindingPoint targetPos, DistanceType distance = DistanceType.Euclidean, bool ignorePrices = false)
         {
             // find path
             List<PathFindingNode> nodes_path = _ImpFindPath(pathFindingGrid, startPos, targetPos, distance, ignorePrices);
 
-            // convert to a list of points and return
-            List<PathFindingPoint> ret = new List<PathFindingPoint>();
-            if (nodes_path != null)
-            {
-                foreach (PathFindingNode node in nodes_path)
-                {
-                    ret.Add(new PathFindingPoint(node.gridX, node.gridY));
-                }
-            }
-            return ret;
+            return nodes_path == null
+                ? PathFindingRoute.CompletedRoute
+                : new PathFindingRoute(nodes_path.Select(node => new PathFindingPoint(node.gridX, node.gridY)).ToList());
         }
 
         /// <summary>

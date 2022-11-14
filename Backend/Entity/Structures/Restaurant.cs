@@ -20,21 +20,21 @@ public class Restaurant : Structure
 
     public bool TryEat(Person person)
     {
-        //lazy Tick
-        if (_lastTick != WorldLayer.Instance.Context.CurrentTick)
-        {
-            _lastTick = WorldLayer.Instance.Context.CurrentTick;
-            Tick();
-        }
-
-        if (_queuedForThisTick.Contains(person))
-            return true;
-
-        if (_queue.Contains(person)) //O(n)
-            return false;
-
         lock (this)
         {
+            //lazy Tick
+            if (_lastTick != WorldLayer.Instance.Context.CurrentTick)
+            {
+                _lastTick = WorldLayer.Instance.Context.CurrentTick;
+                Tick();
+            }
+
+            if (_queuedForThisTick.Contains(person))
+                return true;
+
+            if (_queue.Contains(person)) //O(n)
+                return false;
+
             if (_capacityLeft <= 0)
             {
                 _queue.Enqueue(person);
@@ -48,12 +48,15 @@ public class Restaurant : Structure
 
     private void Tick()
     {
-        _queuedForThisTick.Clear();
-        _capacityLeft = Math.Max(0, MaxCapacityPerTick - _queue.Count);
-        for (int i = 0; i < Math.Min(_queue.Count, MaxCapacityPerTick); i++)
+        lock (this)
         {
-            if (_queue.Count > 0)
-                _queuedForThisTick.Add(_queue.Dequeue());
+            _queuedForThisTick.Clear();
+            _capacityLeft = Math.Max(0, MaxCapacityPerTick - _queue.Count);
+            for (int i = 0; i < Math.Min(_queue.Count, MaxCapacityPerTick); i++)
+            {
+                if (_queue.Count > 0)
+                    _queuedForThisTick.Add(_queue.Dequeue());
+            }
         }
     }
 }

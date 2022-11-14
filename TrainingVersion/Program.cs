@@ -26,8 +26,8 @@ public class Program
         void OnConsoleOnCancelKeyPress(object? _, ConsoleCancelEventArgs e)
         {
             citySim.Abort();
-            iteration = iterationCount + 1; 
-            e.Cancel = citySim != null;
+            Console.WriteLine($"Iteration count now: {iteration}");
+            iteration = iterationCount + 1;
         }
         Binding.tf_output_redirect = TextWriter.Null;
         for (; iteration <= iterationCount; iteration++)
@@ -52,8 +52,9 @@ public class Program
                 }
             };
             _logger.Trace($"Prepare Iteration {iteration}");
+            var task = citySim.StartAsync();
             Console.CancelKeyPress += OnConsoleOnCancelKeyPress;
-            await citySim.StartAsync();
+            await task;
             Console.CancelKeyPress -= OnConsoleOnCancelKeyPress;
             _logger.Debug($"The training took in average {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration}");
         }

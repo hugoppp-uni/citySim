@@ -17,7 +17,7 @@ public class GlobalState
     public GlobalState(int people, int units, int restaurantCapacity)
     {
         Housing = units - people;
-        Housing = restaurantCapacity - people; 
+        Hunger = restaurantCapacity - people; 
     }
 
     /**

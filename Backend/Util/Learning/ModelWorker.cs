@@ -85,7 +85,7 @@ public class ModelWorker
     }
 
     private int _epoch = -1;
-    private void WorkOnModel()
+    private async void WorkOnModel()
     {
         _model = BuildModel(_configuration.UseCase, _configuration.WeightsFileToLoad, _configuration.LearningRate);
         while (!_cancellationToken.IsCancellationRequested || _taskQueue.Count != 0)
@@ -118,8 +118,8 @@ public class ModelWorker
                             if (_configuration.GenerateInsightsInterval != null && 
                                 _epoch % _configuration.GenerateInsightsInterval == 0)
                             {
-                                ModelVisualisation.SaveInsight(_model, 0.08m,
-                                    $"{_configuration.UseCase.ToString()}-Epoch {_epoch}");
+                                await ModelVisualisation.SaveInsight(_model, 0.08m,
+                                    $"{_configuration.UseCase.ToString()}-Epoch {_epoch}", _cancellationToken);
                             }
                             
                         }

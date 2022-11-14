@@ -6,7 +6,7 @@ using World;
 
 public interface IMind
 {
-    ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState);
+    ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances);
     double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState);
 }
 
@@ -21,7 +21,7 @@ public class MindMock : IMind
         i = individualFactor;
     }
 
-    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState)
+    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
     {
         return Enum.GetValues<ActionType>()[
             new[] { personNeeds.Sleepiness, personNeeds.Hunger}.ArgMin()];

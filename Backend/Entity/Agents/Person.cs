@@ -17,6 +17,7 @@ namespace CitySim.Backend.Entity.Agents;
 public class Person : IAgent<WorldLayer>, IPositionableEntity
 {
     public Guid ID { get; set; }
+    private const int ReproductionRate = 20;
     public Position Position { get; set; } = null!; //Init()
     private WorldLayer _worldLayer = null!; //Init()
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -86,7 +87,11 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private PersonAction PlanNextAction()
     {
-        var nextActionType = _mind.GetNextActionType(Needs, _worldLayer.GetGlobalState());
+        var nextActionType = _mind.GetNextActionType(
+            Needs,
+            _worldLayer.GetGlobalState(),
+            new Distances(this, _worldLayer)
+        );
         Position? nearestActionPos = _recollection.ResolvePosition(nextActionType)
             .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray));
         if (nearestActionPos != null)
@@ -131,8 +136,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         Needs.Tick();
         var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1)  * 50;// 0 to 100
         var reproductionRate = (generalNeed * Random.Shared.NextDouble()) + Random.Shared.Next(0, 30);
-
-        if (_tickAge > 0 && reproductionRate > 80)
+        
+        if (_tickAge > 0 && reproductionRate > 100 - ReproductionRate)
         {
             Reproduce();
         }

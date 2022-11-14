@@ -319,10 +319,10 @@ namespace CitySim.Frontend
                 if (IsRoad(cell_x, cell_y))
                 {
                     if (TryGetRoadConnectionTile(
+                        IsRoad(cell_x - 1, cell_y),
                         IsRoad(cell_x, cell_y + 1),
                         IsRoad(cell_x + 1, cell_y),
                         IsRoad(cell_x, cell_y - 1),
-                        IsRoad(cell_x - 1, cell_y),
                         out int tile))
                     {
                         DrawTerrainTile(tile, position2d);
@@ -338,8 +338,7 @@ namespace CitySim.Frontend
                 }
                 else if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(House))
                 {
-                    int stories = (int)Math.Round(3 + Math.Sin(cell_x + 3) + Math.Sin(cell_y + 3));
-                    DrawBuilding(position2d, cell_height, stories);
+                    DrawBuilding(position2d, cell_height, 1);
                 }
                 else
                 {

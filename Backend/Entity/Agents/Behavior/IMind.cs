@@ -23,8 +23,9 @@ public class MindMock : IMind
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
     {
-        return Enum.GetValues<ActionType>()[
-            new[] { personNeeds.Sleepiness, personNeeds.Hunger}.ArgMin()];
+        return Random.Shared.Next(5) == 0
+            ? ActionType.BuildHouse
+            : Enum.GetValues<ActionType>()[new[] { personNeeds.Sleepiness, personNeeds.Hunger }.ArgMin()];
     }
 
     public double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)

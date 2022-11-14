@@ -15,6 +15,8 @@ using NesScripts.Controls.PathFind;
 
 namespace CitySim.Backend.World;
 
+public delegate void TwoPersonEventHandler(Person personA, Person personB);
+
 public class WorldLayer : AbstractLayer, ISteppedActiveLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
@@ -29,6 +31,8 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
     private readonly PathFindingGrid _pathFindingGrid;
     
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
+
+    public event TwoPersonEventHandler? PersonCellDivision;
 
     public WorldLayer()
     {
@@ -135,11 +139,21 @@ public class WorldLayer : AbstractLayer, ISteppedActiveLayer
     {
     }
 
+    Random _rng = new Random();
+
     public void PostTick()
     {
         foreach (var structure in Structures)
         {
             structure.PostTick();
+        }
+
+        //just for testing, please remove once splitting is implemented in the backend
+        if (_rng.Next() < int.MaxValue / 4)
+        {
+            var persons = GridEnvironment.Entities.OfType<Person>().ToList();
+
+            PersonCellDivision?.Invoke(persons[_rng.Next(persons.Count - 1)], persons[_rng.Next(persons.Count - 1)]);
         }
     }
 }

@@ -191,7 +191,7 @@ namespace CitySim.Frontend
         {
             var pos = new Vector2(tileX + 0.5f, tileY + 0.5f);
 
-            return Vector2.Distance(pos, new Vector2(202, 40)) < 205;
+            return Vector2.Distance(pos, new Vector2(202, 40)) < 206;
         }
 
         private bool IsRoad(int tileX, int tileY) => _model.WorldLayer.Structures[tileX, tileY] is Street;

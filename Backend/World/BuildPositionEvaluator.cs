@@ -18,6 +18,8 @@ public class BuildPositionEvaluator
     public Safe2DArrayView<double> HousingScore => new(_housingScore);
 
     private long _lastEvalutedTick = 0;
+    
+    private readonly PathFindingGrid _pathFindingGrid;
 
 
     public BuildPositionEvaluator(Grid2D<Structure> structures)

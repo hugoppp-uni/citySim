@@ -20,12 +20,11 @@ public class WorldLayer : AbstractLayer
 
     public const int XSize = 20;
     public const int YSize = 20;
-    public readonly BuildPositionEvaluator BuildPositionEvaluator;
+    public BuildPositionEvaluator BuildPositionEvaluator;
 
     public readonly Grid2D<Structure> Structures = new(XSize, YSize);
-    private readonly float[,] _pathFindingTileMap = new float[XSize, YSize];
     private readonly PathFindingGrid _pathFindingGrid;
-    
+
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
     public static long CurrentTick => Instance.Context.CurrentTick;
 
@@ -33,10 +32,11 @@ public class WorldLayer : AbstractLayer
     {
         Instance = this;
 
+        float[,] pathFindingTileMap = new float[XSize, YSize];
         for (int i = 0; i < XSize; i++)
         for (int j = 0; j < YSize; j++)
-            _pathFindingTileMap[i, j] = 1; //walkable
-        _pathFindingGrid = new PathFindingGrid(_pathFindingTileMap);
+            pathFindingTileMap[i, j] = 1; //walkable
+        _pathFindingGrid = new PathFindingGrid(pathFindingTileMap);
         BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
     }
 
@@ -94,12 +94,14 @@ public class WorldLayer : AbstractLayer
     {
         int x = (int)structure.Position.X;
         int y = (int)structure.Position.Y;
-        if (structure.GetType() == typeof(Street))
-            _pathFindingTileMap[x, y] = 0.1f;
-        else
-            _pathFindingTileMap[x, y] = 100;
         lock (_pathFindingGrid)
-            _pathFindingGrid.UpdateGrid(_pathFindingTileMap);
+        {
+            if (structure.GetType() == typeof(Street))
+                _pathFindingGrid.nodes[x, y].price = 0.1f;
+            else
+                _pathFindingGrid.nodes[x, y].price = 100;
+        }
+
         GridEnvironment.Insert(structure);
         Structures.Add(structure);
     }

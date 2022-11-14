@@ -35,6 +35,8 @@ namespace CitySim.Frontend
 
     internal class WorldDrawer
     {
+        private record SplitAnim(Person PersonA, Person PersonB, double? StartTime);
+
         private enum Overlay
         {
             [System.ComponentModel.Description("Show Person Count")]
@@ -50,6 +52,9 @@ namespace CitySim.Frontend
         private const int TILE_RESTAURANT_BOTTOMLEFT = 4;
         private const int TILE_BUILDING_ROOF = 5;
         private const int TILE_GRASS_GROUND = 67;
+
+        private readonly List<SplitAnim> _splitAnimations = new();
+        private readonly HashSet<Person> _splittingPersons = new HashSet<Person>();
 
         private readonly Backend.CitySim _model;
         private readonly SpriteSheet _terrainSheet;
@@ -122,6 +127,14 @@ namespace CitySim.Frontend
 
             _overlayNames = Enum.GetValues<Overlay>().Select(x => x.GetDescription()).ToList();
             _overlaysEnabled = new bool[_overlayNames.Count];
+
+            List<Person> people = model.WorldLayer.GridEnvironment.Entities.OfType<Person>().ToList();
+
+            model.WorldLayer.PersonCellDivision += (a, b) =>
+            {
+                lock(_splitAnimations)
+                    _splitAnimations.Add(new(a, b, null));
+            };
         }
 
         public void ToggleOverlay(int overlay, bool enabled)
@@ -211,8 +224,7 @@ namespace CitySim.Frontend
 
 
             //color
-            int hash = person.GetHashCode();
-            col = ColorFromHSV((uint)hash % 360, 70, 100);
+            col = GetPersonColor(person);
 
             if (highlight is not null)
                 col = Tint(col, highlight.Value);
@@ -225,6 +237,14 @@ namespace CitySim.Frontend
                 col = Tint(col, highlight.Value);
 
             DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, col);
+        }
+
+        private static Color GetPersonColor(Person person)
+        {
+            Color col;
+            int hash = person.GetHashCode();
+            col = ColorFromHSV((uint)hash % 360, 70, 100);
+            return col;
         }
 
         private static bool HitTestPerson(Vector2 position2d, Vector2 hitPoint)
@@ -257,6 +277,32 @@ namespace CitySim.Frontend
 
         public void Draw(Camera2D camera, bool isHovered)
         {
+            double time = GetTime();
+
+            lock(_splitAnimations)
+            {
+                for (int i = _splitAnimations.Count - 1; i >= 0; i--)
+                {
+                    var anim = _splitAnimations[i];
+                    if (anim.StartTime + 1.6f < GetTime())
+                    {
+                        _splittingPersons.Remove(anim.PersonA);
+                        _splittingPersons.Remove(anim.PersonB);
+                        _splitAnimations.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (anim.StartTime is null &&
+                        !_splittingPersons.Contains(anim.PersonA) &&
+                        !_splittingPersons.Contains(anim.PersonB))
+                    {
+                        _splitAnimations[i] = _splitAnimations[i] with { StartTime = GetTime() };
+                        _splittingPersons.Add(anim.PersonA);
+                        _splittingPersons.Add(anim.PersonB);
+                    }
+                }
+            }
+
             Person? newHoveredPerson = null;
 
             var personsGroupedByCoord = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
@@ -306,13 +352,35 @@ namespace CitySim.Frontend
                 {
                     foreach (var person in persons)
                     {
+                        if(_splittingPersons.Contains(person))
+                            continue;
+
                         Vector2 _position2d = Grid.GetPosition2D(GetPersonPosition(person));
                         DrawPerson(person, _position2d, HoveredPerson == person ? BLUE : null);
 
                         if (HitTestPerson(_position2d, GetScreenToWorld2D(GetMousePosition(), camera)))
                             newHoveredPerson = person;
                     }
+                }
+            }
 
+            //Draw splitting persons
+            lock (_splitAnimations)
+            {
+                foreach (var (personA, personB, startTime) in _splitAnimations)
+                {
+                    if (startTime is null)
+                        continue;
+
+                    var posA = GetPersonPosition2D(personA);
+                    var posB = GetPersonPosition2D(personB);
+
+                    var colA = GetPersonColor(personA);
+                    var colB = GetPersonColor(personB);
+
+                    SplittingPersonDrawer.Draw((float)(time - startTime!) / 1.6f,
+                        posA, posA, WHITE, colA,
+                        posA, posB, WHITE, colB);
                 }
             }
 

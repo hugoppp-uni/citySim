@@ -14,6 +14,8 @@ namespace CitySim.Frontend
 {
     internal unsafe class CitySimView
     {
+        public event Action<Camera2D>? CameraChanged;
+
         private WorldDrawer _worldDrawer;
         private Camera2D _cam;
         private readonly Backend.CitySim _model;
@@ -139,6 +141,8 @@ namespace CitySim.Frontend
             }
         }
 
+        private Camera2D previousCamera = new Camera2D();
+
         public void UpdateAndDraw(int screenWidth, int screenHeight)
         {
             object? newHoveredElement = _worldDrawer;
@@ -201,6 +205,13 @@ namespace CitySim.Frontend
             DrawHud(screenWidth, screenHeight, ref newHoveredElement);
 
             _hoveredElement = newHoveredElement;
+
+            if (previousCamera.target != _cam.target || previousCamera.zoom != _cam.zoom)
+            {
+                CameraChanged?.Invoke(_cam);
+
+                previousCamera = _cam;
+            }
         }
     }
 }

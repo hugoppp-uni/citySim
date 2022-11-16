@@ -1,12 +1,39 @@
-﻿using CitySim.Frontend;
+﻿using CitySim.Backend;
+using CitySim.Frontend;
 using Raylib_CsLo;
+using System.Diagnostics;
 using System.Numerics;
+using System.Reflection;
 using System.Security.Policy;
 using static Raylib_CsLo.Raylib;
 
 Console.WriteLine("Hello, World!");
 
 
+Process? graphDebugProcess = null;
+
+if (args.Length > 0)
+{
+    GraphDebugProgram.Main(args);
+    return;
+}
+
+if (Debugger.IsAttached)
+{
+    graphDebugProcess = new Process();
+
+    graphDebugProcess.StartInfo.FileName = Environment.ProcessPath;
+    graphDebugProcess.StartInfo.Arguments = "Test";
+
+    graphDebugProcess.StartInfo.CreateNoWindow = false;
+    graphDebugProcess.StartInfo.UseShellExecute = false;
+
+    graphDebugProcess.StartInfo.RedirectStandardInput = true;
+    graphDebugProcess.StartInfo.RedirectStandardOutput = true;
+    graphDebugProcess.StartInfo.RedirectStandardError = true;
+
+    graphDebugProcess.Start();
+}
 //change simulation speed
 
 
@@ -45,7 +72,22 @@ Camera2D cam = new Camera2D()
 
 double startTime = GetTime();
 
-// Main game loop
+//register Debugger in Backend
+if(graphDebugProcess is not null)
+{
+    FrontendDebugger.Register(graphDebugProcess);
+
+
+    view.CameraChanged += (cam) =>
+    {
+        graphDebugProcess.StandardInput.WriteLine($"Cam {cam.target.X} {cam.target.Y} {cam.zoom}");
+    };
+}
+
+Vector2 previousWindowPos = new Vector2();
+int previousWindowWidth = 0;
+int previousWindowHeight = 0;
+
 while (!WindowShouldClose())
 {
     BeginDrawing();
@@ -57,7 +99,7 @@ while (!WindowShouldClose())
     float jumpProgress = Math.Clamp((float)time - 1.6f, 0, 0.4f) / 0.4f;
 
     float textFade = Math.Clamp((float)time - 1.8f, 0, 0.6f) / 0.6f;
-    
+
     float finalWipe = Math.Clamp((float)time - 2.4f, 0, 0.8f) / 0.8f;
 
 
@@ -111,7 +153,23 @@ while (!WindowShouldClose())
     EndScissorMode();
 
     EndDrawing();
+
+
+    //update bounds of graphDebugProcess
+    Vector2 win_pos = GetWindowPosition();
+    int win_width = GetScreenWidth();
+    int win_height = GetScreenHeight();
+
+    if(graphDebugProcess is not null && 
+        (previousWindowPos!=win_pos || previousWindowWidth!=win_width || previousWindowHeight != win_height))
+    {
+        graphDebugProcess.StandardInput.WriteLine($"Win {(int)win_pos.X} {(int)win_pos.Y} {win_width} {win_height}");
+        previousWindowPos = win_pos;
+        previousWindowWidth = win_width;
+        previousWindowHeight = win_height;
+    }
 }
+
 
 citySim.Abort();
 CloseWindow();

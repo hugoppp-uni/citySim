@@ -44,7 +44,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         lock (_worldLayer.Structures)
         {
             var home = _worldLayer.Structures.OfType<House>().First(house => house.FreeSpaces > 0);
-            home.FreeSpaces--;
+            home.AddInhabitant(this);
             _recollection.Add(ActionType.Sleep, home.Position);
         }
 

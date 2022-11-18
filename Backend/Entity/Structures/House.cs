@@ -4,13 +4,14 @@ namespace CitySim.Backend.Entity.Structures;
 
 public class House : Structure
 {
-    public int FreeSpaces { get; private set; } = 3;
+    public int FreeSpaces => MaxSpaces - _inhabitants.Count ;
+    public int MaxSpaces { get; private set; } = 3;
     private readonly List<Person> _inhabitants;
     public IReadOnlyList<Person> Inhabitants => _inhabitants;
 
     public House()
     {
-        _inhabitants = new List<Person>(FreeSpaces);
+        _inhabitants = new List<Person>(MaxSpaces);
     }
 
     public void AddInhabitant(Person p)

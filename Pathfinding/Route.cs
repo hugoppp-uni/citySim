@@ -13,6 +13,8 @@ public class PathFindingRoute
     private int _alreadyVisited;
     public bool Completed => _alreadyVisited == _path.Count;
 
+    public int Remaining => _path.Count - _alreadyVisited;
+
     internal PathFindingRoute(List<PathFindingPoint> path)
     {
         _path = path;

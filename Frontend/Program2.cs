@@ -1,6 +1,7 @@
 ﻿using Raylib_CsLo;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -20,6 +21,8 @@ namespace CitySim.Frontend
 
         public static void Main(string[] args)
         {
+            Process parent = Process.GetProcessById(int.Parse(args[0]));
+
             int i = 0;
 
             (int x, int y, int w, int h)? windowConfiguration = null;
@@ -33,7 +36,8 @@ namespace CitySim.Frontend
                     var line = Console.ReadLine();
 
                     var parts = line!.Split(' ');
-                    Console.WriteLine(parts);
+                    //Console.WriteLine($"RECIEVED--------{line}");
+
                     if (parts.Length > 0)
                     {
                         switch(parts[0])
@@ -58,6 +62,7 @@ namespace CitySim.Frontend
                                 break;
                             case "Clr":
                                 s_markerPoints.Clear();
+                                s_markerLines.Clear();
                                 break;
                             case "Pnt":
                                 s_markerPoints.Add(new DebugMarkerPoint(
@@ -117,13 +122,13 @@ namespace CitySim.Frontend
             flags |= ConfigFlags.FLAG_WINDOW_ALWAYS_RUN;
 
             SetConfigFlags(flags);
-            InitWindow(screenWidth, screenHeight, "CitySim");
+            InitWindow(screenWidth, screenHeight, "CitySim Debug Overlay");
 
             SetTargetFPS(15);
 
             IsoMetricGrid grid = new(128, 64, 32);
             
-            while (!WindowShouldClose())
+            while (!WindowShouldClose() && !parent.HasExited)
             {
                 cam.offset = new Vector2(GetScreenWidth(), GetScreenHeight()) / 2;
 

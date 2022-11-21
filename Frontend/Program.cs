@@ -23,7 +23,7 @@ if (Debugger.IsAttached)
     graphDebugProcess = new Process();
 
     graphDebugProcess.StartInfo.FileName = Environment.ProcessPath;
-    graphDebugProcess.StartInfo.Arguments = "Test";
+    graphDebugProcess.StartInfo.Arguments = Environment.ProcessId.ToString();
 
     graphDebugProcess.StartInfo.CreateNoWindow = false;
     graphDebugProcess.StartInfo.UseShellExecute = false;

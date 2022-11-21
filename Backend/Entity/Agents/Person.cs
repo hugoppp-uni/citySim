@@ -29,6 +29,11 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public PersonNeeds Needs { get; } = new();
 
+    public record struct PersonActionLog(PersonNeeds Needs, PersonAction Action);
+
+    private List<PersonActionLog> _actionLog = new();
+    public IReadOnlyList<PersonActionLog> ActionLog => _actionLog;
+
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
     [PropertyDescription] public string ModelWorkerKey { get; set; }
@@ -74,6 +79,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _plannedAction = PlanNextAction();
             if (_plannedAction is null) return;
+            
+            _actionLog.Add(new PersonActionLog {Action = _plannedAction, Needs = Needs});
             Route = _worldLayer.FindRoute(Position, _plannedAction.TargetPosition);
         }
 

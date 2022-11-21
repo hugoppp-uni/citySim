@@ -28,14 +28,19 @@ public class FixedUpdateLayer : AbstractLayer, ISteppedActiveLayer
             _logger.Debug(
                 $"############################### Tick: {Context.CurrentTick} ############################### ");
             _logger.Debug($"Current ticks per second: {SimulationController.TicksPerSecond:F1}");
+            if (SimulationController.Paused)
+            {
+                SimulationController.ContinueEvent.WaitOne();
+            }
             long msToWait =
-                Math.Max(0, Convert.ToInt64(GetCurrentTick() * SimulationController.MsPerTick - _stopwatch.ElapsedMilliseconds));
+                Math.Max(0, Convert.ToInt64(SimulationController.MsPerTick - _stopwatch.ElapsedMilliseconds));
             _logger.Debug($"CPU %: {(1 - msToWait / SimulationController.MsPerTick)*100}");
             if (msToWait > 0)
             {
                 _logger.Debug($"Waiting: {msToWait:F1}ms");
                 Task.Delay(TimeSpan.FromMilliseconds(msToWait)).Wait();
             }
+            _stopwatch.Restart();
         }
         else
         {

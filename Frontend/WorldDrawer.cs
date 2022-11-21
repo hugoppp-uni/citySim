@@ -44,7 +44,7 @@ namespace CitySim.Frontend
             [System.ComponentModel.Description("Show Grid Lines")]
             GRID_LINES,
             [System.ComponentModel.Description("Show Housing Score")]
-            HOUSING_SCORE
+            HOUSING_SCORE,
         }
 
         private const int TILE_BUILDING_FLOOR = 0;

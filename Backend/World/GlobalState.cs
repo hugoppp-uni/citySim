@@ -5,18 +5,13 @@ using System;
 
 public class GlobalState
 {
-    /// <summary>
-    /// Summand in the denominator to stretch the normalization curve
-    /// </summary>
-    [Range(1,10)]
-    private const double NormalizationStretch = 3;
     public int Hunger { get; }
     public int Housing { get;  }
 
     public GlobalState(int people, int units, int restaurantCapacity)
     {
-        Housing = units - people;
-        Hunger = restaurantCapacity - people; 
+        Housing = units/people;
+        Hunger = restaurantCapacity/people; 
     }
 
     /**
@@ -24,7 +19,7 @@ public class GlobalState
      */
     private static double Normalize(int x)
     {
-        return x  / (NormalizationStretch + Math.Abs(x));
+        return 1.66 * x * Math.Pow(Math.E, 0.5 * x * x );
     }
 
     /// <summary>

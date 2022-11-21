@@ -22,7 +22,7 @@ public class PersonMind : IMind
     private const int CollectiveDecisionEvaluationDelay = 10;
 
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
-    private static readonly int GlobalStatesCount = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+    private static readonly int GlobalStatesCount = new GlobalState(1, 1, 1).AsNormalizedArray().Length;
     private static int _explorationRate = 7;
     private readonly ModelWorker _modelWorker;
     private readonly Random _random = new(Random.Shared.Next());

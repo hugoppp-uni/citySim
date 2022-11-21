@@ -143,8 +143,11 @@ public class ModelWorker
         
         
 
-        if (_configuration.WeightsFileToSave != null)
+        if (_configuration.WeightsFileToSave != null && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
         {
+            if (!Directory.Exists(Path.GetDirectoryName(_configuration.WeightsFileToSave)) 
+                && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
+                Directory.CreateDirectory(Path.GetDirectoryName(_configuration.WeightsFileToSave)!);
             _model.save_weights(_configuration.WeightsFileToSave);
         }
         
@@ -159,7 +162,6 @@ public class ModelWorker
         }
         if (weightsFile != null)
         {
-            weightsFile = Path.GetFullPath(weightsFile);
             if (File.Exists(weightsFile))
             {
                 Console.WriteLine($"Using existing weight from {weightsFile}");

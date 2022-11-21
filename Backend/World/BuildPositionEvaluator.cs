@@ -76,10 +76,7 @@ public class BuildPositionEvaluator
 
     private Structure NearestRestaurant(double[] pos)
     {
-        return _structures.OfType<Restaurant>()
-            .OrderBy(restaurant => Distance.Manhattan(restaurant.Position.PositionArray, pos)).First();
-        //todo the nearest method does not respect the predicate. 
-        return _structures.Kd.Nearest(pos, 1, node => node.Value.GetType() == typeof(Restaurant))
+        return _structures.Kd.Nearest(pos, 1, node => node.Value is Restaurant)
                    .FirstOrDefault().Node?.Value ??
                throw new InvalidOperationException("There should be at least one restaurant on the map");
     }
@@ -96,13 +93,11 @@ public class BuildPositionEvaluator
 
             if (!WorldLayer.Instance.Structures.GetAdjecent(x, y).OfType<Street>().Any())
             {
-                var (x2, y2) = NearestRestaurant(new double[] { x, y }).Position.PositionArray;
-                (x2, y2) = WorldLayer.Instance.Structures.GetAdjecent((int)x2, (int)y2).OfType<Street>().First()
+                var (restX, restY) = NearestRestaurant(new double[] { x, y }).Position.PositionArray;
+                (restX, restY) = WorldLayer.Instance.Structures.GetAdjecent((int)restX, (int)restY).OfType<Street>().First()
                     .Position.PositionArray;
-                //todo this class should have its own pathfinder, this doesn't work as expected
-                PathFindingRoute streetRoute;
-                streetRoute = _pathFindingGrid.FindPath(new PathFindingPoint(x, y),
-                    new PathFindingPoint((int)x2, (int)y2));
+                var streetRoute = _pathFindingGrid.FindPath(new PathFindingPoint(x, y),
+                    new PathFindingPoint((int)restX, (int)restY));
 
                 BuildStreet(streetRoute);
             }

@@ -122,6 +122,17 @@ namespace CitySim.Frontend
                 {
                     _model.SimulationController.Paused = !_model.SimulationController.Paused;
                 }
+                if (_model.SimulationController.Paused)
+                {
+                    var oneStep = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 70, currentY, 50, 20),
+               "Step");
+                    if (oneStep)
+                    {
+                        _model.SimulationController.ContinueEvent.Set();
+                    }
+                }
+                currentY += 30;
+                
             }
 
             if (_selectedPerson is not null)

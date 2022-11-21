@@ -109,6 +109,19 @@ namespace CitySim.Frontend
 
                     currentY += 50;
                 }
+                GuiLabel(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20),
+                    "Ticks per second");
+                currentY += 30;
+                _model.SimulationController.TicksPerSecond = (int) Math.Floor(Math.Pow(2,GuiSlider(
+                    new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20), "",
+                    _model.SimulationController.TicksPerSecond.ToString(), (float)Math.Log2(_model.SimulationController.TicksPerSecond),0,10)));
+                currentY += 30;
+                var pausedClicked = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, 50, 20),
+                    _model.SimulationController.Paused ? "Continue" :"Pause");
+                if (pausedClicked)
+                {
+                    _model.SimulationController.Paused = !_model.SimulationController.Paused;
+                }
             }
 
             if (_selectedPerson is not null)

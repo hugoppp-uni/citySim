@@ -246,6 +246,18 @@ public class PersonMind : IMind
                   ApplyIndividualistFactorOnGlobalStateValues(globalState.AsNormalizedArray()).Sum();
         return sum / (PersonalNeedsCount + GlobalStatesCount);
     }
+
+    public void LearnFromDeath(ActionType neededActionToSurvive)
+    {
+        var prediction = _lastIndividualPrediction!;
+        var expectedAry = new float[Enum.GetValues<ActionType>().Length];
+        expectedAry[(int)neededActionToSurvive] = 1;
+        var newExpected = new NDArray(expectedAry);
+        newExpected = np.stack(newExpected);
+        var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState, prediction.Distances),
+            newExpected);
+        _modelWorker.Queue(task);
+    }
 }
 
 internal record PredictionData(double[] NormalizedGlobalState, double[] NormalizedNeeds, double[] Distances, NDArray Output,

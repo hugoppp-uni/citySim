@@ -54,6 +54,11 @@ namespace CitySim.Backend
             s_debugger!.StandardInput.WriteLine(message);
         }
 
+        public static void AddMarkerLine(Position positionA, Position positionB,
+            float thickness, RGBAColor color) =>
+            AddMarkerLine(new Position3D((float)positionA.X, (float)positionA.Y),
+                new Position3D((float)positionB.X, (float)positionB.Y), thickness, color);
+
         public static void AddMarkerLine(Position3D positionA, Position3D positionB,
             float thickness, RGBAColor color)
         {

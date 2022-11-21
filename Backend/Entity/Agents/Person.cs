@@ -63,9 +63,6 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             //return value is false if the agent died, hacky for now
             return;
 
-        var personsInVicinity = _worldLayer.GridEnvironment
-            .Explore(Position, 2, predicate: person => person.ID != ID);
-
         if (_plannedAction is null)
         {
             _plannedAction = PlanNextAction();

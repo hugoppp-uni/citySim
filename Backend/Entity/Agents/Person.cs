@@ -1,4 +1,4 @@
-﻿using CitySim.Backend.Entity.Agents.Behavior;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using CitySim.Backend.Util.Learning;
@@ -46,7 +46,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
                 _worldLayer.FindRoute(it.Position, Position).Remaining)
                 .First(house => house.FreeSpaces > 0);
-            home.FreeSpaces--;
+            home.AddInhabitant(this);
             _recollection.Add(ActionType.Sleep, home.Position);
         }
 

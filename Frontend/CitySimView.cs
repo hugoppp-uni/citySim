@@ -21,6 +21,7 @@ namespace CitySim.Frontend
         private object? _dragStartElement = null;
 
         private PersonInfoView? _personInfoView;
+        private HouseInfoView? _houseInfoView;
 
         public CitySimView(Backend.CitySim model)
         {
@@ -135,6 +136,30 @@ namespace CitySim.Frontend
                 _personInfoView.ViewBounds = viewBounds;
 
                 _personInfoView.UpdateAndDraw(_hoveredElement == _personInfoView);
+            }
+
+            if (_selectedEntity is House selectedHouse)
+            {
+                //Selected person info panel
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
+                const int padding = 10;
+
+                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
+                    bounds.width - 2 * padding, bounds.height - 2 * padding);
+
+                if (_houseInfoView?.House != _selectedEntity)
+                {
+                    _houseInfoView = new HouseInfoView(selectedHouse, (0, 0), viewBounds);
+                }
+
+                if (CheckCollisionPointRec(mousePos, bounds))
+                    newHoveredElement = _houseInfoView;
+
+                DrawRectangleRec(bounds, panelColor);
+
+                _houseInfoView.ViewBounds = viewBounds;
+
+                _houseInfoView.UpdateAndDraw(_hoveredElement == _houseInfoView);
             }
         }
 

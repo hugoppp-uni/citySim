@@ -1,22 +1,23 @@
 using System.Collections;
 using CircularBuffer;
+using CitySim.Backend.Entity.Agents;
 
 namespace CitySim.Backend.World;
 
-public readonly record struct EventLogEntry(string Log, long tick);
+public readonly record struct EventLogEntry(string Log, Person Person, long Tick);
 
 public class EventLog
 {
     public const int Capacity = 10;
     private readonly CircularBuffer<EventLogEntry> _buffer = new(Capacity);
 
-    public void Log(string log)
+    public void Log(string log, Person person)
     {
         lock (_buffer)
-            _buffer.PushFront(new EventLogEntry(log, WorldLayer.CurrentTick));
+            _buffer.PushFront(new EventLogEntry(log, person, WorldLayer.CurrentTick));
     }
 
-    public void WriteToArray(EventLogEntry[] arr)
+    public int WriteToArray(EventLogEntry[] arr)
     {
         int i = 0;
         lock (_buffer)
@@ -26,5 +27,7 @@ public class EventLog
                 arr[i++] = eventLogEntry;
             }
         }
+
+        return i;
     }
 }

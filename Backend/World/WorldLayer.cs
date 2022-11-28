@@ -26,6 +26,7 @@ public class WorldLayer : AbstractLayer
     public readonly Grid2D<Structure> Structures = new(XSize, YSize);
     private readonly PathFindingGrid _pathFindingGrid;
     public readonly EventLog EventLog = new();
+    public readonly Names Names = new();
 
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
     public static long CurrentTick => Instance.Context.CurrentTick;

@@ -18,22 +18,28 @@ namespace CitySim.Backend.Entity.Agents;
 public class Person : IAgent<WorldLayer>, IPositionableEntity
 {
     public Guid ID { get; set; }
-    private const int ReproductionRate = 20;
+    private const int ReproductionRate = 2;
     public Position Position { get; set; } = null!; //Init()
     private WorldLayer _worldLayer = null!; //Init()
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     private IMind _mind = null!;
     private readonly PersonRecollection _recollection = new();
-    public List<Action> onKill = new();
+    private readonly List<Action> _onKill = new();
 
     public PersonNeeds Needs { get; } = new();
 
+    public readonly string Name;
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
     [PropertyDescription] public string ModelWorkerKey { get; set; }
 
     private int _tickAge = 0;
+
+    public Person()
+    {
+        Name = WorldLayer.Instance.Names.GetRandom();
+    }
 
     public void Init(WorldLayer layer)
     {
@@ -58,7 +64,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         }
         catch (Exception e)
         {
-            _logger.Fatal("Agent crashed", e);
+            _logger.Fatal("Agent crashed:" + Environment.NewLine + "{e}", e);
             throw;
         }
     }
@@ -125,7 +131,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
                     return null;
 
                 home.AddInhabitant(this);
-                onKill.Add(() => home.RemoveInhabitant(this));
+                _onKill.Add(() => home.RemoveInhabitant(this));
                 _recollection.Add(ActionType.Sleep, home.Position);
                 return new PersonAction(ActionType.Sleep, home.Position, this);
             }
@@ -141,7 +147,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _mind.LearnFromDeath(ActionType.Eat);
             Kill();
-            WorldLayer.Instance.EventLog.Log($"{ID} DIED of starvation");
+            WorldLayer.Instance.EventLog.Log($"DIED of starvation", this);
             return false;
         }
 
@@ -149,7 +155,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _mind.LearnFromDeath(ActionType.Sleep);
             Kill();
-            WorldLayer.Instance.EventLog.Log($"{ID} DIED of sleepiness");
+            WorldLayer.Instance.EventLog.Log($"DIED of sleepiness", this);
             return false;
         }
 
@@ -160,7 +166,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private void Kill()
     {
         _worldLayer.Kill(this);
-        onKill.ForEach(action => action.Invoke());
+        _onKill.ForEach(action => action.Invoke());
     }
 
     private void ReproductionNeeds()
@@ -177,7 +183,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private void Reproduce()
     {
-        WorldLayer.Instance.EventLog.Log($"{ID} reproduced");
+        WorldLayer.Instance.EventLog.Log($"reproduced", this);
         Person child = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
         child.Position = Position.Copy();
         _worldLayer.InvokePersonReproduceHandler(this, child);

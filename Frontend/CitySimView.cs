@@ -198,15 +198,19 @@ namespace CitySim.Frontend
 
         private void DrawEventLog()
         {
-            WorldLayer.Instance.EventLog.WriteToArray(_eventLog);
+            int n = WorldLayer.Instance.EventLog.WriteToArray(_eventLog);
 
-            for (var index = 0; index < _eventLog.Length; index++)
+            for (var index = 0; index < n; index++)
             {
                 var eventLogEntry = _eventLog[index];
                 const int showEventsInLastNTicks = 5;
-                if (eventLogEntry.tick < WorldLayer.CurrentTick - showEventsInLastNTicks)
+                if (eventLogEntry.Tick < WorldLayer.CurrentTick - showEventsInLastNTicks)
                     break;
-                DrawText(eventLogEntry.Log, 30, index * 16 + 55, 14, new Color(255, 255, 255, 255));
+
+                var color = WorldDrawer.GetPersonColor(eventLogEntry.Person);
+                DrawText(eventLogEntry.Person.Name + ": " + eventLogEntry.Log,
+                    30, index * 16 + 55, 14,
+                    color);
             }
         }
 

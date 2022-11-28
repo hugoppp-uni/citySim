@@ -25,11 +25,12 @@ public class WorldLayer : AbstractLayer
 
     public readonly Grid2D<Structure> Structures = new(XSize, YSize);
     private readonly PathFindingGrid _pathFindingGrid;
+    public readonly EventLog EventLog = new();
 
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
     public static long CurrentTick => Instance.Context.CurrentTick;
 
-    public event TwoPersonEventHandler? PersonCellDivision;
+    public event TwoPersonEventHandler? ReproduceEventHandler;
 
     public WorldLayer()
     {
@@ -133,10 +134,8 @@ public class WorldLayer : AbstractLayer
         );
     }
 
-    public void CellDevision(Person p1, Person p2)
+    public void InvokePersonReproduceHandler(Person p1, Person p2)
     {
-        var persons = GridEnvironment.Entities.OfType<Person>().ToList();
-
-        PersonCellDivision?.Invoke(p1, p2);
+        ReproduceEventHandler?.Invoke(p1, p2);
     }
 }

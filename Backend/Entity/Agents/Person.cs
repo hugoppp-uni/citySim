@@ -141,7 +141,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _mind.LearnFromDeath(ActionType.Eat);
             Kill();
-            _logger.Trace($"{ID} DIED of starvation");
+            WorldLayer.Instance.EventLog.Log($"{ID} DIED of starvation");
             return false;
         }
 
@@ -149,7 +149,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _mind.LearnFromDeath(ActionType.Sleep);
             Kill();
-            _logger.Trace($"{ID} DIED of sleepiness");
+            WorldLayer.Instance.EventLog.Log($"{ID} DIED of sleepiness");
             return false;
         }
 
@@ -177,10 +177,9 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private void Reproduce()
     {
-        _logger.Trace($"{ID} ZELLTEILUNG");
-        Position position = this.Position.Copy();
-        Person p = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
-        p.Position = position;
-        _worldLayer.CellDevision(this, p);
+        WorldLayer.Instance.EventLog.Log($"{ID} reproduced");
+        Person child = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
+        child.Position = Position.Copy();
+        _worldLayer.InvokePersonReproduceHandler(this, child);
     }
 }

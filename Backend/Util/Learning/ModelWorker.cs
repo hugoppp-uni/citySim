@@ -182,7 +182,7 @@ public class ModelWorker
     private static Model BuildPersonActionModel(float learningRate)
     {
         var layers = new LayersApi();
-        var lenght = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+        var lenght = new GlobalState(1,1,1).AsNormalizedArray().Length;
         lenght += new PersonNeeds().AsNormalizedArray().Length;
         lenght += Distances.Count;
         var actions = new ActionType[Enum.GetValues(typeof(ActionType)).Length];

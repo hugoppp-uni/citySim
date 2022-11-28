@@ -10,13 +10,18 @@ namespace CitySim.Backend.Entity.Structures;
 //restriction: tickets must always be turned in in the tick in which they are valid (action can't be skipped)
 public class Restaurant : Structure
 {
-    private const int MaxCapacityPerTick = 1;
-    private int _capacityLeft = MaxCapacityPerTick;
+    public int MaxCapacityPerTick { get; private set; }= 1;
+    private int _capacityLeft;
 
     private Queue<Person> _queue = new();
     private HashSet<Person> _queuedForThisTick = new();
 
     private long _lastTick;
+
+    public Restaurant()
+    {
+        _capacityLeft = MaxCapacityPerTick;
+    }
 
     public bool TryEat(Person person)
     {

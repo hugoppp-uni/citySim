@@ -44,7 +44,7 @@ namespace CitySim.Frontend
             [System.ComponentModel.Description("Show Grid Lines")]
             GRID_LINES,
             [System.ComponentModel.Description("Show Housing Score")]
-            HOUSING_SCORE
+            HOUSING_SCORE,
         }
 
         private const int TILE_BUILDING_FLOOR = 0;
@@ -84,6 +84,7 @@ namespace CitySim.Frontend
             {0b_1001, 126},
             {0b_1100, 127},
         };
+        private const int Stories = 1;
 
         private static bool TryGetRoadConnectionTile(bool topLeft, bool topRight, bool bottomRight, bool bottomLeft, out int tile)
         {
@@ -108,7 +109,7 @@ namespace CitySim.Frontend
 
         public IsoMetricGrid Grid { get; }
 
-        public Person? HoveredPerson { get; private set; }
+        public IPositionableEntity? HoveredEntity { get; private set; }
 
         public IReadOnlyList<string> OverlayNames => _overlayNames;
 
@@ -239,7 +240,7 @@ namespace CitySim.Frontend
             DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, col);
         }
 
-        private static Color GetPersonColor(Person person)
+        public static Color GetPersonColor(Person person)
         {
             Color col;
             int hash = person.GetHashCode();
@@ -261,6 +262,8 @@ namespace CitySim.Frontend
             return isHitHead || isHitBody;
         }
 
+        public static float GetHouseBlockHeight() => Stories+1.1f;
+
         private void DrawBuilding(Vector2 position2d, float cell_height, int stories)
         {
             DrawBuildingTile(TILE_BUILDING_GROUND, position2d);
@@ -275,11 +278,102 @@ namespace CitySim.Frontend
                     cell_height * (2.3f + stories)));
         }
 
+        private void DrawBuildingBoundingBox(Vector2 position2d, float cell_height, int stories)
+        {
+            unsafe
+            {
+                var buildingTopCenter = position2d - new Vector2(0, cell_height * (stories+1));
+
+                var up = new Vector2(0, -Grid.DiagSpanY / 2);
+                var down = new Vector2(0, Grid.DiagSpanY / 2);
+                var left = new Vector2(-Grid.DiagSpanX / 2, 0);
+                var right = new Vector2(Grid.DiagSpanX / 2, 0);
+
+                {
+                    var points = stackalloc Vector2[]
+                    {
+                        buildingTopCenter + right,
+                        buildingTopCenter + down,
+                        buildingTopCenter + left,
+                        buildingTopCenter + up,
+                        buildingTopCenter + right,
+                    };
+
+                    DrawLineStrip(points, 5, WHITE);
+                }
+
+                {
+                    var points = stackalloc Vector2[]
+                    {
+                        buildingTopCenter + down,
+                        buildingTopCenter + right,
+
+                        position2d + right,
+                        position2d + down,
+
+                        buildingTopCenter + down,
+                    };
+
+                    DrawLineStrip(points, 5, WHITE);
+                }
+
+                {
+                    var points = stackalloc Vector2[]
+                    {
+                        buildingTopCenter + left,
+                        buildingTopCenter + down,
+
+                        position2d + down,
+                        position2d + left,
+                        buildingTopCenter + left,
+                    };
+
+                    DrawLineStrip(points, 5, WHITE);
+                }
+            }
+        }
+
+        private bool HitTestBuildingBoundingBox(Vector2 position2d, float cell_height, int stories, Vector2 hitPoint)
+        {
+            bool hovered = false;
+
+            var buildingTopCenter = position2d - new Vector2(0, cell_height * (stories + 1));
+
+            var up = new Vector2(0, -Grid.DiagSpanY / 2);
+            var down = new Vector2(0, Grid.DiagSpanY / 2);
+            var left = new Vector2(-Grid.DiagSpanX / 2, 0);
+            var right = new Vector2(Grid.DiagSpanX / 2, 0);
+
+            hovered |= Util.IsPointInQuad(hitPoint,
+                buildingTopCenter + right,
+                buildingTopCenter + down,
+                buildingTopCenter + left,
+                buildingTopCenter + up);
+                
+            hovered |= Util.IsPointInQuad(hitPoint,
+                buildingTopCenter + down,
+                buildingTopCenter + right,
+
+                position2d + right,
+                position2d + down);
+
+            hovered |= Util.IsPointInQuad(hitPoint,
+                buildingTopCenter + left,
+                buildingTopCenter + down,
+
+                position2d + down,
+                position2d + left);
+
+            return hovered;
+        }
+
         public void Draw(Camera2D camera, bool isHovered)
         {
             double time = GetTime();
 
-            lock(_splitAnimations)
+            var hitPoint = GetScreenToWorld2D(GetMousePosition(), camera);
+
+            lock (_splitAnimations)
             {
                 for (int i = _splitAnimations.Count - 1; i >= 0; i--)
                 {
@@ -303,7 +397,7 @@ namespace CitySim.Frontend
                 }
             }
 
-            Person? newHoveredPerson = null;
+            IPositionableEntity? newHoveredEntity = null;
 
             var personsGroupedByCoord = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>()
                 .GroupBy(p => (p.Position.X, p.Position.Y))
@@ -332,13 +426,19 @@ namespace CitySim.Frontend
                         DrawTerrainTile(67, position2d);
                     }
                 }
-                else if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(Restaurant))
+                else if (_model.WorldLayer.Structures[cell_x, cell_y] is Restaurant)
                 {
                     DrawBuildingTile(TILE_RESTAURANT_BOTTOMLEFT, position2d);
                 }
-                else if (_model.WorldLayer.Structures[cell_x, cell_y]?.GetType() == typeof(House))
+                else if (_model.WorldLayer.Structures[cell_x, cell_y] is House house)
                 {
-                    DrawBuilding(position2d, cell_height, 1);
+                    DrawBuilding(position2d, cell_height, Stories);
+
+                    if(HoveredEntity == house)
+                        DrawBuildingBoundingBox(position2d, cell_height, Stories);
+
+                    if (HitTestBuildingBoundingBox(position2d, cell_height, Stories, hitPoint))
+                        newHoveredEntity = house;
                 }
                 else
                 {
@@ -355,10 +455,10 @@ namespace CitySim.Frontend
                             continue;
 
                         Vector2 _position2d = Grid.GetPosition2D(GetPersonPosition(person));
-                        DrawPerson(person, _position2d, HoveredPerson == person ? BLUE : null);
+                        DrawPerson(person, _position2d, HoveredEntity == person ? BLUE : null);
 
-                        if (HitTestPerson(_position2d, GetScreenToWorld2D(GetMousePosition(), camera)))
-                            newHoveredPerson = person;
+                        if (HitTestPerson(_position2d, hitPoint))
+                            newHoveredEntity = person;
                     }
                 }
             }
@@ -386,14 +486,14 @@ namespace CitySim.Frontend
             DrawOverlays(camera, personsGroupedByCoord);
 
             if (!isHovered)
-                newHoveredPerson = null;
+                newHoveredEntity = null;
 
-            if (newHoveredPerson is null)
+            if (newHoveredEntity is null)
                 SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
             else
                 SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
 
-            HoveredPerson = newHoveredPerson;
+            HoveredEntity = newHoveredEntity;
         }
 
         private void DrawOverlays(Camera2D camera, Dictionary<(double X, double Y), IGrouping<(double X, double Y), Person>> personsGroupedByCoord)
@@ -437,7 +537,7 @@ namespace CitySim.Frontend
                 foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
                 {
                     var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
-                    if (d is null || _model.WorldLayer.Structures[cell_x, cell_y] is not null)
+                    if (d is null or double.NegativeInfinity)
                         continue;
 
                     var val = (float)d.Value;

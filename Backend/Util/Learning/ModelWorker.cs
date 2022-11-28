@@ -160,7 +160,14 @@ public class ModelWorker
         }
         if (weightsFile != null)
         {
-            model.load_weights(weightsFile);
+            if (File.Exists(weightsFile))
+            {
+                model.load_weights(weightsFile);
+            }
+            else
+            {
+                Console.WriteLine("No weights file found, beginning with new weights");
+            }
         }
         return model;
     }

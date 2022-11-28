@@ -4,6 +4,8 @@ using static Raylib_CsLo.Raylib;
 using static Raylib_CsLo.RayGui;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Util.Learning;
+using CitySim.Backend.Entity.Structures;
+using CitySim.Backend.Entity;
 
 namespace CitySim.Frontend
 {
@@ -13,12 +15,13 @@ namespace CitySim.Frontend
         private Camera2D _cam;
         private readonly Backend.CitySim _model;
 
-        private Person? _selectedPerson = null;
+        private IPositionableEntity? _selectedEntity = null;
 
         private object? _hoveredElement = null;
         private object? _dragStartElement = null;
 
         private PersonInfoView? _personInfoView;
+        private HouseInfoView? _houseInfoView;
 
         public CitySimView(Backend.CitySim model)
         {
@@ -49,10 +52,10 @@ namespace CitySim.Frontend
 
         private void HandleClick()
         {
-            if (_worldDrawer.HoveredPerson is not null)
-                _selectedPerson = _worldDrawer.HoveredPerson;
-            else
-                _selectedPerson = null;
+            _selectedEntity = null;
+
+            if (_worldDrawer.HoveredEntity is not null)
+                _selectedEntity = _worldDrawer.HoveredEntity;
         }
 
         private void DrawHud(int screenWidth, int screenHeight, ref object? newHoveredElement)
@@ -109,9 +112,33 @@ namespace CitySim.Frontend
 
                     currentY += 50;
                 }
+                GuiLabel(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20),
+                    "Ticks per second");
+                currentY += 30;
+                _model.SimulationController.TicksPerSecond = (int) Math.Floor(Math.Pow(2,GuiSlider(
+                    new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20), "",
+                    _model.SimulationController.TicksPerSecond.ToString(), (float)Math.Log2(_model.SimulationController.TicksPerSecond),0,10)));
+                currentY += 30;
+                var pausedClicked = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, 50, 20),
+                    _model.SimulationController.Paused ? "Continue" :"Pause");
+                if (pausedClicked)
+                {
+                    _model.SimulationController.Paused = !_model.SimulationController.Paused;
+                }
+                if (_model.SimulationController.Paused)
+                {
+                    var oneStep = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 70, currentY, 50, 20),
+               "Step");
+                    if (oneStep)
+                    {
+                        _model.SimulationController.ContinueEvent.Set();
+                    }
+                }
+                currentY += 30;
+                
             }
 
-            if (_selectedPerson is not null)
+            if (_selectedEntity is Person selectedPerson)
             {
                 //Selected person info panel
                 var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
@@ -120,9 +147,9 @@ namespace CitySim.Frontend
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
-                if (_personInfoView?.Person != _selectedPerson)
+                if (_personInfoView?.Person != _selectedEntity)
                 {
-                    _personInfoView = new PersonInfoView(_selectedPerson, (0, 0), viewBounds);
+                    _personInfoView = new PersonInfoView(selectedPerson, (0, 0), viewBounds);
                 }
 
                 if (CheckCollisionPointRec(mousePos, bounds))
@@ -133,6 +160,30 @@ namespace CitySim.Frontend
                 _personInfoView.ViewBounds = viewBounds;
 
                 _personInfoView.UpdateAndDraw(_hoveredElement == _personInfoView);
+            }
+
+            if (_selectedEntity is House selectedHouse)
+            {
+                //Selected person info panel
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
+                const int padding = 10;
+
+                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
+                    bounds.width - 2 * padding, bounds.height - 2 * padding);
+
+                if (_houseInfoView?.House != _selectedEntity)
+                {
+                    _houseInfoView = new HouseInfoView(selectedHouse, (0, 0), viewBounds);
+                }
+
+                if (CheckCollisionPointRec(mousePos, bounds))
+                    newHoveredElement = _houseInfoView;
+
+                DrawRectangleRec(bounds, panelColor);
+
+                _houseInfoView.ViewBounds = viewBounds;
+
+                _houseInfoView.UpdateAndDraw(_hoveredElement == _houseInfoView);
             }
         }
 
@@ -165,12 +216,12 @@ namespace CitySim.Frontend
             if (clicked)
                 HandleClick();
 
-            if (_selectedPerson is not null)
+            if (_selectedEntity is Person selectedPerson)
             {
                 //draw indicator (animated arrow, pointing down to and hovering over the selected person)
 
                 var pos = GetWorldToScreen2D(
-                    _worldDrawer.GetPersonPosition2D(_selectedPerson),
+                    _worldDrawer.GetPersonPosition2D(selectedPerson),
                     _cam) + new Vector2(0, -WorldDrawer.GetPersonVisualHeight(_cam));
 
                 pos.Y += -20 +(float)Math.Sin(GetTime()*2) * 10;
@@ -182,6 +233,39 @@ namespace CitySim.Frontend
                 DrawTriangle(
                     _pos+new Vector2( 15, -20),
                     _pos+new Vector2(-15, -20),
+                    _pos,
+                    new Color(0, 0, 0, 150)
+                    );
+                _pos = pos;
+                DrawTriangle(
+                    _pos + new Vector2(15, -20),
+                    _pos + new Vector2(-15, -20),
+                    _pos,
+                    col
+                    );
+            }
+
+            if (_selectedEntity is House selectedHouse)
+            {
+                //draw indicator (animated arrow, pointing down to and hovering over the selected person)
+
+                var pos = GetWorldToScreen2D(
+                    _worldDrawer.Grid.GetPosition2D(new Vector3(
+                        (float)selectedHouse.Position.X,
+                        (float)selectedHouse.Position.Y,
+                        WorldDrawer.GetHouseBlockHeight()
+                        )),
+                    _cam);
+
+                pos.Y += -20 + (float)Math.Sin(GetTime() * 2) * 10;
+
+                var col = ColorFromHSV(160 - (float)Math.Sin(GetTime() * 2) * 10, 1, 1);
+
+
+                var _pos = pos + new Vector2(2, 2);
+                DrawTriangle(
+                    _pos + new Vector2(15, -20),
+                    _pos + new Vector2(-15, -20),
                     _pos,
                     new Color(0, 0, 0, 150)
                     );

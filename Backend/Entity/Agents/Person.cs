@@ -18,7 +18,7 @@ namespace CitySim.Backend.Entity.Agents;
 public class Person : IAgent<WorldLayer>, IPositionableEntity
 {
     public Guid ID { get; set; }
-    private const int ReproductionRate = 20;
+    private const int ReproductionRate = 2;
     public Position Position { get; set; } = null!; //Init()
     private WorldLayer _worldLayer = null!; //Init()
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -167,9 +167,9 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         Needs.Tick();
         var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1) * 50; // 0 to 100
-        var reproductionRate = (generalNeed * Random.Shared.NextDouble()) + Random.Shared.Next(0, 30);
+        var reproductionRate = generalNeed * Random.Shared.NextDouble() + Random.Shared.Next(0, 20);
 
-        if (_tickAge > 0 && reproductionRate > 100 - ReproductionRate)
+        if (_tickAge > 10 && reproductionRate > 100 - ReproductionRate)
         {
             Reproduce();
         }

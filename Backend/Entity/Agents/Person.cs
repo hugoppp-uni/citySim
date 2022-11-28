@@ -52,7 +52,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         _mind = new PersonMind(0.5, ModelWorker.GetInstance(ModelWorkerKey));
         _worldLayer = layer;
-        Position = _worldLayer.RandomPosition();
+        Position = _worldLayer.RandomBuildingPosition();
         _worldLayer.GridEnvironment.Insert(this);
 
         _recollection.Add(ActionType.Eat, _worldLayer.Structures.OfType<Restaurant>().First().Position);

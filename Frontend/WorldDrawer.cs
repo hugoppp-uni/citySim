@@ -132,7 +132,7 @@ namespace CitySim.Frontend
 
             List<Person> people = model.WorldLayer.GridEnvironment.Entities.OfType<Person>().ToList();
 
-            model.WorldLayer.PersonCellDivision += (a, b) =>
+            model.WorldLayer.ReproduceEventHandler += (a, b) =>
             {
                 lock(_splitAnimations)
                     _splitAnimations.Add(new(a, b, null));

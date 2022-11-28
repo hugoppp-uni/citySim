@@ -1,4 +1,5 @@
-﻿using CitySim.Backend.Entity;
+﻿using System.Text;
+using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using Raylib_CsLo;
 
@@ -14,6 +15,7 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
             Person = person;
         }
 
+        private readonly Person.PersonActionLog[] _actionLog = new Person.PersonActionLog[20];
         public Person Person { get; }
 
         public IPositionableEntity Entity => Person;
@@ -21,16 +23,18 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
         public void UpdateAndDraw(bool isHovered)
         {
             Update(isHovered);
+            int logLength = Person.GetActionLog(_actionLog);
+            StringBuilder builder = new StringBuilder();
+            for (var i = 0; i < logLength; i++)
+            {
+                builder.Append("Decided to ");
+                builder.Append(_actionLog[i].Action.Type.ToString());
+                builder.Append(" with the stats: ");
+                builder.Append(_actionLog[i].Needs);
+                builder.Append('\n');
+            }
 
-            string infoText = @"
-Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime mollitia,
-molestiae quas vel sint commodi repudiandae consequuntur voluptatum laborum
-numquam blanditiis harum quisquam eius sed odit fugiat iusto fuga praesentium
-optio, eaque rerum! Provident similique accusantium nemo autem. Veritatis
-obcaecati tenetur iure eius earum ut molestias architecto voluptate aliquam
-nihil, eveniet aliquid culpa officia aut! Impedit sit sunt quaerat, odit,
-tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
-
+            var actionLog = builder.ToString();
             {
                 //Draw (and layout)
 
@@ -48,21 +52,20 @@ tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
                 {
                     DrawTextEx(font, text, new(x, y), fontSize, fontSize / font.baseSize, color);
                     var size = MeasureTextEx(font, text, fontSize, fontSize / font.baseSize);
-                    maxWidth = Math.Max(maxWidth, x + size.X - startX);
-
+                    
                     y += size.Y;
                 }
 
                 Font font = GetFontDefault();
 
 
-                Text(font, 30, x, "Info about Person\n", WHITE);
+                Text(font, 30, x, $"Info about {Person.Name}\n", WHITE);
 
                 Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
                 Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger, 2)}", GREEN);
                 Text(font, 20, x, $"Sleepiness: {Math.Round(Person.Needs.Sleepiness, 2)}", GREEN);
 
-                Text(font, 20, x, infoText, new Color(200, 200, 200, 255));
+                Text(font, 14, x, actionLog, new Color(200,200,200,255));
 
 
                 EndScissorMode();

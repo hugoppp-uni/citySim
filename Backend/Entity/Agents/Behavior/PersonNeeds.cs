@@ -32,4 +32,9 @@ public record PersonNeeds
     {
         return x * 2 - 1;
     }
+
+    public override string ToString()
+    {
+        return $"Hunger: {Hunger:F2}\tSleepiness: {Sleepiness:F2}\tMoney: {Money:F2}";
+    }
 }

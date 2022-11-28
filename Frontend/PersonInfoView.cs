@@ -53,7 +53,7 @@ tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
                 Font font = GetFontDefault();
 
 
-                Text(font, 30, x, "Info about Person\n", WHITE);
+                Text(font, 30, x, $"Info about {Person.Name}\n", WHITE);
 
                 Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
                 Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger,2)}", GREEN);

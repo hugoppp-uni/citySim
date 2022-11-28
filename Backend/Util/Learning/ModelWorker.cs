@@ -26,7 +26,7 @@ public class ModelWorker
     private readonly List<NDArray> _trainingBatchExpected = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
-    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly  ModelWorkerConfiguration _configuration;
     private int _fitCalls = 0;
     public long AverageFitDuration { get; private set; }
@@ -44,7 +44,7 @@ public class ModelWorker
         {
             if (Monitor.IsEntered(task))
             {
-                _logger.Warn("Training should not be waited for");
+                Logger.Warn("Training should not be waited for");
             }
         }
         else
@@ -143,7 +143,7 @@ public class ModelWorker
         
         
 
-        if (_configuration.WeightsFileToSave != null && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
+        if (_configuration.WeightsFileToSave != null)
         {
             if (!Directory.Exists(Path.GetDirectoryName(_configuration.WeightsFileToSave)) 
                 && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
@@ -164,9 +164,7 @@ public class ModelWorker
         {
             if (File.Exists(weightsFile))
             {
-                Console.WriteLine($"Using existing weight from {weightsFile}");
                 model.load_weights(weightsFile);
-                Console.WriteLine("Weights loaded");
             }
             else
             {

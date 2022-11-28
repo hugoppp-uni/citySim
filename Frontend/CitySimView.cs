@@ -90,6 +90,8 @@ namespace CitySim.Frontend
             DrawFPS(10, 10);
             DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
                 10, 25,15, WHITE);
+            DrawText($"Current tick: {_model.WorldLayer.GetCurrentTick()}", 10, screenHeight - 16, 
+                16, WHITE);
             DrawStats(screenWidth, screenHeight);
 
             {

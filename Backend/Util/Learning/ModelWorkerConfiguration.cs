@@ -16,15 +16,25 @@ public class ModelWorkerConfiguration
     /// The model to be used by the worker
     /// </summary>
     public ModelUseCase UseCase { get; }
+
     /// <summary>
     /// The filename to load a weights file for the model
     /// </summary>
-    public string? WeightsFileToLoad { get; set; } = null;
+    public string? WeightsFileToLoad
+    {
+        get => weightsFileToLoad;
+        set => weightsFileToLoad = value == null ? value : Path.GetFullPath(value);
+    }
+
     /// <summary>
     /// The file to save the model to. If set, the model gets saved even if <see cref="Training"/> is set to false
     /// </summary>
-    public string? WeightsFileToSave { get; set; } = null;
-    
+    public string? WeightsFileToSave
+    {
+        get => weightsFileToSave;
+        set => weightsFileToSave = value == null ? value : Path.GetFullPath(value);
+    }
+
     /// <summary>
     /// The batch size of a training. Training Tasks are collected until enough data was collected 
     /// </summary>
@@ -44,4 +54,7 @@ public class ModelWorkerConfiguration
     /// If set, data will be generated to visualize the outputs based on all inputs every x epoch
     /// </summary>
     public int? GenerateInsightsInterval = null;
+
+    private string? weightsFileToLoad = null;
+    private string? weightsFileToSave = null;
 }

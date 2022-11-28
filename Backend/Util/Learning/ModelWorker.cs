@@ -92,8 +92,7 @@ public class ModelWorker
         {
             try
             {
-                ModelTask task;
-                task = _cancellationToken.IsCancellationRequested ?
+                var task = _cancellationToken.IsCancellationRequested ?
                     _taskQueue.RemoveFirst() : _taskQueue.Dequeue(_cancellationToken);
                 if (task.Output.size != 0)
                 {
@@ -144,8 +143,11 @@ public class ModelWorker
         
         
 
-        if (_configuration.WeightsFileToSave != null)
+        if (_configuration.WeightsFileToSave != null && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
         {
+            if (!Directory.Exists(Path.GetDirectoryName(_configuration.WeightsFileToSave)) 
+                && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
+                Directory.CreateDirectory(Path.GetDirectoryName(_configuration.WeightsFileToSave)!);
             _model.save_weights(_configuration.WeightsFileToSave);
         }
         
@@ -162,10 +164,15 @@ public class ModelWorker
         {
             if (File.Exists(weightsFile))
             {
+                Console.WriteLine($"Using existing weight from {weightsFile}");
                 model.load_weights(weightsFile);
+                Console.WriteLine("Weights loaded");
             }
             else
             {
+                var dir = Path.GetDirectoryName(weightsFile);
+                if (dir != null && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
                 Console.WriteLine("No weights file found, beginning with new weights");
             }
         }

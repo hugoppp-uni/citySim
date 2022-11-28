@@ -1,20 +1,22 @@
-﻿using CitySim.Backend.Entity.Agents;
+﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Structures;
 using Raylib_CsLo;
 
 using static Raylib_CsLo.Raylib;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.HUD.EntityInfoViews
 {
-    internal class HouseInfoView : ScrollView
+    internal class RestaurantInfoView : ScrollView, IEntityInfoView
     {
-        public HouseInfoView(House house, (float width, float height) scrollBounds, Rectangle viewBounds)
+        public RestaurantInfoView(Restaurant restaurant, (float width, float height) scrollBounds, Rectangle viewBounds)
             : base(scrollBounds, viewBounds)
         {
-            House = house;
+            Restaurant = restaurant;
         }
 
-        public House House { get; }
+        public Restaurant Restaurant { get; }
+
+        public IPositionableEntity Entity => Restaurant;
 
         public void UpdateAndDraw(bool isHovered)
         {
@@ -45,25 +47,27 @@ namespace CitySim.Frontend
                 Font font = GetFontDefault();
 
 
-                Text(font, 30, x, "Info about House\n", WHITE);
+                Text(font, 30, x, "Info about Restaurant\n", WHITE);
 
-                Text(font, 25, x, $"Inhabitants", LIGHTGRAY);
+                Text(font, 25, x, $"Length of Queue: {Restaurant.Queue.Count}", LIGHTGRAY);
+                Text(font, 25, x, "Queue:", LIGHTGRAY);
 
+                    var iter = Restaurant.Queue.GetEnumerator();
 
-                for (int i = 0; i < House.MaxSpaces; i++)
-                {
-                    DrawRectangleRec(new(x, y, 20, 40),
-                        new Color(50, 50, 50, 150));
-
-                    if (i<House.Inhabitants.Count)
+                    for (int i = 0; i < Restaurant.Queue.Count; i++)
                     {
-                        var person = House.Inhabitants[i];
-                        var color = WorldDrawer.GetPersonColor(person);
-                        DrawRectangleRec(new(x, y, 20, 20), WHITE);
-                        DrawRectangleRec(new(x, y + 20, 20, 20), color);
+                        DrawRectangleRec(new(x, y, 20, 40),
+                            new Color(50, 50, 50, 150));
+
+                        if (iter.MoveNext())
+                        {
+                            var person = iter.Current;
+                            var color = WorldDrawer.GetPersonColor(person);
+                            DrawRectangleRec(new(x, y, 20, 20), WHITE);
+                            DrawRectangleRec(new(x, y + 20, 20, 20), color);
+                        }
+                        x += 30;
                     }
-                    x += 30;
-                }
 
                 y += 50;
 

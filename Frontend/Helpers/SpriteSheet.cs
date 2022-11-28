@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.Helpers
 {
     [XmlRoot("TextureAtlas")]
     public class SpriteSheetXML
@@ -54,7 +54,7 @@ namespace CitySim.Frontend
             Rectangle sourceRect = _rects[name];
 
             Raylib.DrawTexturePro(_texture, sourceRect,
-                new Rectangle(position.X, position.Y, sourceRect.width, sourceRect.height), 
+                new Rectangle(position.X, position.Y, sourceRect.width, sourceRect.height),
                 Vector2.Zero, 0, Raylib.WHITE);
         }
 
@@ -74,7 +74,7 @@ namespace CitySim.Frontend
                 new Rectangle(entry.X, entry.Y, entry.Width, entry.Height)
             )).ToArray();
 
-            return new SpriteSheet(Raylib.LoadTexture(pngFileName) , rects!);
+            return new SpriteSheet(Raylib.LoadTexture(pngFileName), rects!);
         }
     }
 }

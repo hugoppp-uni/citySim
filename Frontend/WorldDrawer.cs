@@ -1,5 +1,5 @@
 ﻿using Raylib_CsLo;
-using static CitySim.Frontend.RaylibExtensions;
+using static CitySim.Frontend.Helpers.RaylibExtensions;
 using static Raylib_CsLo.Raylib;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ using CitySim.Backend.Entity;
 using System.Reflection;
 using CitySim.Backend.Entity.Structures;
 using static ServiceStack.Script.Lisp;
+using CitySim.Frontend.Helpers;
 
 namespace CitySim.Frontend
 {
@@ -426,9 +427,15 @@ namespace CitySim.Frontend
                         DrawTerrainTile(67, position2d);
                     }
                 }
-                else if (_model.WorldLayer.Structures[cell_x, cell_y] is Restaurant)
+                else if (_model.WorldLayer.Structures[cell_x, cell_y] is Restaurant restaurant)
                 {
                     DrawBuildingTile(TILE_RESTAURANT_BOTTOMLEFT, position2d);
+
+                    if (HoveredEntity == restaurant)
+                        DrawBuildingBoundingBox(position2d, cell_height, 0);
+
+                    if (HitTestBuildingBoundingBox(position2d, cell_height, 0, hitPoint))
+                        newHoveredEntity = restaurant;
                 }
                 else if (_model.WorldLayer.Structures[cell_x, cell_y] is House house)
                 {

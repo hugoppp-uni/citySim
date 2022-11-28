@@ -46,6 +46,8 @@ namespace CitySim.Frontend
             GRID_LINES,
             [System.ComponentModel.Description("Show Housing Score")]
             HOUSING_SCORE,
+            [System.ComponentModel.Description("Show House Occupancy")]
+            HOUSE_OCCUPANCY,
         }
 
         private const int TILE_BUILDING_FLOOR = 0;
@@ -570,6 +572,19 @@ namespace CitySim.Frontend
 
                         DrawTriangleStrip(points, 4, co);
                     }
+                }
+            }
+
+            if (_overlaysEnabled[(int)Overlay.HOUSE_OCCUPANCY])
+            {
+                foreach (var house in _model.WorldLayer.GridEnvironment.Entities.OfType<House>())
+                {
+                    Vector2 pos = GetEntityPosition2D(house);
+
+                    DrawCircleV(pos, 30, LIGHTGRAY);
+                    DrawCircleSector(pos, 30, MathF.PI,
+                        MathF.PI + (MathF.Tau * house.Inhabitants.Count) / house.MaxSpaces, 
+                        16, SKYBLUE);
                 }
             }
         }

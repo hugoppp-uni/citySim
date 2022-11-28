@@ -49,14 +49,9 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
 
                 Text(font, 30, x, "Info about Restaurant\n", WHITE);
 
-                Text(font, 25, x, $"Queue", LIGHTGRAY);
+                Text(font, 25, x, $"Length of Queue: {Restaurant.Queue.Count}", LIGHTGRAY);
+                Text(font, 25, x, "Queue:", LIGHTGRAY);
 
-                if (Restaurant.Queue.Count == 0)
-                {
-                    Text(font, 25, x, "Emtpy", GRAY);
-                }
-                else
-                {
                     var iter = Restaurant.Queue.GetEnumerator();
 
                     for (int i = 0; i < Restaurant.Queue.Count; i++)
@@ -73,7 +68,6 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
                         }
                         x += 30;
                     }
-                }
 
                 y += 50;
 

@@ -72,6 +72,10 @@ public class WorldLayer : AbstractLayer
         var random = RandomHelper.Random;
         return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
     }
+    public Position RandomBuildingPosition()
+    {
+        return Structures.Skip(Random.Shared.Next(Structures.Count - 1)).First().Position;
+    }
 
     private void SpawnBuildings()
     {

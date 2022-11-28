@@ -1,6 +1,5 @@
 ﻿using CitySim.Frontend;
 using CitySim.Frontend.Helpers;
-using CitySim.Frontend.HUD;
 using Raylib_CsLo;
 using System.Numerics;
 using static Raylib_CsLo.Raylib;

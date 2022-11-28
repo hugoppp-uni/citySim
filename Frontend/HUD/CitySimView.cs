@@ -155,6 +155,7 @@ namespace CitySim.Frontend
                     {
                         Person x     => new PersonInfoView(    x, (0, 0), viewBounds),
                         House x      => new HouseInfoView(     x, (0, 0), viewBounds),
+                        Restaurant x => new RestaurantInfoView(x, (0, 0), viewBounds),
                         _ => null
                     };
                 }

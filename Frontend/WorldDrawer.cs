@@ -427,9 +427,15 @@ namespace CitySim.Frontend
                         DrawTerrainTile(67, position2d);
                     }
                 }
-                else if (_model.WorldLayer.Structures[cell_x, cell_y] is Restaurant)
+                else if (_model.WorldLayer.Structures[cell_x, cell_y] is Restaurant restaurant)
                 {
                     DrawBuildingTile(TILE_RESTAURANT_BOTTOMLEFT, position2d);
+
+                    if (HoveredEntity == restaurant)
+                        DrawBuildingBoundingBox(position2d, cell_height, 0);
+
+                    if (HitTestBuildingBoundingBox(position2d, cell_height, 0, hitPoint))
+                        newHoveredEntity = restaurant;
                 }
                 else if (_model.WorldLayer.Structures[cell_x, cell_y] is House house)
                 {

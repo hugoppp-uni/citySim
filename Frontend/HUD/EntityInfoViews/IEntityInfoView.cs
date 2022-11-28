@@ -1,10 +1,10 @@
-﻿using Mars.Interfaces.Agents;
+﻿using CitySim.Backend.Entity;
 
 namespace CitySim.Frontend.HUD.EntityInfoViews
 {
     internal interface IEntityInfoView : IScrollView
     {
-        public IEntity Entity { get; }
+        public IPositionableEntity Entity { get; }
 
         void UpdateAndDraw(bool isHovered);
     }

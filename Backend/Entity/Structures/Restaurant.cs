@@ -61,10 +61,10 @@ public class Restaurant : Structure
             _capacityLeft = Math.Max(0, MaxCapacityPerTick - _queue.Count);
             while(_queue.Count > 0 && _queuedForThisTick.Count < MaxCapacityPerTick)
             {
-                var person = _queue.Dequeue();
-                if (person.IsAlive)
+                 
+                if (_queue.TryDequeue(out var person) && person.IsAlive)
                 {
-                    _queuedForThisTick.Add(_queue.Dequeue());
+                    _queuedForThisTick.Add(person);
                 }
             }
         }

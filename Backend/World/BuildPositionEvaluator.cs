@@ -44,13 +44,18 @@ public class BuildPositionEvaluator
     public void EvaluateHousingScore()
     {
         _lastEvalutedTick = WorldLayer.CurrentTick;
-
+        _housingScoreBuffer.Clear();
+        var structuesAt = new List<(int, int)>();
         for (int x = 0; x < _structures.XSize; x++)
         for (int y = 0; y < _structures.YSize; y++)
         {
             var structure = _structures[x, y];
-            if (structure is not null)
+            var oldValue = _housingScore[x, y];
+            if (structure is not null || double.IsNegativeInfinity(oldValue))
+            {
+                structuesAt.Add((x,y));
                 continue;
+            }
 
             var targetPosition = new double[] { x, y };
 
@@ -69,6 +74,11 @@ public class BuildPositionEvaluator
         _housingScoreBuffer = _housingScoreBuffer.Subtract(min);
         var max = _housingScoreBuffer.Max();
         _housingScoreBuffer = _housingScoreBuffer.Divide(max);
+        for (var i = 0; i < structuesAt.Count; i++)
+        {
+            _housingScoreBuffer[structuesAt[i].Item1, structuesAt[i].Item2] = double.NegativeInfinity;
+        }
+        
 
         Buffer.BlockCopy(_housingScoreBuffer, 0, _housingScore, 0,
             sizeof(double) * _housingScore.GetLength(0) * _housingScore.GetLength(1));
@@ -89,7 +99,7 @@ public class BuildPositionEvaluator
                 EvaluateHousingScore();
 
             var (x, y) = _housingScore.ArgMax();
-            _housingScore[x, y] = 0;
+            _housingScore[x, y] = double.NegativeInfinity;
 
             if (!WorldLayer.Instance.Structures.GetAdjecent(x, y).OfType<Street>().Any())
             {

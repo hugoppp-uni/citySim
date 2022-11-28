@@ -26,7 +26,7 @@ public class ModelWorker
     private readonly List<NDArray> _trainingBatchExpected = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
-    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly  ModelWorkerConfiguration _configuration;
     private int _fitCalls = 0;
     public long AverageFitDuration { get; private set; }
@@ -44,7 +44,7 @@ public class ModelWorker
         {
             if (Monitor.IsEntered(task))
             {
-                _logger.Warn("Training should not be waited for");
+                Logger.Warn("Training should not be waited for");
             }
         }
         else
@@ -92,8 +92,7 @@ public class ModelWorker
         {
             try
             {
-                ModelTask task;
-                task = _cancellationToken.IsCancellationRequested ?
+                var task = _cancellationToken.IsCancellationRequested ?
                     _taskQueue.RemoveFirst() : _taskQueue.Dequeue(_cancellationToken);
                 if (task.Output.size != 0)
                 {
@@ -129,7 +128,7 @@ public class ModelWorker
                 {
                     Monitor.Enter(task);
                     task.Output = _model.predict(task.Input)[0].numpy()[0];
-                    _logger.Trace($"The input {task.Input.JoinDataToString()} generated the" +
+                    Logger.Trace($"The input {task.Input.JoinDataToString()} generated the" +
                                   $" prediction {task.Output.JoinDataToString()} in epoch {_epoch}");
                     Monitor.Pulse(task);
                     Monitor.Exit(task);
@@ -144,8 +143,11 @@ public class ModelWorker
         
         
 
-        if (_configuration.WeightsFileToSave != null)
+        if (_configuration.WeightsFileToSave != null && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
         {
+            if (!Directory.Exists(Path.GetDirectoryName(_configuration.WeightsFileToSave)) 
+                && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
+                Directory.CreateDirectory(Path.GetDirectoryName(_configuration.WeightsFileToSave)!);
             _model.save_weights(_configuration.WeightsFileToSave);
         }
         
@@ -162,11 +164,16 @@ public class ModelWorker
         {
             if (File.Exists(weightsFile))
             {
+                Logger.Warn($"Using existing weight from {weightsFile}");
                 model.load_weights(weightsFile);
+                Logger.Warn("Weights loaded");
             }
             else
             {
-                Console.WriteLine("No weights file found, beginning with new weights");
+                var dir = Path.GetDirectoryName(weightsFile);
+                if (dir != null && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                Logger.Warn("No weights file found, beginning with new weights");
             }
         }
         return model;
@@ -175,7 +182,7 @@ public class ModelWorker
     private static Model BuildPersonActionModel(float learningRate)
     {
         var layers = new LayersApi();
-        var lenght = new GlobalState(0, 0, 0).AsNormalizedArray().Length;
+        var lenght = new GlobalState(1,1,1).AsNormalizedArray().Length;
         lenght += new PersonNeeds().AsNormalizedArray().Length;
         lenght += Distances.Count;
         var actions = new ActionType[Enum.GetValues(typeof(ActionType)).Length];
@@ -183,7 +190,6 @@ public class ModelWorker
         var dense = layers.Dense(lenght, activation: "relu").Apply(inLayer);
         var output = layers.Dense(actions.Length, activation: "softmax").Apply(dense);
         var model = keras.Model(inLayer, output);
-        model.summary();
         model.compile(
             optimizer: keras.optimizers.SGD(learningRate),
             loss: keras.losses.CategoricalCrossentropy(from_logits: true),

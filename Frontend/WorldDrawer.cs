@@ -544,7 +544,7 @@ namespace CitySim.Frontend
                 foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
                 {
                     var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
-                    if (d is null || _model.WorldLayer.Structures[cell_x, cell_y] is not null)
+                    if (d is null or double.NegativeInfinity)
                         continue;
 
                     var val = (float)d.Value;

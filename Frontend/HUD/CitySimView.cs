@@ -13,12 +13,13 @@ namespace CitySim.Frontend
 {
     internal unsafe class CitySimView
     {
-        private WorldDrawer _worldDrawer;
+        private readonly WorldDrawer _worldDrawer;
         private Camera2D _cam;
         private readonly Backend.CitySim _model;
+        private readonly Font _defaultFont;
 
         private IPositionableEntity? _selectedEntity = null;
-
+        private const int OPTIONS_PANEL_WIDTH = 210;
         private object? _hoveredElement = null;
         private object? _dragStartElement = null;
 
@@ -26,6 +27,7 @@ namespace CitySim.Frontend
 
         public CitySimView(Backend.CitySim model)
         {
+            _defaultFont = LoadFont(Path.Combine("Assets", "arial.ttf"));
             _worldDrawer = new WorldDrawer(model);
 
             _cam = new()
@@ -59,11 +61,37 @@ namespace CitySim.Frontend
                 _selectedEntity = _worldDrawer.HoveredEntity;
         }
 
+        private void DrawStats(int screenWidth, int screenHeight)
+        {
+            var personCount = _model.WorldLayer.GridEnvironment.Entities.OfType<Person>().Count();
+            var statesWidth = 150;
+            var x = screenWidth - OPTIONS_PANEL_WIDTH - statesWidth;
+            var y = 10;
+            var houses = _model.WorldLayer.Structures.OfType<House>().Sum(house => house.MaxSpaces);
+            var restaurants = _model.WorldLayer.Structures.OfType<Restaurant>()
+                .Sum(restaurant => restaurant.MaxCapacityPerTick);
+            DrawText( $"Person: {personCount}", x, y, 16, WHITE);
+            DrawText( $"Housing capacity: {houses}", x, y + 20, 16, WHITE);
+            DrawText( $"Restaurants: {restaurants}", x, y + 40, 16, WHITE);
+        }
+        
+        
+        private void DrawText( string text,
+            int posX,
+            int posY,
+            int fontSize,
+            Color color)
+        {
+            DrawTextEx(_defaultFont, text, new Vector2{ X = posX, Y = posY },
+                fontSize, 1, color);
+        }
+
         private void DrawHud(int screenWidth, int screenHeight, ref object? newHoveredElement)
         {
             DrawFPS(10, 10);
             DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
-                10, 25,15, BLACK);
+                10, 25,15, WHITE);
+            DrawStats(screenWidth, screenHeight);
 
             {
                 //Title
@@ -75,7 +103,7 @@ namespace CitySim.Frontend
                     60, RAYWHITE);
             }
 
-            int optionsPanelWidth = 210;
+           
             int infoPanelHeight = 300;
 
             Color panelColor = new Color(0, 0, 0, 100);
@@ -86,7 +114,7 @@ namespace CitySim.Frontend
                 //Options panel
                 
                 
-                int left = screenWidth - optionsPanelWidth;
+                int left = screenWidth - OPTIONS_PANEL_WIDTH;
                 int top = 0;
                 int right = screenWidth;
                 int bottom = screenHeight;
@@ -106,21 +134,21 @@ namespace CitySim.Frontend
                     bool enabled = _worldDrawer.IsOverlayEnabled(i);
 
                     enabled = GuiCheckBox(
-                        new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, 20, 20),
+                        new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 10, currentY, 20, 20),
                         _worldDrawer.OverlayNames[i], enabled);
 
                     _worldDrawer.ToggleOverlay(i, enabled);
 
                     currentY += 50;
                 }
-                GuiLabel(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20),
+                GuiLabel(new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 10, currentY, OPTIONS_PANEL_WIDTH - 30, 20),
                     "Ticks per second");
                 currentY += 30;
                 _model.SimulationController.TicksPerSecond = (int) Math.Floor(Math.Pow(2,GuiSlider(
-                    new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20), "",
+                    new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 10, currentY, OPTIONS_PANEL_WIDTH - 30, 20), "",
                     _model.SimulationController.TicksPerSecond.ToString(), (float)Math.Log2(_model.SimulationController.TicksPerSecond),0,10)));
                 currentY += 30;
-                var pausedClicked = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, 50, 20),
+                var pausedClicked = GuiButton(new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 10, currentY, 50, 20),
                     _model.SimulationController.Paused ? "Continue" :"Pause");
                 if (pausedClicked)
                 {
@@ -128,7 +156,7 @@ namespace CitySim.Frontend
                 }
                 if (_model.SimulationController.Paused)
                 {
-                    var oneStep = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 70, currentY, 50, 20),
+                    var oneStep = GuiButton(new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 70, currentY, 50, 20),
                "Step");
                     if (oneStep)
                     {
@@ -142,7 +170,7 @@ namespace CitySim.Frontend
             if(_selectedEntity is not null)
             {
                 //Selected entity info panel
-                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - OPTIONS_PANEL_WIDTH + 2, infoPanelHeight);
                 const int padding = 10;
 
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,

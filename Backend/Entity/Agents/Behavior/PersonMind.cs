@@ -164,8 +164,8 @@ public class PersonMind : IMind
                 historicPrediction.NormalizedGlobalState.Sum();
             wellBeingDelta /= GlobalStatesCount;
             _logger.Trace(wellBeingDelta > 0
-                ? "An action was good for the collective"
-                : "An action wasn't good for the collective");
+                ? $"Action {_lastIndividualPrediction.SelectedActionIndex} was good for the collective with a delta of {wellBeingDelta}"
+                : $"Action {_lastIndividualPrediction.SelectedActionIndex} wasn't good for the collective with a delta of {wellBeingDelta}");
             FinalEvaluate(historicPrediction, wellBeingDelta, 1 - _individualist);
         }
     }

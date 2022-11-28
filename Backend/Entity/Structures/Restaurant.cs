@@ -57,10 +57,13 @@ public class Restaurant : Structure
         {
             _queuedForThisTick.Clear();
             _capacityLeft = Math.Max(0, MaxCapacityPerTick - _queue.Count);
-            for (int i = 0; i < Math.Min(_queue.Count, MaxCapacityPerTick); i++)
+            while(_queue.Count > 0 && _queuedForThisTick.Count < MaxCapacityPerTick)
             {
-                if (_queue.Count > 0)
+                var person = _queue.Dequeue();
+                if (person.IsAlive)
+                {
                     _queuedForThisTick.Add(_queue.Dequeue());
+                }
             }
         }
     }

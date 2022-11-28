@@ -1,3 +1,4 @@
+using CitySim.Backend.Entity.Agents.Behavior.Actions;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.World;
 using Mars.Interfaces.Environments;
@@ -16,47 +17,28 @@ public enum ActionType
         WaitingInQueue,
     }
 
-public record PersonAction(ActionType Type, Position TargetPosition, Person Person)
+public abstract record PersonAction(ActionType Type, Position TargetPosition, Person Person)
 {
+    public abstract ActionResult Execute();
+
+    public virtual void CleanUp()
+    {
+        // do nothing
+    }
+    
     public override string ToString()
     {
         return $"{Type} at ({TargetPosition})";
     }
     
-    public ActionResult Execute()
+    public static PersonAction Create(ActionType type, Position targetPosition, Person person)
     {
-        return Type switch
+        return type switch
         {
-            ActionType.Eat => Eat(Person, TargetPosition),
-            ActionType.Sleep => Sleep(Person, TargetPosition),
-            ActionType.BuildHouse => BuildHouse(Person, TargetPosition),
+            ActionType.Eat => new EatAction(type, targetPosition, person),
+            ActionType.Sleep => new SleepAction(type, targetPosition, person),
+            ActionType.BuildHouse => new BuildHouseAction(type, targetPosition, person),
             _ => throw new ArgumentOutOfRangeException()
         };
-    }
-
-    private ActionResult Sleep(Person personActionPerson, Position personActionTargetPosition)
-    {
-        personActionPerson.Needs.Sleepiness = 1;
-        return ActionResult.Executed;
-    }
-
-    private ActionResult Eat(Person person, Position position)
-    {
-        if (WorldLayer.Instance.Structures[position] is Restaurant restaurant)
-        {
-            if (restaurant.TryEat(Person))
-            {
-                person.Needs.Hunger = 1;
-                return ActionResult.Executed;
-            }
-        }
-
-        return ActionResult.WaitingInQueue;
-    }
-
-    private ActionResult BuildHouse(Person person, Position targetPosition)
-    {
-        WorldLayer.Instance.InsertStructure(new House{Position = targetPosition});
-        return ActionResult.Executed;
     }
 }

@@ -1,4 +1,4 @@
-﻿using CitySim.Backend.Entity.Agents.Behavior;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using CitySim.Backend.Util.Learning;
@@ -43,8 +43,10 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
         lock (_worldLayer.Structures)
         {
-            var home = _worldLayer.Structures.OfType<House>().First(house => house.FreeSpaces > 0);
-            home.FreeSpaces--;
+            var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
+                _worldLayer.FindRoute(it.Position, Position).Remaining)
+                .First(house => house.FreeSpaces > 0);
+            home.AddInhabitant(this);
             _recollection.Add(ActionType.Sleep, home.Position);
         }
 
@@ -120,6 +122,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         Needs.Tick();
         if (Needs.Hunger < 0)
         {
+            _mind.LearnFromDeath(ActionType.Eat);
             Kill();
             _logger.Trace($"{ID} DIED of starvation");
             return false;
@@ -127,6 +130,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
         if (Needs.Sleepiness < -3)
         {
+            _mind.LearnFromDeath(ActionType.Sleep);
             Kill();
             _logger.Trace($"{ID} DIED of sleepiness");
             return false;

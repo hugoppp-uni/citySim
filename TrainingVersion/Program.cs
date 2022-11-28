@@ -39,7 +39,7 @@ public class Program
                 personMindWeightsFileToLoad: PersonMindFileName,
                 newSaveLocationForPersonMindWeights: PersonMindFileName,
                 personCount: 40,
-                maxTick: 500,
+                maxTick: 10,
                 personMindBatchSize: 25,
                 personActionExplorationRate: 20,
                 personMindLearningRate: 0.01f,

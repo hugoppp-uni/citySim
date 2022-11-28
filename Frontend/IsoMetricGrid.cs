@@ -39,7 +39,7 @@ namespace CitySim.Frontend
 
         public Vector2 GetPosition2D(Vector3 position)
         {
-            return Vector2.Transform(new(position.X, position.Y), _transform) + new Vector2(0, _cellHeight);
+            return Vector2.Transform(new(position.X, position.Y), _transform) + new Vector2(0, _cellHeight - position.Z * _cellHeight);
         }
 
         public IEnumerable<(int cell_x, int cell_y, Vector2 position2d, float cellHeight)> GetVisibleCells(Camera2D cam)

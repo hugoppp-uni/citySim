@@ -128,8 +128,8 @@ public class WorldLayer : AbstractLayer
     {
         return new GlobalState(
             GridEnvironment.Entities.Count((it) => it is Person),
-            Structures.OfType<House>().Count(),
-            Structures.OfType<Restaurant>().Count()
+            Structures.OfType<House>().Sum(house => house.MaxSpaces),
+            Structures.OfType<Restaurant>().Sum(restaurant => restaurant.MaxCapacityPerTick)
         );
     }
 

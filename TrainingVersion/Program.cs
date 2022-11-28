@@ -66,6 +66,7 @@ public class Program
             //await task;
             Console.CancelKeyPress -= OnConsoleOnCancelKeyPress;
             _logger.Debug($"The training took in average {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration}");
+            Console.WriteLine($"Iteration {iteration} finished");
         }
     }
 }

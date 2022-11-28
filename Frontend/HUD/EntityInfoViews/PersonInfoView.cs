@@ -1,4 +1,6 @@
 ﻿using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity.Structures;
+using Mars.Interfaces.Agents;
 using Raylib_CsLo;
 
 using static Raylib_CsLo.Raylib;
@@ -14,6 +16,8 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
         }
 
         public Person Person { get; }
+
+        public IEntity Entity => Person;
 
         public void UpdateAndDraw(bool isHovered)
         {

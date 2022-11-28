@@ -139,20 +139,26 @@ namespace CitySim.Frontend
                 
             }
 
-            if (_selectedEntity is Person selectedPerson)
+            if(_selectedEntity is not null)
             {
-                //Selected person info panel
+                //Selected entity info panel
                 var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
                 const int padding = 10;
 
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
-                if ((_activeInfoView as PersonInfoView)?.Person != _selectedEntity)
+                
+                if(_activeInfoView?.Entity != _selectedEntity)
                 {
-                    _activeInfoView = new PersonInfoView(selectedPerson, (0, 0), viewBounds);
+                    _activeInfoView = _selectedEntity switch
+                    {
+                        Person x     => new PersonInfoView(    x, (0, 0), viewBounds),
+                        House x      => new HouseInfoView(     x, (0, 0), viewBounds),
+                        _ => null
+                    };
                 }
-
+                
                 if (CheckCollisionPointRec(mousePos, bounds))
                     newHoveredElement = _activeInfoView;
 
@@ -163,29 +169,7 @@ namespace CitySim.Frontend
                 _activeInfoView!.UpdateAndDraw(_hoveredElement == _activeInfoView);
             }
 
-            if (_selectedEntity is House selectedHouse)
-            {
-                //Selected person info panel
-                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
-                const int padding = 10;
-
-                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
-                    bounds.width - 2 * padding, bounds.height - 2 * padding);
-
-                if ((_activeInfoView as HouseInfoView)?.House != _selectedEntity)
-                {
-                    _activeInfoView = new HouseInfoView(selectedHouse, (0, 0), viewBounds);
-                }
-
-                if (CheckCollisionPointRec(mousePos, bounds))
-                    newHoveredElement = _activeInfoView;
-
-                DrawRectangleRec(bounds, panelColor);
-
-                _activeInfoView!.ViewBounds = viewBounds;
-
-                _activeInfoView!.UpdateAndDraw(_hoveredElement == _activeInfoView);
-            }
+            
         }
 
         public void UpdateAndDraw(int screenWidth, int screenHeight)

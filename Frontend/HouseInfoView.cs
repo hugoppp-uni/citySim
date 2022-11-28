@@ -50,12 +50,18 @@ namespace CitySim.Frontend
                 Text(font, 25, x, $"Inhabitants", LIGHTGRAY);
 
 
-                for (int i = 0; i < House.Inhabitants.Count; i++)
+                for (int i = 0; i < House.MaxSpaces; i++)
                 {
-                    var person = House.Inhabitants[i];
-                    var color = WorldDrawer.GetPersonColor(person);
-                    DrawRectangleRec(new(x, y, 20, 20), WHITE);
-                    DrawRectangleRec(new(x, y+20, 20, 20), color);
+                    DrawRectangleRec(new(x, y, 20, 40),
+                        new Color(50, 50, 50, 150));
+
+                    if (i<House.Inhabitants.Count)
+                    {
+                        var person = House.Inhabitants[i];
+                        var color = WorldDrawer.GetPersonColor(person);
+                        DrawRectangleRec(new(x, y, 20, 20), WHITE);
+                        DrawRectangleRec(new(x, y + 20, 20, 20), color);
+                    }
                     x += 30;
                 }
 

@@ -19,7 +19,7 @@ public class GlobalState
      */
     private static double Normalize(int x)
     {
-        return 1.66 * x * Math.Pow(Math.E, 0.5 * x * x );
+        return 1.66 * x * Math.Pow(Math.E, -0.5 * x * x );
     }
 
     /// <summary>

@@ -43,45 +43,48 @@ public class BuildPositionEvaluator
 
     public void EvaluateHousingScore()
     {
-        _lastEvalutedTick = WorldLayer.CurrentTick;
-        _housingScoreBuffer.Clear();
-        var structuesAt = new List<(int, int)>();
-        for (int x = 0; x < _structures.XSize; x++)
-        for (int y = 0; y < _structures.YSize; y++)
+        lock (this)
         {
-            var structure = _structures[x, y];
-            var oldValue = _housingScore[x, y];
-            if (structure is not null || double.IsNegativeInfinity(oldValue))
+            _lastEvalutedTick = WorldLayer.CurrentTick;
+            _housingScoreBuffer.Clear();
+            var structuesAt = new List<(int, int)>();
+            for (int x = 0; x < _structures.XSize; x++)
+            for (int y = 0; y < _structures.YSize; y++)
             {
-                structuesAt.Add((x,y));
-                continue;
+                var structure = _structures[x, y];
+                var oldValue = _housingScore[x, y];
+                if (structure is not null || double.IsNegativeInfinity(oldValue))
+                {
+                    structuesAt.Add((x, y));
+                    continue;
+                }
+
+                var targetPosition = new double[] { x, y };
+
+                var manhattanDistanceToRestaurant =
+                    Distance.Manhattan(NearestRestaurant(targetPosition).Position.PositionArray, targetPosition);
+
+                const int width = 7;
+                const int height = 7;
+                IList<K2dTreeNode<Structure>>? buildingsNearby =
+                    _structures.Kd.InsideRegion(new Hyperrectangle(x - width / 2, y - width / 2, width, height));
+                var buildingsNearbyCount = buildingsNearby.Select(node => node.Value).OfType<House>().Count();
+                _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToRestaurant;
             }
 
-            var targetPosition = new double[] { x, y };
+            var min = _housingScoreBuffer.Min();
+            _housingScoreBuffer = _housingScoreBuffer.Subtract(min);
+            var max = _housingScoreBuffer.Max();
+            _housingScoreBuffer = _housingScoreBuffer.Divide(max);
+            for (var i = 0; i < structuesAt.Count; i++)
+            {
+                _housingScoreBuffer[structuesAt[i].Item1, structuesAt[i].Item2] = double.NegativeInfinity;
+            }
 
-            var manhattanDistanceToRestaurant =
-                Distance.Manhattan(NearestRestaurant(targetPosition).Position.PositionArray, targetPosition);
 
-            const int width = 7;
-            const int height = 7;
-            IList<K2dTreeNode<Structure>>? buildingsNearby =
-                _structures.Kd.InsideRegion(new Hyperrectangle(x - width / 2, y - width / 2, width, height));
-            var buildingsNearbyCount = buildingsNearby.Select(node => node.Value).OfType<House>().Count();
-            _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToRestaurant;
+            Buffer.BlockCopy(_housingScoreBuffer, 0, _housingScore, 0,
+                sizeof(double) * _housingScore.GetLength(0) * _housingScore.GetLength(1));
         }
-
-        var min = _housingScoreBuffer.Min();
-        _housingScoreBuffer = _housingScoreBuffer.Subtract(min);
-        var max = _housingScoreBuffer.Max();
-        _housingScoreBuffer = _housingScoreBuffer.Divide(max);
-        for (var i = 0; i < structuesAt.Count; i++)
-        {
-            _housingScoreBuffer[structuesAt[i].Item1, structuesAt[i].Item2] = double.NegativeInfinity;
-        }
-        
-
-        Buffer.BlockCopy(_housingScoreBuffer, 0, _housingScore, 0,
-            sizeof(double) * _housingScore.GetLength(0) * _housingScore.GetLength(1));
     }
 
     private Structure NearestRestaurant(double[] pos)
@@ -128,4 +131,11 @@ public class BuildPositionEvaluator
         }
     }
 
+    public void ResetScore(Position targetPosition)
+    {
+        lock (this)
+        {
+            _housingScore[(int)targetPosition.X, (int)targetPosition.Y] = 0;
+        }
+    }
 }

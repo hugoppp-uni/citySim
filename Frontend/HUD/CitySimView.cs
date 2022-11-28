@@ -90,6 +90,12 @@ namespace CitySim.Frontend
 
         private void DrawHud(int screenWidth, int screenHeight, ref object? newHoveredElement)
         {
+            if(_selectedEntity is not null &&
+                !_model.WorldLayer.GridEnvironment.Entities.Contains(_selectedEntity))
+            {
+                _selectedEntity = null;
+            }
+
             DrawFPS(10, 10);
             DrawEventLog();
             DrawStats(screenWidth, screenHeight);

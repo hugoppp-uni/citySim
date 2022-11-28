@@ -25,6 +25,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private IMind _mind = null!;
     private readonly PersonRecollection _recollection = new();
+    public List<Action> onKill = new();
 
     public PersonNeeds Needs { get; } = new();
 
@@ -41,15 +42,6 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         Position = _worldLayer.RandomPosition();
         _worldLayer.GridEnvironment.Insert(this);
 
-        lock (_worldLayer.Structures)
-        {
-            var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
-                _worldLayer.FindRoute(it.Position, Position).Remaining)
-                .First(house => house.FreeSpaces > 0);
-            home.AddInhabitant(this);
-            _recollection.Add(ActionType.Sleep, home.Position);
-        }
-
         _recollection.Add(ActionType.Eat, _worldLayer.Structures.OfType<Restaurant>().First().Position);
     }
 
@@ -60,13 +52,23 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public void Tick()
     {
+        try
+        {
+            TickInternal();
+        }
+        catch (Exception e)
+        {
+            _logger.Fatal("Agent crashed", e);
+            throw;
+        }
+    }
+
+    private void TickInternal()
+    {
         _tickAge++;
         if (!ApplyGameRules())
             //return value is false if the agent died, hacky for now
             return;
-
-        var personsInVicinity = _worldLayer.GridEnvironment
-            .Explore(Position, 2, predicate: person => person.ID != ID);
 
         if (_plannedAction is null)
         {
@@ -89,7 +91,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             _plannedAction = null;
     }
 
-    private PersonAction PlanNextAction()
+    private PersonAction? PlanNextAction()
     {
         var nextActionType = _mind.GetNextActionType(
             Needs,
@@ -110,11 +112,26 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             return new PersonAction(nextActionType, actionPosition, this);
         }
-        else
+
+        if (nextActionType == ActionType.Sleep)
         {
-            //todo exploration
-            return null;
+            lock (_worldLayer.Structures)
+            {
+                var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
+                        _worldLayer.FindRoute(it.Position, Position).Remaining)
+                    .FirstOrDefault(house => house.FreeSpaces > 0);
+
+                if (home is null)
+                    return null;
+
+                home.AddInhabitant(this);
+                onKill.Add(() => home.RemoveInhabitant(this));
+                _recollection.Add(ActionType.Sleep, home.Position);
+                return new PersonAction(ActionType.Sleep, home.Position, this);
+            }
         }
+
+        return null;
     }
 
     private bool ApplyGameRules()
@@ -135,7 +152,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             _logger.Trace($"{ID} DIED of sleepiness");
             return false;
         }
-        
+
         ReproductionNeeds();
         return true;
     }
@@ -143,14 +160,15 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private void Kill()
     {
         _worldLayer.Kill(this);
+        onKill.ForEach(action => action.Invoke());
     }
 
     private void ReproductionNeeds()
     {
         Needs.Tick();
-        var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1)  * 50;// 0 to 100
+        var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1) * 50; // 0 to 100
         var reproductionRate = (generalNeed * Random.Shared.NextDouble()) + Random.Shared.Next(0, 30);
-        
+
         if (_tickAge > 0 && reproductionRate > 100 - ReproductionRate)
         {
             Reproduce();

@@ -17,8 +17,13 @@ public class House : Structure
     public void AddInhabitant(Person p)
     {
         lock (_inhabitants)
+        {
+            if (FreeSpaces == 0)
+                throw new InvalidOperationException("No free spaces available");
             _inhabitants.Add(p);
+        }
     }
+
     public void RemoveInhabitant(Person p)
     {
         lock (_inhabitants)

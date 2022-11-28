@@ -52,6 +52,19 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public void Tick()
     {
+        try
+        {
+            TickInternal();
+        }
+        catch (Exception e)
+        {
+            _logger.Fatal("Agent crashed", e);
+            throw;
+        }
+    }
+
+    private void TickInternal()
+    {
         _tickAge++;
         if (!ApplyGameRules())
             //return value is false if the agent died, hacky for now
@@ -110,13 +123,12 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
                 if (home is null)
                     return null;
-                
+
                 home.AddInhabitant(this);
                 onKill.Add(() => home.RemoveInhabitant(this));
                 _recollection.Add(ActionType.Sleep, home.Position);
                 return new PersonAction(ActionType.Sleep, home.Position, this);
             }
-
         }
 
         return null;

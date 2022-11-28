@@ -1,12 +1,13 @@
 ﻿using System.Text;
+using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using Raylib_CsLo;
 
 using static Raylib_CsLo.Raylib;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.HUD.EntityInfoViews
 {
-    internal class PersonInfoView : ScrollView
+    internal class PersonInfoView : ScrollView, IEntityInfoView
     {
         public PersonInfoView(Person person, (float width, float height) scrollBounds, Rectangle viewBounds)
             : base(scrollBounds, viewBounds)
@@ -16,6 +17,8 @@ namespace CitySim.Frontend
 
         private readonly Person.PersonActionLog[] _actionLog = new Person.PersonActionLog[20];
         public Person Person { get; }
+
+        public IPositionableEntity Entity => Person;
 
         public void UpdateAndDraw(bool isHovered)
         {
@@ -59,7 +62,7 @@ namespace CitySim.Frontend
                 Text(font, 30, x, $"Info about {Person.Name}\n", WHITE);
 
                 Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
-                Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger,2)}", GREEN);
+                Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger, 2)}", GREEN);
                 Text(font, 20, x, $"Sleepiness: {Math.Round(Person.Needs.Sleepiness, 2)}", GREEN);
 
                 Text(font, 14, x, actionLog, new Color(200,200,200,255));

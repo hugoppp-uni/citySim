@@ -5,13 +5,13 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.Helpers
 {
     internal class Util
     {
         public static float EaseOutElastic(float x)
         {
-            float c4 = (2 * MathF.PI) / 3;
+            float c4 = 2 * MathF.PI / 3;
 
             return x == 0
               ? 0

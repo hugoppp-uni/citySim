@@ -1,5 +1,6 @@
 ﻿using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.World;
+using System.Collections.Concurrent;
 
 namespace CitySim.Backend.Entity.Structures;
 
@@ -13,7 +14,8 @@ public class Restaurant : Structure
     public int MaxCapacityPerTick { get; private set; }= 1;
     private int _capacityLeft;
 
-    private Queue<Person> _queue = new();
+    private ConcurrentQueue<Person> _queue = new();
+    public IReadOnlyCollection<Person> Queue => _queue;
     private HashSet<Person> _queuedForThisTick = new();
 
     private long _lastTick;
@@ -59,8 +61,8 @@ public class Restaurant : Structure
             _capacityLeft = Math.Max(0, MaxCapacityPerTick - _queue.Count);
             for (int i = 0; i < Math.Min(_queue.Count, MaxCapacityPerTick); i++)
             {
-                if (_queue.Count > 0)
-                    _queuedForThisTick.Add(_queue.Dequeue());
+                if (_queue.Count > 0 && _queue.TryDequeue(out Person? person))
+                    _queuedForThisTick.Add(person);
             }
         }
     }

@@ -36,6 +36,8 @@ namespace CitySim.Frontend
 
     internal class WorldDrawer
     {
+        private static readonly Color SHADOW_COLOR = new Color(0, 0, 0, 50);
+
         private record SplitAnim(Person PersonA, Person PersonB, double? StartTime);
 
         private enum Overlay
@@ -219,7 +221,7 @@ namespace CitySim.Frontend
             Vector2 pos = position2d - new Vector2(1, 1);
 
             //shadow
-            Color col = highlight ?? new Color(0, 0, 0, 50);
+            Color col = highlight ?? SHADOW_COLOR;
 
             MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, col);
             DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, col);
@@ -579,11 +581,12 @@ namespace CitySim.Frontend
             {
                 foreach (var house in _model.WorldLayer.GridEnvironment.Entities.OfType<House>())
                 {
-                    Vector2 pos = GetEntityPosition2D(house);
+                    Vector2 pos = GetEntityPosition2D(house) - new Vector2(0, GetHouseBlockHeight());
 
-                    DrawCircleV(pos, 30, LIGHTGRAY);
-                    DrawCircleSector(pos, 30, MathF.PI,
-                        MathF.PI + (MathF.Tau * house.Inhabitants.Count) / house.MaxSpaces, 
+                    DrawCircleV(pos+new Vector2(2,2), 20, SHADOW_COLOR);
+                    DrawCircleV(pos, 20, LIGHTGRAY);
+                    DrawCircleSector(pos, 20, -180,
+                        -180-360*house.Inhabitants.Count/(float)house.MaxSpaces, 
                         16, SKYBLUE);
                 }
             }

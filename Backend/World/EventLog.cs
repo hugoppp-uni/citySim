@@ -4,9 +4,11 @@ using CircularBuffer;
 namespace CitySim.Backend.World;
 
 public readonly record struct EventLogEntry(string Log, long tick);
-public class EventLog : IEnumerable<EventLogEntry>
+
+public class EventLog
 {
-    private readonly CircularBuffer<EventLogEntry> _buffer = new(10);
+    public const int Capacity = 10;
+    private readonly CircularBuffer<EventLogEntry> _buffer = new(Capacity);
 
     public void Log(string log)
     {
@@ -14,16 +16,15 @@ public class EventLog : IEnumerable<EventLogEntry>
             _buffer.PushFront(new EventLogEntry(log, WorldLayer.CurrentTick));
     }
 
-    public IEnumerator<EventLogEntry> GetEnumerator()
+    public void WriteToArray(EventLogEntry[] arr)
     {
+        int i = 0;
         lock (_buffer)
         {
-            return _buffer.GetEnumerator();
+            foreach (var eventLogEntry in _buffer)
+            {
+                arr[i++] = eventLogEntry;
+            }
         }
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
     }
 }

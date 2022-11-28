@@ -6,6 +6,7 @@ using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Util.Learning;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Entity;
+using CitySim.Backend.World;
 
 namespace CitySim.Frontend
 {
@@ -14,6 +15,7 @@ namespace CitySim.Frontend
         private WorldDrawer _worldDrawer;
         private Camera2D _cam;
         private readonly Backend.CitySim _model;
+        private readonly EventLogEntry[] _eventLog = new EventLogEntry[EventLog.Capacity];
 
         private IPositionableEntity? _selectedEntity = null;
 
@@ -37,7 +39,7 @@ namespace CitySim.Frontend
 
         private void UpdateCamera()
         {
-            if (_dragStartElement==_worldDrawer && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_dragStartElement == _worldDrawer && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                 _cam.target -= GetMouseDelta() / _cam.zoom;
 
             if (_hoveredElement == _worldDrawer)
@@ -61,8 +63,10 @@ namespace CitySim.Frontend
         private void DrawHud(int screenWidth, int screenHeight, ref object? newHoveredElement)
         {
             DrawFPS(10, 10);
-            DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
-                10, 25,15, BLACK);
+            DrawText(
+                $"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
+                10, 25, 15, BLACK);
+            DrawEventLog();
 
             {
                 //Title
@@ -83,8 +87,8 @@ namespace CitySim.Frontend
 
             {
                 //Options panel
-                
-                
+
+
                 int left = screenWidth - optionsPanelWidth;
                 int top = 0;
                 int right = screenWidth;
@@ -112,36 +116,40 @@ namespace CitySim.Frontend
 
                     currentY += 50;
                 }
+
                 GuiLabel(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20),
                     "Ticks per second");
                 currentY += 30;
-                _model.SimulationController.TicksPerSecond = (int) Math.Floor(Math.Pow(2,GuiSlider(
+                _model.SimulationController.TicksPerSecond = (int)Math.Floor(Math.Pow(2, GuiSlider(
                     new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, optionsPanelWidth - 30, 20), "",
-                    _model.SimulationController.TicksPerSecond.ToString(), (float)Math.Log2(_model.SimulationController.TicksPerSecond),0,10)));
+                    _model.SimulationController.TicksPerSecond.ToString(),
+                    (float)Math.Log2(_model.SimulationController.TicksPerSecond), 0, 10)));
                 currentY += 30;
                 var pausedClicked = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 10, currentY, 50, 20),
-                    _model.SimulationController.Paused ? "Continue" :"Pause");
+                    _model.SimulationController.Paused ? "Continue" : "Pause");
                 if (pausedClicked)
                 {
                     _model.SimulationController.Paused = !_model.SimulationController.Paused;
                 }
+
                 if (_model.SimulationController.Paused)
                 {
                     var oneStep = GuiButton(new Rectangle(screenWidth - optionsPanelWidth + 70, currentY, 50, 20),
-               "Step");
+                        "Step");
                     if (oneStep)
                     {
                         _model.SimulationController.ContinueEvent.Set();
                     }
                 }
+
                 currentY += 30;
-                
             }
 
             if (_selectedEntity is Person selectedPerson)
             {
                 //Selected person info panel
-                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2,
+                    infoPanelHeight);
                 const int padding = 10;
 
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
@@ -165,7 +173,8 @@ namespace CitySim.Frontend
             if (_selectedEntity is House selectedHouse)
             {
                 //Selected person info panel
-                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2, infoPanelHeight);
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - optionsPanelWidth + 2,
+                    infoPanelHeight);
                 const int padding = 10;
 
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
@@ -187,15 +196,29 @@ namespace CitySim.Frontend
             }
         }
 
+        private void DrawEventLog()
+        {
+            WorldLayer.Instance.EventLog.WriteToArray(_eventLog);
+
+            for (var index = 0; index < _eventLog.Length; index++)
+            {
+                var eventLogEntry = _eventLog[index];
+                const int showEventsInLastNTicks = 5;
+                if (eventLogEntry.tick < WorldLayer.CurrentTick - showEventsInLastNTicks)
+                    break;
+                DrawText(eventLogEntry.Log, 30, index * 16 + 55, 14, new Color(255, 255, 255, 255));
+            }
+        }
+
         public void UpdateAndDraw(int screenWidth, int screenHeight)
         {
             object? newHoveredElement = _worldDrawer;
 
             //bit hacky but who cares
             bool clicked = _hoveredElement == _worldDrawer &&
-                GetGestureDragVector() == Vector2.Zero && 
-                GuiLabelButton(new Rectangle(0, 0, screenWidth, screenHeight), 
-                string.Empty);
+                           GetGestureDragVector() == Vector2.Zero &&
+                           GuiLabelButton(new Rectangle(0, 0, screenWidth, screenHeight),
+                               string.Empty);
 
             if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                 _dragStartElement = _hoveredElement;
@@ -207,10 +230,8 @@ namespace CitySim.Frontend
             ClearBackground(new Color(10, 130, 255, 255));
 
             BeginMode2D(_cam);
-            _worldDrawer.Draw(_cam, _hoveredElement==_worldDrawer);
+            _worldDrawer.Draw(_cam, _hoveredElement == _worldDrawer);
             EndMode2D();
-
-
 
 
             if (clicked)
@@ -224,25 +245,25 @@ namespace CitySim.Frontend
                     _worldDrawer.GetPersonPosition2D(selectedPerson),
                     _cam) + new Vector2(0, -WorldDrawer.GetPersonVisualHeight(_cam));
 
-                pos.Y += -20 +(float)Math.Sin(GetTime()*2) * 10;
+                pos.Y += -20 + (float)Math.Sin(GetTime() * 2) * 10;
 
                 var col = ColorFromHSV(190 - (float)Math.Sin(GetTime() * 2) * 10, 1, 1);
 
 
                 var _pos = pos + new Vector2(2, 2);
                 DrawTriangle(
-                    _pos+new Vector2( 15, -20),
-                    _pos+new Vector2(-15, -20),
+                    _pos + new Vector2(15, -20),
+                    _pos + new Vector2(-15, -20),
                     _pos,
                     new Color(0, 0, 0, 150)
-                    );
+                );
                 _pos = pos;
                 DrawTriangle(
                     _pos + new Vector2(15, -20),
                     _pos + new Vector2(-15, -20),
                     _pos,
                     col
-                    );
+                );
             }
 
             if (_selectedEntity is House selectedHouse)
@@ -254,7 +275,7 @@ namespace CitySim.Frontend
                         (float)selectedHouse.Position.X,
                         (float)selectedHouse.Position.Y,
                         WorldDrawer.GetHouseBlockHeight()
-                        )),
+                    )),
                     _cam);
 
                 pos.Y += -20 + (float)Math.Sin(GetTime() * 2) * 10;
@@ -268,14 +289,14 @@ namespace CitySim.Frontend
                     _pos + new Vector2(-15, -20),
                     _pos,
                     new Color(0, 0, 0, 150)
-                    );
+                );
                 _pos = pos;
                 DrawTriangle(
                     _pos + new Vector2(15, -20),
                     _pos + new Vector2(-15, -20),
                     _pos,
                     col
-                    );
+                );
             }
 
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using static Raylib_CsLo.Raylib;
 using Raylib_CsLo;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.Helpers
 {
     internal class RaylibExtensions
     {
@@ -26,7 +26,8 @@ namespace CitySim.Frontend
             DrawRectangleRounded(new(left, top, width, height), roundness, 6, color);
         }
 
-        public enum GuiControlProperty {
+        public enum GuiControlProperty
+        {
             BORDER_COLOR_NORMAL = 0,
             BASE_COLOR_NORMAL,
             TEXT_COLOR_NORMAL,

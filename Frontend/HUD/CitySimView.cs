@@ -6,6 +6,9 @@ using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Util.Learning;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Entity;
+using CitySim.Backend.World;
+using CitySim.Frontend.HUD.EntityInfoViews;
+using CitySim.Frontend.Helpers;
 
 namespace CitySim.Frontend
 {
@@ -14,6 +17,7 @@ namespace CitySim.Frontend
         private readonly WorldDrawer _worldDrawer;
         private Camera2D _cam;
         private readonly Backend.CitySim _model;
+        private readonly EventLogEntry[] _eventLog = new EventLogEntry[EventLog.Capacity];
         private readonly Font _defaultFont;
 
         private IPositionableEntity? _selectedEntity = null;
@@ -21,8 +25,7 @@ namespace CitySim.Frontend
         private object? _hoveredElement = null;
         private object? _dragStartElement = null;
 
-        private PersonInfoView? _personInfoView;
-        private HouseInfoView? _houseInfoView;
+        private IEntityInfoView? _activeInfoView;
 
         public CitySimView(Backend.CitySim model)
         {
@@ -39,7 +42,7 @@ namespace CitySim.Frontend
 
         private void UpdateCamera()
         {
-            if (_dragStartElement==_worldDrawer && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_dragStartElement == _worldDrawer && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                 _cam.target -= GetMouseDelta() / _cam.zoom;
 
             if (_hoveredElement == _worldDrawer)
@@ -88,9 +91,14 @@ namespace CitySim.Frontend
         private void DrawHud(int screenWidth, int screenHeight, ref object? newHoveredElement)
         {
             DrawFPS(10, 10);
+            DrawEventLog();
+            DrawStats(screenWidth, screenHeight);
+            
             DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
                 10, 25,15, WHITE);
             DrawStats(screenWidth, screenHeight);
+            DrawText($"Current tick: {_model.WorldLayer.GetCurrentTick()}", 10, screenHeight - 16, 
+                16, WHITE);
 
             {
                 //Title
@@ -101,8 +109,7 @@ namespace CitySim.Frontend
                 DrawText("CitySim", screenWidth / 2 - width / 2, 20,
                     60, RAYWHITE);
             }
-
-           
+            
             int infoPanelHeight = 300;
 
             Color panelColor = new Color(0, 0, 0, 100);
@@ -111,8 +118,6 @@ namespace CitySim.Frontend
 
             {
                 //Options panel
-                
-                
                 int left = screenWidth - OPTIONS_PANEL_WIDTH;
                 int top = 0;
                 int right = screenWidth;
@@ -149,10 +154,12 @@ namespace CitySim.Frontend
                 currentY += 30;
                 var pausedClicked = GuiButton(new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 10, currentY, 50, 20),
                     _model.SimulationController.Paused ? "Continue" :"Pause");
+                
                 if (pausedClicked)
                 {
                     _model.SimulationController.Paused = !_model.SimulationController.Paused;
                 }
+
                 if (_model.SimulationController.Paused)
                 {
                     var oneStep = GuiButton(new Rectangle(screenWidth - OPTIONS_PANEL_WIDTH + 70, currentY, 50, 20),
@@ -162,7 +169,19 @@ namespace CitySim.Frontend
                         _model.SimulationController.ContinueEvent.Set();
                     }
                 }
+
                 currentY += 30;
+            }
+
+            if(_selectedEntity is not null)
+            {
+                //Selected entity info panel
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - OPTIONS_PANEL_WIDTH + 2, infoPanelHeight);
+                const int padding = 10;
+
+                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
+                    bounds.width - 2 * padding, bounds.height - 2 * padding);
+
                 
             }
 
@@ -175,43 +194,46 @@ namespace CitySim.Frontend
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
-                if (_personInfoView?.Person != _selectedEntity)
+                if(_activeInfoView?.Entity != _selectedEntity)
                 {
-                    _personInfoView = new PersonInfoView(selectedPerson, (0, 0), viewBounds);
+                    _activeInfoView = _selectedEntity switch
+                    {
+                        Person x     => new PersonInfoView(    x, (0, 0), viewBounds),
+                        House x      => new HouseInfoView(     x, (0, 0), viewBounds),
+                        Restaurant x => new RestaurantInfoView(x, (0, 0), viewBounds),
+                        _ => null
+                    };
                 }
-
+                
                 if (CheckCollisionPointRec(mousePos, bounds))
-                    newHoveredElement = _personInfoView;
+                    newHoveredElement = _activeInfoView;
 
                 DrawRectangleRec(bounds, panelColor);
 
-                _personInfoView.ViewBounds = viewBounds;
+                _activeInfoView!.ViewBounds = viewBounds;
 
-                _personInfoView.UpdateAndDraw(_hoveredElement == _personInfoView);
+                _activeInfoView!.UpdateAndDraw(_hoveredElement == _activeInfoView);
             }
 
-            if (_selectedEntity is House selectedHouse)
+            
+        }
+
+        private void DrawEventLog()
+        {
+            int n = WorldLayer.Instance.EventLog.WriteToArray(_eventLog);
+
+            for (var index = 0; index < n; index++)
             {
-                //Selected person info panel
-                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - OPTIONS_PANEL_WIDTH + 2, infoPanelHeight);
                 const int padding = 10;
+                var eventLogEntry = _eventLog[index];
+                const int showEventsInLastNTicks = 5;
+                if (eventLogEntry.Tick < WorldLayer.CurrentTick - showEventsInLastNTicks)
+                    break;
 
-                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
-                    bounds.width - 2 * padding, bounds.height - 2 * padding);
-
-                if (_houseInfoView?.House != _selectedEntity)
-                {
-                    _houseInfoView = new HouseInfoView(selectedHouse, (0, 0), viewBounds);
-                }
-
-                if (CheckCollisionPointRec(mousePos, bounds))
-                    newHoveredElement = _houseInfoView;
-
-                DrawRectangleRec(bounds, panelColor);
-
-                _houseInfoView.ViewBounds = viewBounds;
-
-                _houseInfoView.UpdateAndDraw(_hoveredElement == _houseInfoView);
+                var color = WorldDrawer.GetPersonColor(eventLogEntry.Person);
+                DrawText(eventLogEntry.Person.Name + ": " + eventLogEntry.Log,
+                    30, index * 16 + 55, 14,
+                    color);
             }
         }
 
@@ -221,9 +243,9 @@ namespace CitySim.Frontend
 
             //bit hacky but who cares
             bool clicked = _hoveredElement == _worldDrawer &&
-                GetGestureDragVector() == Vector2.Zero && 
-                GuiLabelButton(new Rectangle(0, 0, screenWidth, screenHeight), 
-                string.Empty);
+                           GetGestureDragVector() == Vector2.Zero &&
+                           GuiLabelButton(new Rectangle(0, 0, screenWidth, screenHeight),
+                               string.Empty);
 
             if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                 _dragStartElement = _hoveredElement;
@@ -235,10 +257,8 @@ namespace CitySim.Frontend
             ClearBackground(new Color(10, 130, 255, 255));
 
             BeginMode2D(_cam);
-            _worldDrawer.Draw(_cam, _hoveredElement==_worldDrawer);
+            _worldDrawer.Draw(_cam, _hoveredElement == _worldDrawer);
             EndMode2D();
-
-
 
 
             if (clicked)
@@ -252,25 +272,25 @@ namespace CitySim.Frontend
                     _worldDrawer.GetPersonPosition2D(selectedPerson),
                     _cam) + new Vector2(0, -WorldDrawer.GetPersonVisualHeight(_cam));
 
-                pos.Y += -20 +(float)Math.Sin(GetTime()*2) * 10;
+                pos.Y += -20 + (float)Math.Sin(GetTime() * 2) * 10;
 
                 var col = ColorFromHSV(190 - (float)Math.Sin(GetTime() * 2) * 10, 1, 1);
 
 
                 var _pos = pos + new Vector2(2, 2);
                 DrawTriangle(
-                    _pos+new Vector2( 15, -20),
-                    _pos+new Vector2(-15, -20),
+                    _pos + new Vector2(15, -20),
+                    _pos + new Vector2(-15, -20),
                     _pos,
                     new Color(0, 0, 0, 150)
-                    );
+                );
                 _pos = pos;
                 DrawTriangle(
                     _pos + new Vector2(15, -20),
                     _pos + new Vector2(-15, -20),
                     _pos,
                     col
-                    );
+                );
             }
 
             if (_selectedEntity is House selectedHouse)
@@ -282,7 +302,7 @@ namespace CitySim.Frontend
                         (float)selectedHouse.Position.X,
                         (float)selectedHouse.Position.Y,
                         WorldDrawer.GetHouseBlockHeight()
-                        )),
+                    )),
                     _cam);
 
                 pos.Y += -20 + (float)Math.Sin(GetTime() * 2) * 10;
@@ -296,14 +316,14 @@ namespace CitySim.Frontend
                     _pos + new Vector2(-15, -20),
                     _pos,
                     new Color(0, 0, 0, 150)
-                    );
+                );
                 _pos = pos;
                 DrawTriangle(
                     _pos + new Vector2(15, -20),
                     _pos + new Vector2(-15, -20),
                     _pos,
                     col
-                    );
+                );
             }
 
 

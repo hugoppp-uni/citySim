@@ -12,6 +12,7 @@ using Mars.Numerics;
 using NesScripts.Controls.PathFind;
 using NLog;
 using NLog.Fluent;
+using CircularBuffer;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -25,21 +26,33 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private IMind _mind = null!;
     private readonly PersonRecollection _recollection = new();
-    public List<Action> onKill = new();
+    private readonly List<Action> _onKill = new();
 
     public PersonNeeds Needs { get; } = new();
 
+    public record struct PersonActionLog(PersonNeeds Needs, PersonAction Action);
+    
+
+    private readonly CircularBuffer<PersonActionLog> _actionLog = new(20);
+    public int GetActionLog(PersonActionLog[] ary) => _actionLog.WriteToArray(ary);
+
+    public readonly string Name;
     public PathFindingRoute Route = PathFindingRoute.CompletedRoute;
     private PersonAction? _plannedAction;
     [PropertyDescription] public string ModelWorkerKey { get; set; }
 
     private int _tickAge = 0;
 
+    public Person()
+    {
+        Name = WorldLayer.Instance.Names.GetRandom();
+    }
+
     public void Init(WorldLayer layer)
     {
         _mind = new PersonMind(0.5, ModelWorker.GetInstance(ModelWorkerKey));
         _worldLayer = layer;
-        Position = _worldLayer.RandomPosition();
+        Position = _worldLayer.RandomBuildingPosition();
         _worldLayer.GridEnvironment.Insert(this);
 
         _recollection.Add(ActionType.Eat, _worldLayer.Structures.OfType<Restaurant>().First().Position);
@@ -58,7 +71,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         }
         catch (Exception e)
         {
-            _logger.Fatal("Agent crashed", e);
+            _logger.Fatal("Agent crashed:" + Environment.NewLine + "{e}", e);
             throw;
         }
     }
@@ -74,6 +87,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _plannedAction = PlanNextAction();
             if (_plannedAction is null) return;
+            
+            _actionLog.PushFront(new PersonActionLog {Action = _plannedAction, Needs = Needs with {}});
             Route = _worldLayer.FindRoute(Position, _plannedAction.TargetPosition);
         }
 
@@ -125,7 +140,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
                     return null;
 
                 home.AddInhabitant(this);
-                onKill.Add(() => home.RemoveInhabitant(this));
+                _onKill.Add(() => home.RemoveInhabitant(this));
                 _recollection.Add(ActionType.Sleep, home.Position);
                 return new PersonAction(ActionType.Sleep, home.Position, this);
             }
@@ -141,7 +156,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _mind.LearnFromDeath(ActionType.Eat);
             Kill();
-            _logger.Trace($"{ID} DIED of starvation");
+            WorldLayer.Instance.EventLog.Log($"DIED of starvation", this);
             return false;
         }
 
@@ -149,7 +164,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             _mind.LearnFromDeath(ActionType.Sleep);
             Kill();
-            _logger.Trace($"{ID} DIED of sleepiness");
+            WorldLayer.Instance.EventLog.Log($"DIED of sleepiness", this);
             return false;
         }
 
@@ -160,7 +175,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private void Kill()
     {
         _worldLayer.Kill(this);
-        onKill.ForEach(action => action.Invoke());
+        _onKill.ForEach(action => action.Invoke());
     }
 
     private void ReproductionNeeds()
@@ -177,10 +192,9 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private void Reproduce()
     {
-        _logger.Trace($"{ID} ZELLTEILUNG");
-        Position position = this.Position.Copy();
-        Person p = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
-        p.Position = position;
-        _worldLayer.CellDevision(this, p);
+        WorldLayer.Instance.EventLog.Log($"reproduced", this);
+        Person child = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
+        child.Position = Position.Copy();
+        _worldLayer.InvokePersonReproduceHandler(this, child);
     }
 }

@@ -25,11 +25,13 @@ public class WorldLayer : AbstractLayer
 
     public readonly Grid2D<Structure> Structures = new(XSize, YSize);
     private readonly PathFindingGrid _pathFindingGrid;
+    public readonly EventLog EventLog = new();
+    public readonly Names Names = new();
 
     public static WorldLayer Instance { get; private set; } = null!; //Ctor
     public static long CurrentTick => Instance.Context.CurrentTick;
 
-    public event TwoPersonEventHandler? PersonCellDivision;
+    public event TwoPersonEventHandler? ReproduceEventHandler;
 
     public WorldLayer()
     {
@@ -69,6 +71,10 @@ public class WorldLayer : AbstractLayer
     {
         var random = RandomHelper.Random;
         return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
+    }
+    public Position RandomBuildingPosition()
+    {
+        return Structures.Skip(Random.Shared.Next(Structures.Count - 1)).First().Position;
     }
 
     private void SpawnBuildings()
@@ -133,10 +139,8 @@ public class WorldLayer : AbstractLayer
         );
     }
 
-    public void CellDevision(Person p1, Person p2)
+    public void InvokePersonReproduceHandler(Person p1, Person p2)
     {
-        var persons = GridEnvironment.Entities.OfType<Person>().ToList();
-
-        PersonCellDivision?.Invoke(p1, p2);
+        ReproduceEventHandler?.Invoke(p1, p2);
     }
 }

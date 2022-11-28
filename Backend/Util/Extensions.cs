@@ -1,7 +1,7 @@
 using Tensorflow.NumPy;
 
 namespace CitySim.Backend.Util;
-
+using CircularBuffer;
 public static class Extensions
 {
     public static T RandomEnumValue<T>() where T : struct, Enum
@@ -24,5 +24,19 @@ public static class Extensions
     {
         t0 = items.Length > 0 ? items[0] : default(T);
         t1 = items.Length > 1 ? items[1] : default(T);
+    }
+    
+    public static int WriteToArray<T>(this CircularBuffer<T> buffer, T[] arr)
+    {
+        var i = 0;
+        lock (buffer)
+        {
+            foreach (var eventLogEntry in buffer)
+            {
+                arr[i++] = eventLogEntry;
+            }
+        }
+
+        return i;
     }
 }

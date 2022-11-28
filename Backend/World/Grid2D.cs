@@ -4,7 +4,7 @@ using Mars.Interfaces.Environments;
 
 namespace CitySim.Backend.World;
 
-public class Grid2D<T> : IEnumerable<T>
+public class Grid2D<T> : IReadOnlyCollection<T>
 {
     public Grid2D(int xSize, int ySize)
     {
@@ -13,6 +13,7 @@ public class Grid2D<T> : IEnumerable<T>
 
     private readonly T?[,] _array;
     public readonly K2DTree<T> Kd = new();
+    private int _count;
     public int YSize => _array.GetLength(1);
 
     public int XSize => _array.GetLength(0);
@@ -25,6 +26,7 @@ public class Grid2D<T> : IEnumerable<T>
 
     public void Add(T structure, double[] pos)
     {
+        _count++;
         Kd.Add(pos, structure);
         _array[(int)pos[0], (int)pos[1]] = structure;
     }
@@ -62,4 +64,5 @@ public class Grid2D<T> : IEnumerable<T>
         _array.Cast<T?>().Where(structure => structure is not null).GetEnumerator()!;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public int Count => _count;
 }

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CircularBuffer" Version="1.3.0" />
     <PackageReference Include="Mars.Life.Simulations" Version="4.4.3" />
     <PackageReference Include="NLog" Version="5.0.4" />
     <PackageReference Include="SciSharp.TensorFlow.Redist" Version="2.7.0" />
@@ -25,6 +26,9 @@
     </None>
     <None Update="Resources\Map.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Names.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

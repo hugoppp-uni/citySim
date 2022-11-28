@@ -10,12 +10,12 @@ public record PersonNeeds
 {
     public double Sleepiness { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
     public double Hunger { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
-    public double Money { get; set; } = 1;//0.4 + Random.Shared.NextDouble() * 0.6;
+    public double Money { get; set; } = 0.1 + Random.Shared.NextDouble() * 0.6;
 
     public void Tick()
     {
-        Hunger -= 0.02;
-        Sleepiness -= 0.02;
+        Hunger -= 0.015;
+        Sleepiness -= 0.015;
         //Money -= 0.01;
     }
 

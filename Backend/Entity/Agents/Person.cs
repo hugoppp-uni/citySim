@@ -173,9 +173,9 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         Needs.Tick();
         var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1) * 50; // 0 to 100
-        var reproductionRate = (generalNeed * Random.Shared.NextDouble()) + Random.Shared.Next(0, 30);
+        var reproductionRate = generalNeed * Random.Shared.NextDouble() + Random.Shared.Next(0, 20);
 
-        if (_tickAge > 0 && reproductionRate > 100 - ReproductionRate)
+        if (_tickAge > 10 && reproductionRate > 100 - ReproductionRate)
         {
             Reproduce();
         }

@@ -4,9 +4,9 @@ using Raylib_CsLo;
 
 using static Raylib_CsLo.Raylib;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.HUD.EntityInfoViews
 {
-    internal class HouseInfoView : ScrollView
+    internal class HouseInfoView : ScrollView, IEntityInfoView
     {
         public HouseInfoView(House house, (float width, float height) scrollBounds, Rectangle viewBounds)
             : base(scrollBounds, viewBounds)
@@ -55,7 +55,7 @@ namespace CitySim.Frontend
                     DrawRectangleRec(new(x, y, 20, 40),
                         new Color(50, 50, 50, 150));
 
-                    if (i<House.Inhabitants.Count)
+                    if (i < House.Inhabitants.Count)
                     {
                         var person = House.Inhabitants[i];
                         var color = WorldDrawer.GetPersonColor(person);

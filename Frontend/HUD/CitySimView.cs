@@ -6,6 +6,8 @@ using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Util.Learning;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Entity;
+using CitySim.Frontend.HUD.EntityInfoViews;
+using CitySim.Frontend.Helpers;
 
 namespace CitySim.Frontend
 {
@@ -20,8 +22,7 @@ namespace CitySim.Frontend
         private object? _hoveredElement = null;
         private object? _dragStartElement = null;
 
-        private PersonInfoView? _personInfoView;
-        private HouseInfoView? _houseInfoView;
+        private IEntityInfoView? _activeInfoView;
 
         public CitySimView(Backend.CitySim model)
         {
@@ -147,19 +148,19 @@ namespace CitySim.Frontend
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
-                if (_personInfoView?.Person != _selectedEntity)
+                if ((_activeInfoView as PersonInfoView)?.Person != _selectedEntity)
                 {
-                    _personInfoView = new PersonInfoView(selectedPerson, (0, 0), viewBounds);
+                    _activeInfoView = new PersonInfoView(selectedPerson, (0, 0), viewBounds);
                 }
 
                 if (CheckCollisionPointRec(mousePos, bounds))
-                    newHoveredElement = _personInfoView;
+                    newHoveredElement = _activeInfoView;
 
                 DrawRectangleRec(bounds, panelColor);
 
-                _personInfoView.ViewBounds = viewBounds;
+                _activeInfoView!.ViewBounds = viewBounds;
 
-                _personInfoView.UpdateAndDraw(_hoveredElement == _personInfoView);
+                _activeInfoView!.UpdateAndDraw(_hoveredElement == _activeInfoView);
             }
 
             if (_selectedEntity is House selectedHouse)
@@ -171,19 +172,19 @@ namespace CitySim.Frontend
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
-                if (_houseInfoView?.House != _selectedEntity)
+                if ((_activeInfoView as HouseInfoView)?.House != _selectedEntity)
                 {
-                    _houseInfoView = new HouseInfoView(selectedHouse, (0, 0), viewBounds);
+                    _activeInfoView = new HouseInfoView(selectedHouse, (0, 0), viewBounds);
                 }
 
                 if (CheckCollisionPointRec(mousePos, bounds))
-                    newHoveredElement = _houseInfoView;
+                    newHoveredElement = _activeInfoView;
 
                 DrawRectangleRec(bounds, panelColor);
 
-                _houseInfoView.ViewBounds = viewBounds;
+                _activeInfoView!.ViewBounds = viewBounds;
 
-                _houseInfoView.UpdateAndDraw(_hoveredElement == _houseInfoView);
+                _activeInfoView!.UpdateAndDraw(_hoveredElement == _activeInfoView);
             }
         }
 

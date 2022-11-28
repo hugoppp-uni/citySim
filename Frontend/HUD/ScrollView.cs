@@ -4,7 +4,7 @@ using static Raylib_CsLo.Raylib;
 
 namespace CitySim.Frontend
 {
-    internal class ScrollView
+    internal class ScrollView : IScrollView
     {
         private (float width, float height) scrollBounds;
         private Vector2 scrollOffset;
@@ -69,5 +69,12 @@ namespace CitySim.Frontend
             if (isHovered)
                 ScrollOffset -= GetMouseWheelMoveV() * 20;
         }
+    }
+
+    internal interface IScrollView
+    {
+        (float width, float height) ScrollBounds { get; set; }
+        Vector2 ScrollOffset { get; set; }
+        Rectangle ViewBounds { get; set; }
     }
 }

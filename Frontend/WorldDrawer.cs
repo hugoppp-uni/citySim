@@ -1,5 +1,5 @@
 ﻿using Raylib_CsLo;
-using static CitySim.Frontend.RaylibExtensions;
+using static CitySim.Frontend.Helpers.RaylibExtensions;
 using static Raylib_CsLo.Raylib;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ using CitySim.Backend.Entity;
 using System.Reflection;
 using CitySim.Backend.Entity.Structures;
 using static ServiceStack.Script.Lisp;
+using CitySim.Frontend.Helpers;
 
 namespace CitySim.Frontend
 {

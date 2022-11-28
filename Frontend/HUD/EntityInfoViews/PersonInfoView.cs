@@ -3,9 +3,9 @@ using Raylib_CsLo;
 
 using static Raylib_CsLo.Raylib;
 
-namespace CitySim.Frontend
+namespace CitySim.Frontend.HUD.EntityInfoViews
 {
-    internal class PersonInfoView : ScrollView
+    internal class PersonInfoView : ScrollView, IEntityInfoView
     {
         public PersonInfoView(Person person, (float width, float height) scrollBounds, Rectangle viewBounds)
             : base(scrollBounds, viewBounds)
@@ -56,10 +56,10 @@ tenetur error, harum nesciunt ipsum debitis quas aliquid.".Replace('\r', ' ');
                 Text(font, 30, x, "Info about Person\n", WHITE);
 
                 Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
-                Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger,2)}", GREEN);
+                Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger, 2)}", GREEN);
                 Text(font, 20, x, $"Sleepiness: {Math.Round(Person.Needs.Sleepiness, 2)}", GREEN);
 
-                Text(font, 20, x, infoText, new Color(200,200,200,255));
+                Text(font, 20, x, infoText, new Color(200, 200, 200, 255));
 
 
                 EndScissorMode();

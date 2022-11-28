@@ -1,6 +1,7 @@
 using System.Collections;
 using CircularBuffer;
 using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Util;
 
 namespace CitySim.Backend.World;
 
@@ -19,15 +20,9 @@ public class EventLog
 
     public int WriteToArray(EventLogEntry[] arr)
     {
-        int i = 0;
         lock (_buffer)
         {
-            foreach (var eventLogEntry in _buffer)
-            {
-                arr[i++] = eventLogEntry;
-            }
+            return _buffer.WriteToArray(arr);
         }
-
-        return i;
     }
 }

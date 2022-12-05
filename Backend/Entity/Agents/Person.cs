@@ -27,6 +27,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private IMind _mind = null!;
     private readonly PersonRecollection _recollection = new();
     private readonly List<Action> _onKill = new();
+    public bool IsAlive { get; private set; }
 
     public PersonNeeds Needs { get; } = new();
 
@@ -125,7 +126,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         var actionPosition = GetPosition();
         if (actionPosition != null)
         {
-            return new PersonAction(nextActionType, actionPosition, this);
+            return  PersonAction.Create(nextActionType, actionPosition, this);
         }
 
         if (nextActionType == ActionType.Sleep)
@@ -142,7 +143,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
                 home.AddInhabitant(this);
                 _onKill.Add(() => home.RemoveInhabitant(this));
                 _recollection.Add(ActionType.Sleep, home.Position);
-                return new PersonAction(ActionType.Sleep, home.Position, this);
+                return PersonAction.Create(ActionType.Sleep, home.Position, this);
             }
         }
 
@@ -176,6 +177,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         _worldLayer.Kill(this);
         _onKill.ForEach(action => action.Invoke());
+        _plannedAction?.CleanUp();
+        IsAlive = false;
     }
 
     private void ReproductionNeeds()

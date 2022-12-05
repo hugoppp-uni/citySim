@@ -36,6 +36,8 @@ namespace CitySim.Frontend
 
     internal class WorldDrawer
     {
+        private static readonly Color SHADOW_COLOR = new Color(0, 0, 0, 50);
+
         private record SplitAnim(Person PersonA, Person PersonB, double? StartTime);
 
         private enum Overlay
@@ -46,6 +48,8 @@ namespace CitySim.Frontend
             GRID_LINES,
             [System.ComponentModel.Description("Show Housing Score")]
             HOUSING_SCORE,
+            [System.ComponentModel.Description("Show House Occupancy")]
+            HOUSE_OCCUPANCY,
         }
 
         private const int TILE_BUILDING_FLOOR = 0;
@@ -217,7 +221,7 @@ namespace CitySim.Frontend
             Vector2 pos = position2d - new Vector2(1, 1);
 
             //shadow
-            Color col = highlight ?? new Color(0, 0, 0, 50);
+            Color col = highlight ?? SHADOW_COLOR;
 
             MyDrawRoundedRect(pos.X - 10, pos.Y - 25, pos.X + 10, pos.Y, 5, col);
             DrawEllipse((int)pos.X, (int)pos.Y - 40, 10, 10, col);
@@ -570,6 +574,20 @@ namespace CitySim.Frontend
 
                         DrawTriangleStrip(points, 4, co);
                     }
+                }
+            }
+
+            if (_overlaysEnabled[(int)Overlay.HOUSE_OCCUPANCY])
+            {
+                foreach (var house in _model.WorldLayer.GridEnvironment.Entities.OfType<House>())
+                {
+                    Vector2 pos = GetEntityPosition2D(house) - new Vector2(0, GetHouseBlockHeight());
+
+                    DrawCircleV(pos+new Vector2(2,2), 20, SHADOW_COLOR);
+                    DrawCircleV(pos, 20, LIGHTGRAY);
+                    DrawCircleSector(pos, 20, -180,
+                        -180-360*house.Inhabitants.Count/(float)house.MaxSpaces, 
+                        16, SKYBLUE);
                 }
             }
         }

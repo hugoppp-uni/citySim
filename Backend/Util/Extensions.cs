@@ -12,7 +12,7 @@ public static class Extensions
     
     public static string JoinDataToString(this NDArray ary)
     {
-        return string.Join(",", ary.ToArray().Select(it => it.ToString()));
+        return string.Join(", ", ary.ToArray().Select(it => it.ToString()));
     }
     
    public static void Deconstruct<T>(this T?[] items, out T? t0)

@@ -197,18 +197,6 @@ namespace CitySim.Frontend
                 var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
-                
-            }
-
-            if (_selectedEntity is Person selectedPerson)
-            {
-                //Selected person info panel
-                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - OPTIONS_PANEL_WIDTH + 2, infoPanelHeight);
-                const int padding = 10;
-
-                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
-                    bounds.width - 2 * padding, bounds.height - 2 * padding);
-
                 if(_activeInfoView?.Entity != _selectedEntity)
                 {
                     _activeInfoView = _selectedEntity switch

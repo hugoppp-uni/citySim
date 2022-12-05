@@ -30,7 +30,7 @@ public class Benchmark
     public void IterationSetup()
     {
         _citySim = new CitySim.Backend.CitySim(15, personMindWeightsFileToLoad: PersonMindFileName,
-            personCount: PersonCount, personMindBatchSize: PersonCount / 2)
+            personCount: PersonCount, personMindBatchSize: (x)=> x / 2)
         {
             SimulationController =
             {

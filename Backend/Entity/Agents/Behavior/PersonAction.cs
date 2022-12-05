@@ -9,7 +9,8 @@ public enum ActionType
 {
     Sleep,
     Eat,
-    BuildHouse
+    BuildHouse,
+    BuildRestaurant
 }
     public enum ActionResult
     {
@@ -38,6 +39,7 @@ public abstract record PersonAction(ActionType Type, Position TargetPosition, Pe
             ActionType.Eat => new EatAction(type, targetPosition, person),
             ActionType.Sleep => new SleepAction(type, targetPosition, person),
             ActionType.BuildHouse => new BuildHouseAction(type, targetPosition, person),
+            ActionType.BuildRestaurant => new BuildRestaurantAction(type, targetPosition, person),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

@@ -58,13 +58,13 @@ public class Restaurant : Structure
         lock (this)
         {
             _queuedForThisTick.Clear();
-            _capacityLeft = Math.Max(0, MaxCapacityPerTick - _queue.Count);
+            _capacityLeft = MaxCapacityPerTick;
             while(_queue.Count > 0 && _queuedForThisTick.Count < MaxCapacityPerTick)
             {
-                 
                 if (_queue.TryDequeue(out var person) && person.IsAlive)
                 {
                     _queuedForThisTick.Add(person);
+                    _capacityLeft--;
                 }
             }
         }

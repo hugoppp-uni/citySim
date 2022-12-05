@@ -2,7 +2,6 @@
 using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
-using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
 using Mars.Components.Environments;
 using Mars.Components.Layers;
@@ -56,7 +55,7 @@ public class WorldLayer : AbstractLayer
 
         SpawnBuildings();
         BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
-        BuildPositionEvaluator.EvaluateHousingScore();
+        BuildPositionEvaluator.EvaluateBuildingScore();
 
         agentManager.Spawn<Person, WorldLayer>().ToList();
 

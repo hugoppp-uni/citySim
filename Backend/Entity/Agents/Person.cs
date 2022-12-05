@@ -170,7 +170,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             return false;
         }
 
-        if (Needs.Sleepiness < -3)
+        if (Needs.Sleepiness < 0)
         {
             _mind.LearnFromDeath(ActionType.Sleep);
             Kill();

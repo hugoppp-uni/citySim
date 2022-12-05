@@ -89,6 +89,7 @@ public class CitySim
         var fixedUpdateLayer = (FixedUpdateLayer)Model.Layers[new LayerType(typeof(FixedUpdateLayer))];
         fixedUpdateLayer.SimulationController = SimulationController;
         WorldLayer = (WorldLayer)Model.Layers[new LayerType(typeof(WorldLayer))];
+        WorldLayer.citySim = this;
     }
 
 

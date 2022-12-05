@@ -14,8 +14,8 @@ public record PersonNeeds
 
     public void Tick()
     {
-        Hunger -= 0.08;
-        Sleepiness -= 0.015;
+        Hunger -= 0.01;
+        Sleepiness -= 0.01;
         //Money -= 0.01;
     }
 

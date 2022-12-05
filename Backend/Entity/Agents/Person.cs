@@ -20,7 +20,7 @@ namespace CitySim.Backend.Entity.Agents;
 
 public class Person : IAgent<WorldLayer>, IPositionableEntity
 {
-    public Guid ID { get; set; }
+    public Guid ID { get; set; } = Guid.NewGuid();
     private const int ReproductionRate = 2;
     public Position Position { get; set; } = null!; //Init()
     private WorldLayer _worldLayer = null!; //Init()
@@ -29,7 +29,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private IMind _mind = null!;
     private readonly PersonRecollection _recollection = new();
     private readonly List<Action> _onKill = new();
-    public bool IsAlive { get; private set; }
+    public bool IsAlive { get; private set; } = true;
 
     public PersonNeeds Needs { get; } = new();
 

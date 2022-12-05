@@ -111,6 +111,7 @@ namespace CitySim.Frontend
             
             DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
                 10, 25,15, WHITE);
+            DrawStats(screenWidth, screenHeight);
             DrawText($"Current tick: {_model.WorldLayer.GetCurrentTick()}", 10, screenHeight - 16, 
                 16, WHITE);
 
@@ -123,7 +124,7 @@ namespace CitySim.Frontend
                 DrawText("CitySim", screenWidth / 2 - width / 2, 20,
                     60, RAYWHITE);
             }
-
+            
             int infoPanelHeight = 300;
 
             Color panelColor = new Color(0, 0, 0, 100);
@@ -197,6 +198,17 @@ namespace CitySim.Frontend
                     bounds.width - 2 * padding, bounds.height - 2 * padding);
 
                 
+            }
+
+            if (_selectedEntity is Person selectedPerson)
+            {
+                //Selected person info panel
+                var bounds = new Rectangle(0, screenHeight - infoPanelHeight, screenWidth - OPTIONS_PANEL_WIDTH + 2, infoPanelHeight);
+                const int padding = 10;
+
+                var viewBounds = new Rectangle(bounds.X + padding, bounds.Y + padding,
+                    bounds.width - 2 * padding, bounds.height - 2 * padding);
+
                 if(_activeInfoView?.Entity != _selectedEntity)
                 {
                     _activeInfoView = _selectedEntity switch
@@ -227,6 +239,7 @@ namespace CitySim.Frontend
 
             for (var index = 0; index < n; index++)
             {
+                const int padding = 10;
                 var eventLogEntry = _eventLog[index];
                 const int showEventsInLastNTicks = 5;
                 if (eventLogEntry.Tick < WorldLayer.CurrentTick - showEventsInLastNTicks)

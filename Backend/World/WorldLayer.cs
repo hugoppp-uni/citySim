@@ -1,4 +1,5 @@
-﻿using CitySim.Backend.Entity;
+﻿using Autofac.Builder;
+using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
@@ -33,6 +34,8 @@ public class WorldLayer : AbstractLayer
 
     public event TwoPersonEventHandler? ReproduceEventHandler;
 
+    public CitySim citySim { set; get; }
+
     public WorldLayer()
     {
         Instance = this;
@@ -65,6 +68,11 @@ public class WorldLayer : AbstractLayer
     {
         GridEnvironment.Remove(person);
         UnregisterAgent.Invoke(this, person);
+
+        if (!GridEnvironment.Entities.OfType<Person>().Any())
+        {
+            citySim.Abort();
+        }
     }
 
     public Position RandomPosition()

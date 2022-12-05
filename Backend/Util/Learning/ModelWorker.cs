@@ -143,7 +143,7 @@ public class ModelWorker
         
         
 
-        if (_configuration.WeightsFileToSave != null && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)
+        if (_configuration.WeightsFileToSave != null)
         {
             if (!Directory.Exists(Path.GetDirectoryName(_configuration.WeightsFileToSave)) 
                 && Path.GetDirectoryName(_configuration.WeightsFileToSave) != null)

@@ -581,13 +581,26 @@ namespace CitySim.Frontend
             {
                 foreach (var house in _model.WorldLayer.GridEnvironment.Entities.OfType<House>())
                 {
-                    Vector2 pos = GetEntityPosition2D(house) - new Vector2(0, GetHouseBlockHeight());
+                    Vector2 pos = Grid.GetPosition2D(new Vector3(
+                        (float)house.Position.X, 
+                        (float)house.Position.Y, 
+                        GetHouseBlockHeight()));
 
-                    DrawCircleV(pos+new Vector2(2,2), 20, SHADOW_COLOR);
-                    DrawCircleV(pos, 20, LIGHTGRAY);
+                    int value = house.Inhabitants.Count;
+                    int max = house.MaxSpaces;
+
+                    DrawCircleV(pos+new Vector2(2,2), 20, new Color(0,0,0,200));
+                    DrawCircleV(pos, 20, DARKGRAY);
                     DrawCircleSector(pos, 20, -180,
-                        -180-360*house.Inhabitants.Count/(float)house.MaxSpaces, 
+                        -180-360*value/(float)max, 
                         16, SKYBLUE);
+
+                    for (int i = 0; i < max; i++)
+                    {
+                        var (s,c) = MathF.SinCos(MathF.Tau * i / max);
+
+                        DrawLineV(pos, pos + new Vector2(s, -c) * 20, GRAY);
+                    }
                 }
             }
         }

@@ -20,6 +20,11 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
 
         public IPositionableEntity Entity => Person;
 
+        void IEntityInfoView.HandleClick()
+        {
+
+        }
+
         public void UpdateAndDraw(bool isHovered)
         {
             Update(isHovered);

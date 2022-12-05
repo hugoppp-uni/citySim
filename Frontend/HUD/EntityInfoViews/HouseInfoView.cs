@@ -1,13 +1,19 @@
 ﻿using CitySim.Backend.Entity;
+using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
 using Raylib_CsLo;
-
+using System.Numerics;
 using static Raylib_CsLo.Raylib;
 
 namespace CitySim.Frontend.HUD.EntityInfoViews
 {
     internal class HouseInfoView : ScrollView, IEntityInfoView
     {
+        private Person? hoveredPerson;
+        private Person? selectedPerson;
+
+        private PersonInfoView? selectedPersonInfoView;
+
         public HouseInfoView(House house, (float width, float height) scrollBounds, Rectangle viewBounds)
             : base(scrollBounds, viewBounds)
         {
@@ -17,6 +23,17 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
         public House House { get; }
 
         public IPositionableEntity Entity => House;
+
+        void IEntityInfoView.HandleClick()
+        {
+            selectedPerson = hoveredPerson;
+
+            if (selectedPerson is not null)
+                selectedPersonInfoView = new PersonInfoView(selectedPerson, (0, 0), ViewBounds);
+            else
+                selectedPersonInfoView = null;
+
+        }
 
         public void UpdateAndDraw(bool isHovered)
         {
@@ -46,10 +63,15 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
 
                 Font font = GetFontDefault();
 
+                Vector2 mousePos = GetMousePosition();
+
+
 
                 Text(font, 30, x, "Info about House\n", WHITE);
 
                 Text(font, 25, x, $"Inhabitants", LIGHTGRAY);
+
+                hoveredPerson = null;
 
 
                 for (int i = 0; i < House.MaxSpaces; i++)
@@ -57,9 +79,25 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
                     DrawRectangleRec(new(x, y, 20, 40),
                         new Color(50, 50, 50, 150));
 
+                    var hoverRect = new Rectangle(
+                        x - 5,
+                        y,
+                        30,
+                        40
+                        );
+
+                    var personIsHovered = CheckCollisionPointRec(mousePos, hoverRect);
+
                     if (i < House.Inhabitants.Count)
                     {
                         var person = House.Inhabitants[i];
+
+                        if (personIsHovered && isHovered)
+                        {
+                            DrawRectangleRec(hoverRect, new Color(0, 0, 0, 50));
+                            hoveredPerson = person;
+                        }
+
                         var color = WorldDrawer.GetPersonColor(person);
                         DrawRectangleRec(new(x, y, 20, 20), WHITE);
                         DrawRectangleRec(new(x, y + 20, 20, 20), color);
@@ -70,6 +108,18 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
                 y += 50;
 
                 EndScissorMode();
+
+                if (selectedPersonInfoView is not null)
+                {
+                    selectedPersonInfoView.ViewBounds = new Rectangle(
+                        ViewBounds.X + ViewBounds.width - 600,
+                        ViewBounds.Y,
+                        600,
+                        ViewBounds.height
+                        );
+
+                    selectedPersonInfoView.UpdateAndDraw(isHovered);
+                }
 
 
                 ScrollBounds = (maxWidth, y - startY);

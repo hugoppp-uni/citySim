@@ -13,6 +13,8 @@ using NesScripts.Controls.PathFind;
 using NLog;
 using NLog.Fluent;
 using CircularBuffer;
+using Mars.Common.Core.Collections;
+using ServiceStack;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -32,7 +34,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     public PersonNeeds Needs { get; } = new();
 
     public record struct PersonActionLog(PersonNeeds Needs, PersonAction Action);
-    
+
 
     private readonly CircularBuffer<PersonActionLog> _actionLog = new(20);
     public int GetActionLog(PersonActionLog[] ary) => _actionLog.WriteToArray(ary);
@@ -55,8 +57,6 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         _worldLayer = layer;
         Position = _worldLayer.RandomBuildingPosition();
         _worldLayer.GridEnvironment.Insert(this);
-
-        _recollection.Add(ActionType.Eat, _worldLayer.Structures.OfType<Restaurant>().First().Position);
     }
 
     public ActionType? GetNextAction()
@@ -84,12 +84,14 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             //return value is false if the agent died, hacky for now
             return;
 
+        InitRecollection();
+
         if (_plannedAction is null)
         {
             _plannedAction = PlanNextAction();
             if (_plannedAction is null) return;
-            
-            _actionLog.PushFront(new PersonActionLog {Action = _plannedAction, Needs = Needs with {}});
+
+            _actionLog.PushFront(new PersonActionLog { Action = _plannedAction, Needs = Needs with { } });
             Route = _worldLayer.FindRoute(Position, _plannedAction.TargetPosition);
         }
 
@@ -105,6 +107,31 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         _logger.Trace($"{ID} is {_plannedAction}");
         if (_plannedAction.Execute() == ActionResult.Executed)
             _plannedAction = null;
+    }
+
+    private void InitRecollection()
+    {
+        if (!_recollection.ResolvePosition(ActionType.Sleep).Any())
+        {
+            lock (_worldLayer.Structures)
+            {
+                var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
+                        _worldLayer.FindRoute(it.Position, Position).Remaining)
+                    .FirstOrDefault(house => house.FreeSpaces > 0);
+
+                _recollection.Add(ActionType.Sleep, home.Position);
+
+                home.AddInhabitant(this);
+                _onKill.Add(() => home.RemoveInhabitant(this));
+            }
+        }
+
+        if (!_recollection.ResolvePosition(ActionType.Eat).Any())
+        {
+            var restaurants = _worldLayer.Structures.OfType<Restaurant>().ToList();
+            var randomRestaurant = restaurants[Random.Shared.Next(restaurants.Count)];
+            _recollection.Add(ActionType.Eat, randomRestaurant.Position);
+        }
     }
 
     private PersonAction? PlanNextAction()
@@ -126,25 +153,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         var actionPosition = GetPosition();
         if (actionPosition != null)
         {
-            return  PersonAction.Create(nextActionType, actionPosition, this);
-        }
-
-        if (nextActionType == ActionType.Sleep)
-        {
-            lock (_worldLayer.Structures)
-            {
-                var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
-                        _worldLayer.FindRoute(it.Position, Position).Remaining)
-                    .FirstOrDefault(house => house.FreeSpaces > 0);
-
-                if (home is null)
-                    return null;
-
-                home.AddInhabitant(this);
-                _onKill.Add(() => home.RemoveInhabitant(this));
-                _recollection.Add(ActionType.Sleep, home.Position);
-                return PersonAction.Create(ActionType.Sleep, home.Position, this);
-            }
+            return PersonAction.Create(nextActionType, actionPosition, this);
         }
 
         return null;

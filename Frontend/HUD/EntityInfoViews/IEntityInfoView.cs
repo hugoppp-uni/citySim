@@ -7,5 +7,7 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
         public IPositionableEntity Entity { get; }
 
         void UpdateAndDraw(bool isHovered);
+
+        void HandleClick();
     }
 }

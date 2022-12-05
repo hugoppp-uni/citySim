@@ -57,10 +57,19 @@ namespace CitySim.Frontend
 
         private void HandleClick()
         {
-            _selectedEntity = null;
+            
 
-            if (_worldDrawer.HoveredEntity is not null)
-                _selectedEntity = _worldDrawer.HoveredEntity;
+            if (_hoveredElement == _worldDrawer)
+            {
+                _selectedEntity = null;
+
+                if(_worldDrawer.HoveredEntity is not null)
+                    _selectedEntity = _worldDrawer.HoveredEntity;
+            }
+            else if (_activeInfoView is not null && _hoveredElement == _activeInfoView)
+            {
+                _activeInfoView.HandleClick();
+            }
         }
 
         private void DrawStats(int screenWidth, int screenHeight)
@@ -235,8 +244,7 @@ namespace CitySim.Frontend
             object? newHoveredElement = _worldDrawer;
 
             //bit hacky but who cares
-            bool clicked = _hoveredElement == _worldDrawer &&
-                           GetGestureDragVector() == Vector2.Zero &&
+            bool clicked = GetGestureDragVector() == Vector2.Zero &&
                            GuiLabelButton(new Rectangle(0, 0, screenWidth, screenHeight),
                                string.Empty);
 

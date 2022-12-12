@@ -17,7 +17,7 @@ const int screenHeight = 900;
 SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_MSAA_4X_HINT);
 InitWindow(screenWidth, screenHeight, "CitySim");
 
-CitySim.Backend.CitySim CreateModel()
+CitySim.Backend.CitySim CreateModel(Type mindImpl)
 {
     string? personMindFileName = "./ModelWeights/personMind2Hidden.hdf5";
     return new CitySim.Backend.CitySim(
@@ -26,7 +26,8 @@ CitySim.Backend.CitySim CreateModel()
         personCount: 40,
         personMindBatchSize: 25,
         personMindLearningRate: 0.01f,
-        training: true
+        training: true,
+        mindImplementationType: mindImpl
     )
     {
         SimulationController =
@@ -132,14 +133,23 @@ while (!WindowShouldClose())
 
     if (!isModelCreated)
     {
-        string? choice = null;
+        Type? choice = null;
 
-        if (RayGui.GuiButton(new Rectangle(0, GetScreenHeight() - 40, GetScreenWidth(), 40), "Test"))
-            choice = "Test";
+
+        int y = 0;
+        foreach (var mindType in CitySim.Backend.CitySim.MindImplementations)
+        {
+            if (RayGui.GuiButton(new Rectangle(0, GetScreenHeight() - 160 + y, GetScreenWidth(), 40), 
+                mindType.Name))
+                choice = mindType;
+
+            y += 40;
+        }
+        
 
         if (choice != null)
         {
-            citySim = CreateModel();
+            citySim = CreateModel(choice);
             view = new CitySimView(citySim);
 
             isModelCreated = true;

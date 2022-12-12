@@ -28,9 +28,9 @@ public class BuildPositionEvaluator
         _housingScore = new double[structures.XSize, structures.YSize];
         _housingScoreBuffer = new double[structures.XSize, structures.YSize];
 
-        float[,] tilesCosts = new float[WorldLayer.XSize, WorldLayer.YSize];
-        for (int i = 0; i < WorldLayer.XSize; i++)
-        for (int j = 0; j < WorldLayer.YSize; j++)
+        float[,] tilesCosts = new float[WorldLayer.Instance.XSize, WorldLayer.Instance.YSize];
+        for (int i = 0; i < WorldLayer.Instance.XSize; i++)
+        for (int j = 0; j < WorldLayer.Instance.YSize; j++)
             tilesCosts[i, j] = 100;
         foreach (var structure in _structures)
         {

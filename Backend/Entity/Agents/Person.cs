@@ -1,7 +1,6 @@
 using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
-using CitySim.Backend.Util.Learning;
 using CitySim.Backend.World;
 using Mars.Core.Data;
 using Mars.Interfaces.Agents;
@@ -11,8 +10,6 @@ using Mars.Numerics;
 using NesScripts.Controls.PathFind;
 using NLog;
 using CircularBuffer;
-using Mars.Common.Core.Collections;
-using ServiceStack;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -142,10 +139,12 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     private PersonAction? PlanNextAction()
     {
+        var globalState = _worldLayer.GetGlobalState();
         var nextActionType = _mind.GetNextActionType(
             Needs,
-            _worldLayer.GetGlobalState(),
-            new Distances(this, _worldLayer)
+            globalState,
+            new Distances(this, _worldLayer),
+            GetWellBeing(Needs, globalState)
         );
 
         Position? GetPosition() => nextActionType switch
@@ -200,13 +199,21 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     private void ReproductionNeeds()
     {
         Needs.Tick();
-        var generalNeed = (_mind.GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1) * 50; // 0 to 100
+        var generalNeed = (GetWellBeing(Needs, _worldLayer.GetGlobalState()) + 1) * 50; // 0 to 100
         var reproductionRate = generalNeed * Random.Shared.NextDouble() + Random.Shared.Next(0, 20);
 
         if (_tickAge > 10 && reproductionRate > 100 - ReproductionRate)
         {
             Reproduce();
         }
+    }
+    
+    private double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)
+    {
+        var global = globalState.AsNormalizedArray();
+        var personal = personNeeds.AsNormalizedArray();
+        return (personal.Sum() + global.Sum()) /
+            (global.Length + personal.Length);
     }
 
     private void Reproduce()

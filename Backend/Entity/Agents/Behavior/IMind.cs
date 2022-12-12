@@ -5,8 +5,16 @@ namespace CitySim.Backend.Entity.Agents.Behavior;
 
 public interface IMind
 {
-    ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances);
-    double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState);
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="personNeeds"></param>
+    /// <param name="globalState"></param>
+    /// <param name="distances"></param>
+    /// <param name="wellBeing">A normalized well being value calculated from the persons needs and the global state.
+    /// The value can be between -1 and 1. A high value increased the chance of reproduction and can be used for debugging.</param>
+    /// <returns></returns>
+    ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances, double wellBeing);
     void LearnFromDeath(ActionType neededActionToSurvive);
 
     public static IMind Create(Type type)
@@ -33,19 +41,11 @@ public class MindMock : IMind
         i = individualFactor;
     }
 
-    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
+    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances, double wellBeing)
     {
         return Random.Shared.Next(5) == 0
             ? ActionType.BuildHouse
             : Enum.GetValues<ActionType>()[new[] { personNeeds.Sleepiness, personNeeds.Hunger }.ArgMin()];
-    }
-
-    public double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)
-    {
-        var global = globalState.AsNormalizedArray();
-        var personal = personNeeds.AsNormalizedArray();
-        return (personal.Sum() + global.Sum()) /
-            (global.Length + personal.Length) * 2 - 1;
     }
 
     public void LearnFromDeath(ActionType neededActionToSurvive)

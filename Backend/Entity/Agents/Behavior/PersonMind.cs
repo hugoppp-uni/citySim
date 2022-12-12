@@ -76,7 +76,7 @@ public class PersonMind : IMind
     }
 
 
-    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
+    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances, double ignore)
     {
         Evaluate(personNeeds, globalState);
         var needsAry = personNeeds.AsNormalizedArray();

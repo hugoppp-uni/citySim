@@ -12,7 +12,7 @@ public class ExampleUserMind : IMind
         throw new NotImplementedException();
     }
 
-    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
+    public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances, double wellBeing)
     {
         throw new NotImplementedException();
     }

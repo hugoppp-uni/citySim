@@ -22,7 +22,9 @@ var citySim = new CitySim.Backend.CitySim(
     personCount: 40,
     personMindBatchSize: 25,
     personMindLearningRate: 0.01f,
-    training: true
+    training: true,
+    mindImplementationType: null
+    
 )
 {
     SimulationController =
@@ -60,7 +62,7 @@ while (!WindowShouldClose())
     float jumpProgress = Math.Clamp((float)time - 1.6f, 0, 0.4f) / 0.4f;
 
     float textFade = Math.Clamp((float)time - 1.8f, 0, 0.6f) / 0.6f;
-    
+
     float finalWipe = Math.Clamp((float)time - 2.4f, 0, 0.8f) / 0.8f;
 
 
@@ -74,8 +76,6 @@ while (!WindowShouldClose())
         view.UpdateAndDraw(GetScreenWidth(), GetScreenHeight());
 
     cam.offset = new Vector2(GetScreenWidth(), GetScreenHeight()) / 2;
-
-
 
 
     float t3 = jumpProgress;
@@ -93,7 +93,6 @@ while (!WindowShouldClose())
     BeginMode2D(cam);
 
 
-
     //Fading in CitySim text
     {
         Font font = GetFontDefault();
@@ -108,7 +107,7 @@ while (!WindowShouldClose())
     }
 
     SplittingPersonDrawer.Draw(splitProgress, posAStart, posAEnd, WHITE, WHITE,
-                                              posBStart, posBEnd, WHITE, WHITE);
+        posBStart, posBEnd, WHITE, WHITE);
 
     EndMode2D();
     EndScissorMode();

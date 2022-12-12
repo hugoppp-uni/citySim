@@ -6,6 +6,7 @@ using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Util.Learning;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Entity;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.World;
 using CitySim.Frontend.HUD.EntityInfoViews;
 using CitySim.Frontend.Helpers;
@@ -109,7 +110,7 @@ namespace CitySim.Frontend
             DrawEventLog();
             DrawStats(screenWidth, screenHeight);
             
-            DrawText($"Average model training duration: {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration} ms",
+            DrawText($"Average model training duration: {ModelWorker.GetInstance(PersonMind.ModelWorkerKey).AverageFitDuration} ms",
                 10, 25,15, WHITE);
             DrawStats(screenWidth, screenHeight);
             DrawText($"Current tick: {_model.WorldLayer.GetCurrentTick()}", 10, screenHeight - 16, 

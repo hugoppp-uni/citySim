@@ -49,6 +49,8 @@ public class PersonMind : IMind
     /// </summary>
     private readonly double _individualist;
 
+    public const string ModelWorkerKey = nameof(PersonMind);
+
     private PredictionData? _lastIndividualPrediction;
     private readonly Queue<PredictionData> _lastPredictions = new();
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -61,9 +63,9 @@ public class PersonMind : IMind
     /// /// <param name="modelWorker">The Worker to run the neural network model operations on
     /// </param>
     /// <exception cref="InvalidArgumentError"></exception>
-    public PersonMind([Range(0.0, 1.0)] double individualist, ModelWorker modelWorker)
+    public PersonMind([Range(0.0, 1.0)] double individualist)
     {
-        _modelWorker = modelWorker;
+        _modelWorker = ModelWorker.GetInstance(ModelWorkerKey);
         if (individualist is < 0 or > 1)
         {
             throw new InvalidArgumentError("The param individualist has to be in the range [0,1]");

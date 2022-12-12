@@ -1,14 +1,25 @@
+using CitySim.Backend.World;
 using Mars.Numerics;
 
 namespace CitySim.Backend.Entity.Agents.Behavior;
-
-using World;
 
 public interface IMind
 {
     ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances);
     double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState);
     void LearnFromDeath(ActionType neededActionToSurvive);
+
+    public static IMind Create(Type type)
+    {
+        if (!typeof(IMind).IsAssignableFrom(type))
+            throw new InvalidOperationException($"{type} must implement IMind");
+
+        return type.Name switch
+        {
+            nameof(PersonMind) => new PersonMind(0.5),
+            _ => (IMind)Activator.CreateInstance(type)!
+        };
+    }
 }
 
 public class MindMock : IMind

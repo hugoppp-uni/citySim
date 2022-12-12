@@ -1,5 +1,4 @@
-﻿using Autofac.Builder;
-using CitySim.Backend.Entity;
+﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
@@ -80,6 +79,7 @@ public class WorldLayer : AbstractLayer
         var random = RandomHelper.Random;
         return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
     }
+
     public Position RandomBuildingPosition()
     {
         return Structures.Skip(Random.Shared.Next(Structures.Count - 1)).First().Position.Copy();

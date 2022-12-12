@@ -53,7 +53,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
     public void Init(WorldLayer layer)
     {
-        _mind = new PersonMind(0.5, ModelWorker.GetInstance(ModelWorkerKey));
+        _mind = CitySim.Instance.GetMind();
         _worldLayer = layer;
         Position = _worldLayer.RandomBuildingPosition();
         _worldLayer.GridEnvironment.Insert(this);

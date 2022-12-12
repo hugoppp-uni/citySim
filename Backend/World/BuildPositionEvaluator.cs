@@ -18,6 +18,7 @@ public class BuildPositionEvaluator
     private double[,] _housingScoreBuffer;
     private double[,] _restaurantScoreBuffer;
     public Safe2DArrayView<double> HousingScore => new(_housingScore);
+    public Safe2DArrayView<double> RestaurantScore => new(_restaurantScore);
 
     private long _lastEvalutedTick = 0;
 

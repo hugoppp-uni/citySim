@@ -48,6 +48,8 @@ namespace CitySim.Frontend
             GRID_LINES,
             [System.ComponentModel.Description("Show Housing Score")]
             HOUSING_SCORE,
+            [System.ComponentModel.Description("Show Restaurant Score")]
+            RESTAURANT_SCORE,
             [System.ComponentModel.Description("Show House Occupancy")]
             HOUSE_OCCUPANCY,
         }
@@ -145,6 +147,14 @@ namespace CitySim.Frontend
 
         public void ToggleOverlay(int overlay, bool enabled)
         {
+            int housing_score = (int)Overlay.HOUSING_SCORE;
+            int restaurant_score = (int)Overlay.RESTAURANT_SCORE;
+
+            if(enabled && overlay==housing_score)
+                _overlaysEnabled[restaurant_score] = false;
+            else if (enabled && overlay == restaurant_score)
+                _overlaysEnabled[housing_score] = false;
+
             _overlaysEnabled[overlay] = enabled;
         }
 
@@ -543,11 +553,18 @@ namespace CitySim.Frontend
                 }
             }
 
-            if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE])
+            if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE] || 
+                _overlaysEnabled[(int)Overlay.RESTAURANT_SCORE])
             {
                 foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
                 {
-                    var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
+                    double? d = 0;
+
+                    if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE])
+                        d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
+                    else
+                        d = _model.WorldLayer.BuildPositionEvaluator.RestaurantScore[cell_x, cell_y];
+
                     if (d is null or double.NegativeInfinity)
                         continue;
 

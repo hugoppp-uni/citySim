@@ -3,7 +3,6 @@ using CitySim.Backend.Entity.Structures;
 using CitySim.Backend.Util;
 using CitySim.Backend.Util.Learning;
 using CitySim.Backend.World;
-using Mars.Components.Services;
 using Mars.Core.Data;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Annotations;
@@ -11,7 +10,6 @@ using Mars.Interfaces.Environments;
 using Mars.Numerics;
 using NesScripts.Controls.PathFind;
 using NLog;
-using NLog.Fluent;
 using CircularBuffer;
 using Mars.Common.Core.Collections;
 using ServiceStack;
@@ -109,6 +107,14 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             _plannedAction = null;
     }
 
+    public double GetDistanceToAction(ActionType actionType)
+    {
+        return _recollection.ResolvePosition(actionType)
+            .Select(it => Distance.Manhattan(it.PositionArray, Position.PositionArray))
+            .MinBy(it => it);
+    }
+
+
     private void InitRecollection()
     {
         if (!_recollection.ResolvePosition(ActionType.Sleep).Any())
@@ -144,7 +150,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
 
         Position? GetPosition() => nextActionType switch
         {
-            ActionType.BuildHouse => _worldLayer.BuildPositionEvaluator.GetNextBuildPos(),
+            ActionType.BuildHouse => _worldLayer.BuildPositionEvaluator.GetNextHouseBuildPos(),
+            ActionType.BuildRestaurant => _worldLayer.BuildPositionEvaluator.GetNextRestaurantBuildPos(),
             _ => _recollection.ResolvePosition(nextActionType)
                 .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray))
         };

@@ -33,13 +33,14 @@ List<Type> FindMindImplementations()
 
 CitySim.Backend.CitySim CreateModel(Type mindImpl)
 {
-    string? personMindFileName = "./ModelWeights/personMind2Hidden.hdf5";
+    string? personMindFileName = "./ModelWeights/personMind.hdf5";
     return new CitySim.Backend.CitySim(
         personMindWeightsFileToLoad: personMindFileName,
         newSaveLocationForPersonMindWeights: personMindFileName,
-        personCount: 40,
-        personMindBatchSize: 25,
-        personMindLearningRate: 0.01f,
+        personCount: 30,
+        personMindBatchSize: x => x / 2,
+        personMindLearningRate: 0.02f,
+    personActionExplorationRate:0,
         training: true,
         mindImplementationType: mindImpl
     )
@@ -50,7 +51,6 @@ CitySim.Backend.CitySim CreateModel(Type mindImpl)
         }
     };
 }
-
 
 Task simulationTask;
 bool isSimulationRunning = false;

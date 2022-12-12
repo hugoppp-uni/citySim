@@ -40,7 +40,7 @@ public class Program
                 newSaveLocationForPersonMindWeights: PersonMindFileName,
                 personCount: 40,
                 maxTick: 10,
-                personMindBatchSize: 25,
+                personMindBatchSize: (x)=> x / 2,
                 personActionExplorationRate: 20,
                 personMindLearningRate: 0.01f,
                 training: true,

@@ -1,17 +1,11 @@
 ﻿using Raylib_CsLo;
 using static CitySim.Frontend.Helpers.RaylibExtensions;
 using static Raylib_CsLo.Raylib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity;
 using System.Reflection;
 using CitySim.Backend.Entity.Structures;
-using static ServiceStack.Script.Lisp;
 using CitySim.Frontend.Helpers;
 
 namespace CitySim.Frontend
@@ -48,8 +42,12 @@ namespace CitySim.Frontend
             GRID_LINES,
             [System.ComponentModel.Description("Show Housing Score")]
             HOUSING_SCORE,
+            [System.ComponentModel.Description("Show Restaurant Score")]
+            RESTAURANT_SCORE,
             [System.ComponentModel.Description("Show House Occupancy")]
             HOUSE_OCCUPANCY,
+            [System.ComponentModel.Description("Show Restaureant Usage score")]
+            RESTAURANT_USGAE_SCORE,
         }
 
         private const int TILE_BUILDING_FLOOR = 0;
@@ -145,6 +143,14 @@ namespace CitySim.Frontend
 
         public void ToggleOverlay(int overlay, bool enabled)
         {
+            int housing_score = (int)Overlay.HOUSING_SCORE;
+            int restaurant_score = (int)Overlay.RESTAURANT_SCORE;
+
+            if(enabled && overlay==housing_score)
+                _overlaysEnabled[restaurant_score] = false;
+            else if (enabled && overlay == restaurant_score)
+                _overlaysEnabled[housing_score] = false;
+
             _overlaysEnabled[overlay] = enabled;
         }
 
@@ -543,11 +549,18 @@ namespace CitySim.Frontend
                 }
             }
 
-            if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE])
+            if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE] || 
+                _overlaysEnabled[(int)Overlay.RESTAURANT_SCORE])
             {
                 foreach (var (cell_x, cell_y, position2d, cell_height) in Grid.GetVisibleCells(camera))
                 {
-                    var d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
+                    double? d = 0;
+
+                    if (_overlaysEnabled[(int)Overlay.HOUSING_SCORE])
+                        d = _model.WorldLayer.BuildPositionEvaluator.HousingScore[cell_x, cell_y];
+                    else
+                        d = _model.WorldLayer.BuildPositionEvaluator.RestaurantScore[cell_x, cell_y];
+
                     if (d is null or double.NegativeInfinity)
                         continue;
 
@@ -601,6 +614,18 @@ namespace CitySim.Frontend
 
                         DrawLineV(pos, pos + new Vector2(s, -c) * 20, GRAY);
                     }
+                }
+            }
+
+            if (_overlaysEnabled[(int)Overlay.RESTAURANT_USGAE_SCORE])
+            {
+                foreach (var restaurant in _model.WorldLayer.GridEnvironment.Entities.OfType<Restaurant>())
+                {
+                    Vector2 pos = Grid.GetPosition2D(new Vector3(
+                        (float)restaurant.Position.X, 
+                        (float)restaurant.Position.Y, 
+                        GetHouseBlockHeight()));
+                    DrawText(Math.Round(restaurant.UsageScore, 2).ToString(),pos.X, pos.Y, 16,GRAY);
                 }
             }
         }

@@ -47,13 +47,17 @@ public class CitySim
     public CitySim(int maxTick = int.MaxValue, int personCount = 30, bool training = true,
         string? personMindWeightsFileToLoad = null,
         string? newSaveLocationForPersonMindWeights = null,
-        int personMindBatchSize = 15,
+        Func<int, int>? personMindBatchSize = null,
         int personActionExplorationRate = 7,
         float personMindLearningRate = 0.01f,
         int? generateInsightInterval = null,
         Type? mindImplementationType = null
     )
     {
+        if (personMindBatchSize == null)
+        {
+            personMindBatchSize = x => x / 2;
+        }
         _mindType = mindImplementationType ?? typeof(PersonMind);
         Instance = this;
         var desc = new ModelDescription();

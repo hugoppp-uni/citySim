@@ -3,9 +3,11 @@ using CitySim.Backend.World;
 
 namespace Plugins;
 
-public class UserMind : IMind
+// This is an example for implementing IMind.
+// Duplicate this file and change the name of the class to your group name.
+public class ExampleUserMind : IMind
 {
-    public UserMind()
+    public ExampleUserMind()
     {
         throw new NotImplementedException();
     }

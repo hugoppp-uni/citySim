@@ -14,6 +14,7 @@ using World;
 
 public class PersonMind : IMind
 {
+    public string Name => "AI Mind";
     private const double EgoScalar = 0.5;
     private const double IgnoreOwnBodyScalar = 0.1;
     private const double GoodWorldLensScalar = 0.8;
@@ -73,6 +74,7 @@ public class PersonMind : IMind
 
         _individualist = individualist;
     }
+
 
     public ActionType GetNextActionType(PersonNeeds personNeeds, GlobalState globalState, Distances distances)
     {

@@ -25,7 +25,7 @@ List<Type> FindMindImplementations()
     return Assembly.LoadFrom("Plugins.dll")
         .GetTypes()
         .Where(p => typeof(IMind).IsAssignableFrom(p))
-        .Where(p => p != typeof(MindMock) && p != typeof(IMind))
+        .Where(p => p != typeof(MindMock) && p != typeof(IMind) && p != typeof(ExampleUserMind))
         .Concat(new []{typeof(PersonMind)})
         .ToList();
 }
@@ -181,10 +181,12 @@ while (!WindowShouldClose())
 
         foreach (var mindType in mindImplementations)
         {
+            var mindName = mindType == typeof(PersonMind) ? "AI Mind" : mindType.Name;
+            
             if (RayGui.GuiButton(new Rectangle(
-                GetScreenWidth() / 2 - width/2, 
-                GetScreenHeight() + y, width, 40), 
-                mindType.Name))
+                        GetScreenWidth() / 2 - width/2, 
+                        GetScreenHeight() + y, width, 40), 
+                    mindName))
                 choice = mindType;
 
             y += 50;

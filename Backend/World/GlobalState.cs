@@ -5,19 +5,19 @@ using System;
 
 public class GlobalState
 {
-    public int Hunger { get; }
-    public int Housing { get;  }
+    public double RestaurantScoreAverage { get; }
+    public double Housing { get;  }
 
-    public GlobalState(int people, int units, int restaurantCapacity)
+    public GlobalState(int people, int units, double restaurantScoreAverage)
     {
-        Housing = units/people;
-        Hunger = restaurantCapacity/people; 
+        Housing = ((double)units)/people;
+        RestaurantScoreAverage = restaurantScoreAverage; 
     }
 
     /**
-     * Normalize a value by using fast sigmoid
+     * Normalize an open ranged positive integer where the best value is at x = 1
      */
-    private static double Normalize(int x)
+    private static double NormalizeFraction_optimumAt1(double x)
     {
         return 1.66 * x * Math.Pow(Math.E, -0.5 * x * x );
     }
@@ -28,6 +28,6 @@ public class GlobalState
     /// </summary>
     public double[] AsNormalizedArray()
     {
-        return new [] { Normalize(Hunger), Normalize(Housing) };
+        return new [] { RestaurantScoreAverage, NormalizeFraction_optimumAt1(Housing) };
     }
 }

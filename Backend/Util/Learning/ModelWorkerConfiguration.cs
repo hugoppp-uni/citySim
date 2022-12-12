@@ -38,7 +38,7 @@ public class ModelWorkerConfiguration
     /// <summary>
     /// The batch size of a training. Training Tasks are collected until enough data was collected 
     /// </summary>
-    public int BatchSize { get; set; } = 5;
+    public Func<int, int> BatchSize { get; set; } = x => x / 2;
 
     /// <summary>
     /// if set to false, all training tasks are ignored

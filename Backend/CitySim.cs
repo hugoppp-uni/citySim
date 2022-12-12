@@ -36,12 +36,16 @@ public class CitySim
     /// <param name="generateInsightInterval">If set, data will be generated to visualize the outputs of the neural networks based on all inputs every x epochs.</param>
     public CitySim(int maxTick = int.MaxValue, int personCount = 30, bool training = true,
         string? personMindWeightsFileToLoad = null, 
-        string? newSaveLocationForPersonMindWeights = null, 
-        int personMindBatchSize = 15,
+        string? newSaveLocationForPersonMindWeights = null,
+        Func<int, int>? personMindBatchSize = null,
         int personActionExplorationRate = 7,
         float personMindLearningRate = 0.01f,
         int? generateInsightInterval = null)
     {
+        if (personMindBatchSize == null)
+        {
+            personMindBatchSize = x => x / 2;
+        }
         var desc = new ModelDescription();
         desc.AddLayer<WorldLayer>();
         desc.AddLayer<FixedUpdateLayer>();

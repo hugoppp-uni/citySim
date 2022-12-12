@@ -151,7 +151,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         Position? GetPosition() => nextActionType switch
         {
             ActionType.BuildHouse => _worldLayer.BuildPositionEvaluator.GetNextHouseBuildPos(),
-            ActionType.BuildRestaurant => _worldLayer.BuildPositionEvaluator.GetNextHouseBuildPos(),
+            ActionType.BuildRestaurant => _worldLayer.BuildPositionEvaluator.GetNextRestaurantBuildPos(),
             _ => _recollection.ResolvePosition(nextActionType)
                 .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray))
         };

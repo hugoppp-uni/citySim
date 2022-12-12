@@ -19,9 +19,10 @@ string? personMindFileName = "./ModelWeights/personMind.hdf5";
 var citySim = new CitySim.Backend.CitySim(
     personMindWeightsFileToLoad: personMindFileName,
     newSaveLocationForPersonMindWeights: personMindFileName,
-    personCount: 40,
+    personCount: 30,
     personMindBatchSize: x => x / 2,
-    personMindLearningRate: 0.01f,
+    personMindLearningRate: 0.02f,
+    personActionExplorationRate:0,
     training: true
 )
 {

@@ -58,8 +58,8 @@ public class BuildPositionEvaluator
             for (int y = 0; y < _structures.YSize; y++)
             {
                 var structure = _structures[x, y];
-                var oldValue = _housingScore[x, y];
-                if (structure is not null || double.IsNegativeInfinity(oldValue))
+                if (structure is not null || double.IsNegativeInfinity(_housingScore[x, y]) || 
+                    double.IsNegativeInfinity(_restaurantScore[x, y]))
                 {
                     structuresAt.Add((x, y));
                     continue;
@@ -76,7 +76,7 @@ public class BuildPositionEvaluator
                     _structures.Kd.InsideRegion(new Hyperrectangle(x - width / 2, y - width / 2, width, height));
                 var buildingsNearbyCount = buildingsNearby.Select(node => node.Value).OfType<House>().Count();
                 _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToNearestRestaurant;
-                _restaurantScoreBuffer[x, y] = buildingsNearbyCount * 2 + manhattanDistanceToNearestRestaurant;
+                _restaurantScoreBuffer[x, y] = buildingsNearbyCount * manhattanDistanceToNearestRestaurant;
             }
 
             var min = _housingScoreBuffer.Min();
@@ -98,7 +98,6 @@ public class BuildPositionEvaluator
                 sizeof(double) * _housingScore.GetLength(0) * _housingScore.GetLength(1));
             Buffer.BlockCopy(_restaurantScoreBuffer, 0, _restaurantScore, 0,
                 sizeof(double) * _restaurantScore.GetLength(0) * _restaurantScore.GetLength(1));
-
         }
     }
 
@@ -118,7 +117,7 @@ public class BuildPositionEvaluator
 
             var (x, y) = _housingScore.ArgMax();
             _housingScore[x, y] = double.NegativeInfinity;
-            buildStreetToConnect(x, y);
+            BuildStreetToConnect(x, y);
 
             _pathFindingGrid.nodes[x, y].Update(false, x, y);
             return new Position(x, y);
@@ -133,14 +132,14 @@ public class BuildPositionEvaluator
 
             var (x, y) = _restaurantScore.ArgMax();
             _restaurantScore[x, y] = double.NegativeInfinity;
-            buildStreetToConnect(x, y);
+            BuildStreetToConnect(x, y);
 
             _pathFindingGrid.nodes[x, y].Update(false, x, y);
             return new Position(x, y);
         }
     }
 
-    private void buildStreetToConnect(int x, int y)
+    private void BuildStreetToConnect(int x, int y)
     {
         if (!WorldLayer.Instance.Structures.GetAdjecent(x, y).OfType<Street>().Any())
         {

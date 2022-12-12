@@ -1,6 +1,4 @@
 using CitySim.Backend.Entity.Agents.Behavior.Actions;
-using CitySim.Backend.Entity.Structures;
-using CitySim.Backend.World;
 using Mars.Interfaces.Environments;
 
 namespace CitySim.Backend.Entity.Agents.Behavior;

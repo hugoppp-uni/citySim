@@ -20,6 +20,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainingVersion", "TrainingVersion\TrainingVersion.csproj", "{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugins", "Plugins\Plugins.csproj", "{A7C5FD9B-541D-44C0-9F72-FEB7E37E49DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65284DB0-FCDA-4F45-AD8D-8DAE9C6988B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7C5FD9B-541D-44C0-9F72-FEB7E37E49DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C5FD9B-541D-44C0-9F72-FEB7E37E49DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7C5FD9B-541D-44C0-9F72-FEB7E37E49DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7C5FD9B-541D-44C0-9F72-FEB7E37E49DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

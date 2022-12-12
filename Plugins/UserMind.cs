@@ -1,6 +1,7 @@
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.World;
 
-namespace CitySim.Backend.Entity.Agents.Behavior;
+namespace Plugins;
 
 public class UserMind : IMind
 {

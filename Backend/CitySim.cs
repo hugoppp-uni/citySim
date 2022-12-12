@@ -24,8 +24,6 @@ public class CitySim
     public SimulationController SimulationController { get; } = new();
     internal static CitySim Instance { get; private set; }
 
-    public static IReadOnlyList<Type> MindImplementations = FindMindImplementations();
-
 
     private readonly Type _mindType;
 
@@ -126,25 +124,5 @@ public class CitySim
     {
         Simulation.AbortSimulation();
         ModelWorker.TerminateAll();
-    }
-    private static List<Type> FindMindImplementations()
-    {
-        return AppDomain.CurrentDomain.GetAssemblies()
-            .Where(s =>
-            {
-                try
-                {
-                    s.GetTypes();
-                    return true;
-                }
-                catch (Exception e)
-                {
-                    return false;
-                }
-            })
-            .SelectMany(s => s.GetTypes())
-            .Where(p => typeof(IMind).IsAssignableFrom(p))
-            .Where(p => p != typeof(MindMock) && p != typeof(IMind))
-            .ToList();
     }
 }

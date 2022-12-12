@@ -4,6 +4,9 @@ using CitySim.Frontend.Helpers;
 using Raylib_CsLo;
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
+using CitySim.Backend.Entity.Agents.Behavior;
+using Plugins;
 using static Raylib_CsLo.Raylib;
 
 //change simulation speed
@@ -16,6 +19,17 @@ const int screenHeight = 900;
 
 SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_MSAA_4X_HINT);
 InitWindow(screenWidth, screenHeight, "CitySim");
+
+List<Type> FindMindImplementations()
+{
+    return Assembly.LoadFrom("Plugins.dll")
+        .GetTypes()
+        .Where(p => typeof(IMind).IsAssignableFrom(p))
+        .Where(p => p != typeof(MindMock) && p != typeof(IMind))
+        .Concat(new []{typeof(PersonMind)})
+        .ToList();
+}
+
 
 CitySim.Backend.CitySim CreateModel(Type mindImpl)
 {
@@ -31,9 +45,9 @@ CitySim.Backend.CitySim CreateModel(Type mindImpl)
     )
     {
         SimulationController =
-    {
-        TicksPerSecond = 2
-    }
+        {
+            TicksPerSecond = 2
+        }
     };
 }
 
@@ -93,8 +107,6 @@ while (!WindowShouldClose())
     cam.offset = new Vector2(GetScreenWidth(), GetScreenHeight()) / 2;
 
 
-
-
     float t3 = jumpProgress;
 
     float y_offset = (-(t3 * t3) + 2 * t3) * -15;
@@ -108,7 +120,6 @@ while (!WindowShouldClose())
     BeginScissorMode(0, 0, (int)(GetScreenWidth() * (1 - finalWipe * finalWipe * finalWipe)), GetScreenHeight());
     ClearBackground(BLACK);
     BeginMode2D(cam);
-
 
 
     //Fading in CitySim text
@@ -125,21 +136,22 @@ while (!WindowShouldClose())
     }
 
     SplittingPersonDrawer.Draw(splitProgress, posAStart, posAEnd, WHITE, WHITE,
-                                              posBStart, posBEnd, WHITE, WHITE);
+        posBStart, posBEnd, WHITE, WHITE);
 
 
     EndMode2D();
     EndScissorMode();
+
 
     if (!isModelCreated)
     {
         Type? choice = null;
 
 
-        var impls = CitySim.Backend.CitySim.MindImplementations;
+        var mindImplementations = FindMindImplementations();
 
 
-        int y = -impls.Count*50 - 30;
+        int y = -mindImplementations.Count*50 - 30;
 
 
         {
@@ -167,7 +179,7 @@ while (!WindowShouldClose())
         RayGui.GuiSetStyle((int)RaylibExtensions.GuiControl.DEFAULT,
             (int)RaylibExtensions.GuiControlProperty.TEXT_SIZE, 22);
 
-        foreach (var mindType in impls)
+        foreach (var mindType in mindImplementations)
         {
             if (RayGui.GuiButton(new Rectangle(
                 GetScreenWidth() / 2 - width/2, 

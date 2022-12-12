@@ -136,18 +136,53 @@ while (!WindowShouldClose())
         Type? choice = null;
 
 
-        int y = 0;
-        foreach (var mindType in CitySim.Backend.CitySim.MindImplementations)
+        var impls = CitySim.Backend.CitySim.MindImplementations;
+
+
+        int y = -impls.Count*50 - 30;
+
+
         {
-            if (RayGui.GuiButton(new Rectangle(0, GetScreenHeight() - 160 + y, GetScreenWidth(), 40), 
+            string text = "Choose your Mind";
+
+            Font font = GetFontDefault();
+
+            float fontSize = 20;
+
+            var size = MeasureTextEx(font, text, fontSize, fontSize / font.baseSize);
+
+            var col = GRAY;
+
+            DrawText(text, 
+                GetScreenWidth() / 2 - size.X / 2,
+                GetScreenHeight() + y - size.Y - 40, fontSize, col);
+        }
+
+
+        int width = GetScreenWidth() / 2;
+
+        int default_size = RayGui.GuiGetStyle((int)RaylibExtensions.GuiControl.DEFAULT,
+            (int)RaylibExtensions.GuiControlProperty.TEXT_SIZE);
+
+        RayGui.GuiSetStyle((int)RaylibExtensions.GuiControl.DEFAULT,
+            (int)RaylibExtensions.GuiControlProperty.TEXT_SIZE, 22);
+
+        foreach (var mindType in impls)
+        {
+            if (RayGui.GuiButton(new Rectangle(
+                GetScreenWidth() / 2 - width/2, 
+                GetScreenHeight() + y, width, 40), 
                 mindType.Name))
                 choice = mindType;
 
-            y += 40;
+            y += 50;
         }
-        
 
-        if (choice != null)
+        RayGui.GuiSetStyle((int)RaylibExtensions.GuiControl.DEFAULT,
+            (int)RaylibExtensions.GuiControlProperty.TEXT_SIZE, default_size);
+
+
+        if (choice is not null)
         {
             citySim = CreateModel(choice);
             view = new CitySimView(citySim);

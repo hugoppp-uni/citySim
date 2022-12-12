@@ -43,7 +43,12 @@ namespace CitySim.Frontend.Helpers
             BORDER_WIDTH,
             TEXT_PADDING,
             TEXT_ALIGNMENT,
-            RESERVED
+            RESERVED,
+
+            TEXT_SIZE = 16,             // Text size (glyphs max height)
+            TEXT_SPACING,               // Text spacing between glyphs
+            LINE_COLOR,                 // Line control color
+            BACKGROUND_COLOR
         }
 
         public enum GuiControl

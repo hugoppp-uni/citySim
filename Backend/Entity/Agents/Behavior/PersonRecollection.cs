@@ -12,7 +12,6 @@ public class PersonRecollection
         {
             _actionPosition[actionType] = new();
         }
-
     }
 
     public IEnumerable<Position> ResolvePosition(ActionType nextActionType)

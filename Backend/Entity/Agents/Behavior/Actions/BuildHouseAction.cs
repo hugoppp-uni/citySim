@@ -4,7 +4,7 @@ using CitySim.Backend.World;
 
 namespace CitySim.Backend.Entity.Agents.Behavior.Actions;
 
-public record BuildHouseAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
+internal record BuildHouseAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
 {
     public override ActionResult Execute()
     {

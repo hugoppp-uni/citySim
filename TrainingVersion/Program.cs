@@ -1,5 +1,6 @@
 ﻿
 using CitySim.Backend.Entity.Agents;
+using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.Util.Learning;
 using NLog;
 using Tensorflow;
@@ -16,7 +17,7 @@ public class Program
         _logger.Debug(Binding.tf.config.list_physical_devices("GPU"));
         var g = Binding.tf.config.list_physical_devices("GPU");
         var cancellationTokenSource = new CancellationTokenSource();
-        var iterationCount = 5;
+        var iterationCount = 20;
         CitySim.Backend.CitySim? citySim = null;
         if (args.Length > 0)
         {
@@ -38,13 +39,13 @@ public class Program
             citySim = new CitySim.Backend.CitySim(
                 personMindWeightsFileToLoad: PersonMindFileName,
                 newSaveLocationForPersonMindWeights: PersonMindFileName,
-                personCount: 40,
-                maxTick: 10,
+                personCount: 10,
+                maxTick: 150,
                 personMindBatchSize: (x)=> x / 2,
                 personActionExplorationRate: 20,
-                personMindLearningRate: 0.01f,
+                personMindLearningRate: 0.02f,
                 training: true,
-                generateInsightInterval: 50
+                generateInsightInterval: null
             )
             {
                 SimulationController =
@@ -65,8 +66,8 @@ public class Program
             }
             //await task;
             Console.CancelKeyPress -= OnConsoleOnCancelKeyPress;
-            _logger.Debug($"The training took in average {ModelWorker.GetInstance(nameof(Person)).AverageFitDuration}");
-            Console.WriteLine($"Iteration {iteration} finished");
+            _logger.Debug($"The training took in average {ModelWorker.GetInstance(PersonMind.ModelWorkerKey).AverageFitDuration}");
+            Console.WriteLine($"Iteration {iteration} finished after step ${citySim.WorldLayer.GetCurrentTick()}");
         }
     }
 }

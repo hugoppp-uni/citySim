@@ -1,5 +1,4 @@
-﻿using Autofac.Builder;
-using CitySim.Backend.Entity;
+﻿using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
 using Mars.Common.Core.Random;

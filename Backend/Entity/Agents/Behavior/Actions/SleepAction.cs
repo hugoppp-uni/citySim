@@ -2,7 +2,7 @@ using Mars.Interfaces.Environments;
 
 namespace CitySim.Backend.Entity.Agents.Behavior.Actions;
 
-public record SleepAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
+internal record SleepAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
 {
     public override ActionResult Execute()
     {

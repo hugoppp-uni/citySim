@@ -17,12 +17,19 @@ public class BuildPositionEvaluator
     private double[,] _restaurantScore;
     private double[,] _housingScoreBuffer;
     private double[,] _restaurantScoreBuffer;
+    private PlannedStructure[,] _plannedBuildingType;
     public Safe2DArrayView<double> HousingScore => new(_housingScore);
     public Safe2DArrayView<double> RestaurantScore => new(_restaurantScore);
 
     private long _lastEvalutedTick = 0;
 
     private readonly PathFindingGrid _pathFindingGrid;
+    private enum PlannedStructure
+    {
+        None = 0,
+        Restaurant,
+        Home
+    }
 
 
     public BuildPositionEvaluator(Grid2D<Structure> structures)
@@ -32,6 +39,7 @@ public class BuildPositionEvaluator
         _restaurantScore = new double[structures.XSize, structures.YSize];
         _housingScoreBuffer = new double[structures.XSize, structures.YSize];
         _restaurantScoreBuffer = new double[structures.XSize, structures.YSize];
+        _plannedBuildingType = new PlannedStructure[structures.XSize, structures.YSize];
 
         float[,] tilesCosts = new float[WorldLayer.Instance.XSize, WorldLayer.Instance.YSize];
         for (int i = 0; i < WorldLayer.Instance.XSize; i++)
@@ -75,8 +83,10 @@ public class BuildPositionEvaluator
                 IList<K2dTreeNode<Structure>>? buildingsNearby =
                     _structures.Kd.InsideRegion(new Hyperrectangle(x - width / 2, y - width / 2, width, height));
                 var buildingsNearbyCount = buildingsNearby.Select(node => node.Value).OfType<House>().Count();
+                var nearestPlannedRestaurantDistance = NearestPlannedPositionDistance(PlannedStructure.Restaurant, x, y);
+                _restaurantScoreBuffer[x, y] = HousingNearbyScore(targetPosition) * Math.Min(Math.Min(manhattanDistanceToNearestRestaurant, 
+                    nearestPlannedRestaurantDistance), 8);
                 _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToNearestRestaurant;
-                _restaurantScoreBuffer[x, y] = buildingsNearbyCount * manhattanDistanceToNearestRestaurant;
             }
 
             var min = _housingScoreBuffer.Min();
@@ -108,6 +118,67 @@ public class BuildPositionEvaluator
                throw new InvalidOperationException("There should be at least one restaurant on the map");
     }
 
+    private double HousingNearbyScore(double[] pos)
+    {
+        double score = 0;
+        for (int x = 0; x < _structures.XSize; x++)
+        for (int y = 0; y < _structures.YSize; y++)
+        {
+            var structure = _structures[x, y];
+            if (structure is House)
+            {
+                score += 30 * Math.Pow(0.85, Distance.Manhattan(pos, new double[] { x, y }));
+            }
+        }
+
+        return score;
+    }
+
+    private int NearestPlannedPositionDistance(PlannedStructure structure, int x, int y)
+    {
+        var radius = 1;
+        var width = _plannedBuildingType.GetLength(0);
+        var height = _plannedBuildingType.GetLength(1);
+
+        while (radius < Math.Max(width, height))
+        {
+            // check top edge
+            if (y - radius >= 0)
+            {
+                for (var currentX = x - radius; currentX <= x + radius; currentX++)
+                {
+                    if (currentX < 0 || currentX >= width)
+                        continue;
+                    if (_plannedBuildingType[currentX, y - radius] == structure)
+                        return radius;
+                }
+            }
+            // check bottom edge
+            if (y + radius < height)
+            {
+                for (var currentX = x - radius; currentX <= x + radius; currentX++)
+                {
+                    if (currentX < 0 || currentX >= width)
+                        continue;
+                    if (_plannedBuildingType[currentX, y + radius] == structure)
+                        return radius;
+                }
+            }
+            // check left and right edges
+            for (var currentY = y - radius + 1; currentY <= y + radius - 1; currentY++)
+            {
+                if (currentY < 0 || currentY >= height)
+                    continue;
+                if (x - radius >= 0 && _plannedBuildingType[x - radius, currentY] == structure)
+                    return radius;
+                if (x + radius < width && _plannedBuildingType[x + radius, currentY] == structure)
+                    return radius;
+            }
+            radius++;
+        }
+        return int.MaxValue;
+    }
+
     public Position GetNextHouseBuildPos()
     {
         lock (this)
@@ -117,6 +188,7 @@ public class BuildPositionEvaluator
 
             var (x, y) = _housingScore.ArgMax();
             _housingScore[x, y] = double.NegativeInfinity;
+            _plannedBuildingType[x, y] = PlannedStructure.Home;
             BuildStreetToConnect(x, y);
 
             _pathFindingGrid.nodes[x, y].Update(false, x, y);
@@ -132,6 +204,7 @@ public class BuildPositionEvaluator
 
             var (x, y) = _restaurantScore.ArgMax();
             _restaurantScore[x, y] = double.NegativeInfinity;
+            _plannedBuildingType[x, y] = PlannedStructure.Restaurant;
             BuildStreetToConnect(x, y);
 
             _pathFindingGrid.nodes[x, y].Update(false, x, y);
@@ -171,6 +244,7 @@ public class BuildPositionEvaluator
         lock (this)
         {
             _housingScore[(int)targetPosition.X, (int)targetPosition.Y] = 0;
+            _plannedBuildingType[(int)targetPosition.X, (int)targetPosition.Y] = PlannedStructure.None;
         }
     }
     public void ResetRestaurantScore(Position targetPosition)
@@ -178,6 +252,7 @@ public class BuildPositionEvaluator
         lock (this)
         {
             _housingScore[(int)targetPosition.X, (int)targetPosition.Y] = 0;
+            _plannedBuildingType[(int)targetPosition.X, (int)targetPosition.Y] = PlannedStructure.None;
         }
     }
 }

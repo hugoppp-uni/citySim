@@ -188,7 +188,7 @@ public class ModelWorker
         var layers = new LayersApi();
         var lenght = new GlobalState(1,1,1).AsNormalizedArray().Length;
         lenght += new PersonNeeds().AsNormalizedArray().Length;
-        lenght += Distances.Count;
+        lenght += Distances.PropertyCount;
         var actions = new ActionType[Enum.GetValues(typeof(ActionType)).Length];
         var inLayer = keras.Input((lenght), name:"status");
         var dense = layers.Dense(lenght, activation: "relu").Apply(inLayer);

@@ -8,22 +8,21 @@ namespace CitySim.Backend.Entity.Agents.Behavior;
 /// </summary>
 public record PersonNeeds
 {
-    public double Sleepiness { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
-    public double Hunger { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
-    public int Money { get; set; } =  5 + Random.Shared.Next(6);
+    public double Sleepiness { get; internal set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
+    public double Hunger { get; internal set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
+    public int Money { get; internal set; } =  5 + Random.Shared.Next(6);
 
-    public void Tick()
+    internal void Tick()
     {
         Hunger -= 0.01;
         Sleepiness -= 0.015;
-        //Money -= 0.01;
     }
 
     /// <summary>
     /// Returns the values of the personal needs as array.
     /// The Values gets normalized to values between -1 and 1 
     /// </summary>
-    public double[] AsNormalizedArray()
+    internal double[] AsNormalizedArray()
     {
         return new []{Normalize(Sleepiness), Normalize(Hunger), NormalizeMoney(Money)};
     }

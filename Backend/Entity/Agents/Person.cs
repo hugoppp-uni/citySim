@@ -227,6 +227,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         WorldLayer.Instance.EventLog.Log($"reproduced", this);
         Person child = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
         child.Position = Position.Copy();
+        child.Needs.Money = Needs.Money / 2;
+        Needs.Money -= child.Needs.Money;
         _worldLayer.InvokePersonReproduceHandler(this, child);
     }
 }

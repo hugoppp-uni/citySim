@@ -16,7 +16,6 @@ public record PersonNeeds
     {
         Hunger -= 0.01;
         Sleepiness -= 0.015;
-        //Money -= 0.01;
     }
 
     /// <summary>

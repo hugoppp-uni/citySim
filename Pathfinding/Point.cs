@@ -51,18 +51,11 @@ namespace NesScripts.Controls.PathFind
         public override bool Equals(System.Object obj)
         {
             // check type
-            if (!(obj.GetType() == typeof(PathFind.PathFindingPoint)))
+            if (obj is not PathFindingPoint point)
                 return false;
-
-            // check if other is null
-            PathFindingPoint p = (PathFindingPoint)obj;
-            if (ReferenceEquals(null, p))
-            {
-                return false;
-            }
 
             // Return true if the fields match:
-            return (x == p.x) && (y == p.y);
+            return (x == point.x) && (y == point.y);
         }
 
         /// <summary>
@@ -70,12 +63,6 @@ namespace NesScripts.Controls.PathFind
         /// </summary>
         public bool Equals(PathFindingPoint p)
         {
-            // check if other is null
-            if (ReferenceEquals(null, p))
-            {
-                return false;
-            }
-
             // Return true if the fields match:
             return (x == p.x) && (y == p.y);
         }
@@ -85,22 +72,6 @@ namespace NesScripts.Controls.PathFind
         /// </summary>
         public static bool operator ==(PathFindingPoint a, PathFindingPoint b)
         {
-            // If both are null, or both are same instance, return true.
-            if (System.Object.ReferenceEquals(a, b))
-            {
-                return true;
-            }
-
-            if (ReferenceEquals(null, a))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(null, b))
-            {
-                return false;
-            }
-
             // Return true if the fields match:
             return a.x == b.x && a.y == b.y;
         }

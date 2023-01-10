@@ -10,6 +10,9 @@ using Mars.Numerics;
 using NesScripts.Controls.PathFind;
 using NLog;
 using CircularBuffer;
+using CitySim.Backend.Entity.Agents.Behavior.Actions;
+using Mars.Common.Core.Collections;
+using ServiceStack;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -108,6 +111,7 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
     {
         return _recollection.ResolvePosition(actionType)
             .Select(it => Distance.Manhattan(it.PositionArray, Position.PositionArray))
+            .Prepend(int.MaxValue)
             .MinBy(it => it);
     }
 
@@ -121,11 +125,14 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
                 var home = _worldLayer.Structures.OfType<House>().OrderBy(it =>
                         _worldLayer.FindRoute(it.Position, Position).Remaining)
                     .FirstOrDefault(house => house.FreeSpaces > 0);
+                if (home != null)
+                {
+                    _recollection.Add(ActionType.Sleep, home.Position);
+                    _recollection.Add(ActionType.Work, home.Position);
 
-                _recollection.Add(ActionType.Sleep, home.Position);
-
-                home.AddInhabitant(this);
-                _onKill.Add(() => home.RemoveInhabitant(this));
+                    home.AddInhabitant(this);
+                    _onKill.Add(() => home.RemoveInhabitant(this));
+                }
             }
         }
 
@@ -170,9 +177,17 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         Needs.Tick();
         if (Needs.Hunger < 0)
         {
-            _mind.LearnFromDeath(ActionType.Eat);
+            if (Needs.Money < EatAction.BurgerCost)
+            {
+                _mind.LearnFromDeath(ActionType.Work);
+            }
+            else
+            {
+                _mind.LearnFromDeath(ActionType.Eat);
+            }
+
             Kill();
-            WorldLayer.Instance.EventLog.Log($"DIED of starvation", this);
+            WorldLayer.Instance.EventLog.Log($"DIED of starvation with {Needs.Money} money", this);
             return false;
         }
 
@@ -221,6 +236,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         WorldLayer.Instance.EventLog.Log($"reproduced", this);
         Person child = _worldLayer.Container.Resolve<IAgentManager>().Spawn<Person, WorldLayer>().First();
         child.Position = Position.Copy();
+        child.Needs.Money = Needs.Money / 2;
+        Needs.Money -= child.Needs.Money;
         _worldLayer.InvokePersonReproduceHandler(this, child);
     }
 }

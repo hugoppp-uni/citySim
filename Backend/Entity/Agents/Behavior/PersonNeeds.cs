@@ -10,7 +10,7 @@ public record PersonNeeds
 {
     public double Sleepiness { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
     public double Hunger { get; set; } = 0.4 + Random.Shared.NextDouble() * 0.6;
-    public double Money { get; set; } = 0.1 + Random.Shared.NextDouble() * 0.6;
+    public int Money { get; set; } =  5 + Random.Shared.Next(6);
 
     public void Tick()
     {
@@ -25,12 +25,17 @@ public record PersonNeeds
     /// </summary>
     public double[] AsNormalizedArray()
     {
-        return new []{Normalize(Sleepiness), Normalize(Hunger), Normalize(Money)};
+        return new []{Normalize(Sleepiness), Normalize(Hunger), NormalizeMoney(Money)};
     }
     
     private static double Normalize(double x)
     {
         return x * 2 - 1;
+    }
+    
+    private static double NormalizeMoney(double x)
+    {
+        return Math.Log(x + 1, 4) - 1;
     }
 
     public override string ToString()

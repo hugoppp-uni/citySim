@@ -14,17 +14,18 @@ using NesScripts.Controls.PathFind;
 namespace CitySim.Backend.World;
 
 public delegate void TwoPersonEventHandler(Person personA, Person personB);
+
 public class WorldLayer : AbstractLayer
 {
     public SpatialHashEnvironment<IPositionableEntity> GridEnvironment { get; private set; } =
         new(20, 20, true) { IsDiscretizePosition = true };
 
-    public const int XSize = 20;
-    public const int YSize = 20;
+    public int XSize { get; }
+    public int YSize { get; }
     public BuildPositionEvaluator BuildPositionEvaluator;
 
-    public readonly Grid2D<Structure> Structures = new(XSize, YSize);
-    private readonly PathFindingGrid _pathFindingGrid;
+    public Grid2D<Structure> Structures;
+    private PathFindingGrid _pathFindingGrid;
     public readonly EventLog EventLog = new();
     public readonly Names Names = new();
 
@@ -34,16 +35,21 @@ public class WorldLayer : AbstractLayer
     public event TwoPersonEventHandler? ReproduceEventHandler;
 
     public CitySim citySim { set; get; }
+    private string[] csv_map;
 
     public WorldLayer()
     {
         Instance = this;
 
+        csv_map = File.ReadAllLines("Resources/Map.csv");
+        XSize = csv_map[0].Length;
+        YSize = csv_map.Length;
         float[,] pathFindingTileMap = new float[XSize, YSize];
         for (int i = 0; i < XSize; i++)
         for (int j = 0; j < YSize; j++)
             pathFindingTileMap[i, j] = 1; //walkable
         _pathFindingGrid = new PathFindingGrid(pathFindingTileMap);
+        Structures = new Grid2D<Structure>(XSize, YSize);
     }
 
     public override bool InitLayer(LayerInitData layerInitData, RegisterAgent registerAgentHandle,
@@ -53,7 +59,7 @@ public class WorldLayer : AbstractLayer
 
         var agentManager = layerInitData.Container.Resolve<IAgentManager>();
 
-        SpawnBuildings();
+        SpawnBuildings(csv_map);
         BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
         BuildPositionEvaluator.EvaluateBuildingScore();
 
@@ -79,14 +85,14 @@ public class WorldLayer : AbstractLayer
         var random = RandomHelper.Random;
         return Position.CreatePosition(random.Next(XSize - 1), random.Next(YSize - 1));
     }
+
     public Position RandomBuildingPosition()
     {
         return Structures.Skip(Random.Shared.Next(Structures.Count - 1)).First().Position.Copy();
     }
 
-    private void SpawnBuildings()
+    private void SpawnBuildings(string[] csv)
     {
-        var csv = File.ReadAllLines("Resources/Map.csv");
         for (var x = 0; x < csv.Length; x++)
         {
             var strings = csv[x].Split(";");

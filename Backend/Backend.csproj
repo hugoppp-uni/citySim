@@ -7,6 +7,10 @@
     <RootNamespace>CitySim.Backend</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CircularBuffer" Version="1.3.0" />
     <PackageReference Include="Mars.Life.Simulations" Version="4.4.3" />

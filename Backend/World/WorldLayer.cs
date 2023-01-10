@@ -2,7 +2,6 @@
 using CitySim.Backend.Entity;
 using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Structures;
-using CitySim.Backend.Util;
 using Mars.Common.Core.Random;
 using Mars.Components.Environments;
 using Mars.Components.Layers;
@@ -62,7 +61,7 @@ public class WorldLayer : AbstractLayer
 
         SpawnBuildings(csv_map);
         BuildPositionEvaluator = new BuildPositionEvaluator(Structures);
-        BuildPositionEvaluator.EvaluateHousingScore();
+        BuildPositionEvaluator.EvaluateBuildingScore();
 
         agentManager.Spawn<Person, WorldLayer>().ToList();
 
@@ -149,7 +148,8 @@ public class WorldLayer : AbstractLayer
         return new GlobalState(
             GridEnvironment.Entities.Count((it) => it is Person),
             Structures.OfType<House>().Sum(house => house.MaxSpaces),
-            Structures.OfType<Restaurant>().Sum(restaurant => restaurant.MaxCapacityPerTick)
+            Structures.OfType<Restaurant>()
+                .Sum(restaurant => restaurant.UsageScore) / Structures.OfType<Restaurant>().Count()
         );
     }
 

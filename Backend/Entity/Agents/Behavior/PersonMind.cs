@@ -78,7 +78,6 @@ public class PersonMind : IMind
         var needsAry = personNeeds.AsNormalizedArray();
         var globalStateAry = globalState.AsNormalizedArray();
         var distancesAry = distances.AsNormalizedArray();
-        //var distancesAry=
         ApplyIndividualistFactorOnPersonalNeedsValues(needsAry);
         var task = new ModelTask(GetInputArray(needsAry, globalStateAry, distancesAry));
         ApplyIndividualistFactorOnGlobalStateValues(globalStateAry);
@@ -135,15 +134,18 @@ public class PersonMind : IMind
             }
             var newExpected = new NDArray(expected);
             newExpected = np.stack(newExpected);
-            _evaluationLogger.Trace((wellBeingDelta > 0
-                                        ? $"Action {actionIndex} was good with a delta of {wellBeingDelta}."
-                                        : $"Action {actionIndex} wasn't good with a delta of {wellBeingDelta}.")+
-                                    $"Adjust the output {string.Join(", ",prediction.Output.ToArray<float>())} to " +
-                                    $"the new expected {string.Join(", ",expected)} for the input " +
-                                    $"{string.Join(", ",prediction.NormalizedNeeds)}. The new needs are " +
-                                    $"{string.Join(", ", currentPersonNeeds.AsNormalizedArray())}");
             var task = new ModelTask(GetInputArray(prediction.NormalizedNeeds, prediction.NormalizedGlobalState, prediction.Distances),
                 newExpected);
+            _evaluationLogger.Trace((wellBeingDelta > 0
+                                        ? $"Action {Enum.GetValues<ActionType>()[actionIndex]} " +
+                                          $"({actionIndex}) was good with a delta of {wellBeingDelta}. "
+                                        : $"Action {Enum.GetValues<ActionType>()[actionIndex]} " +
+                                          $"({actionIndex})wasn't good with a delta of {wellBeingDelta}. ")+
+                                    $"Adjust the output {string.Join(", ",prediction.Output.ToArray<float>())} to " +
+                                    $"the new expected {string.Join(", ",expected)} for the input " +
+                                    $"{task.Input.JoinDataToString()}. The new needs are " +
+                                    $"{string.Join(", ", currentPersonNeeds.AsNormalizedArray())} " +
+                                    $"and the global states are {string.Join(", ", currentGlobalState.AsNormalizedArray())}");
             _modelWorker.Queue(task);
         }
 
@@ -152,8 +154,10 @@ public class PersonMind : IMind
             _lastIndividualPrediction.NormalizedNeeds.Sum();
         wellBeingDelta /= PersonalNeedsCount;
         _evaluationLogger.Trace(wellBeingDelta > 0
-            ? $"Action {_lastIndividualPrediction.SelectedActionIndex} was good for the individual with a delta of {wellBeingDelta}."
-            : $"Action {_lastIndividualPrediction.SelectedActionIndex} wasn't good for the individual with a delta of {wellBeingDelta}.");
+            ? $"Action {Enum.GetValues<ActionType>()[_lastIndividualPrediction.SelectedActionIndex]} " +
+              $"({_lastIndividualPrediction.SelectedActionIndex}) was good for the individual with a delta of {wellBeingDelta}."
+            : $"Action {Enum.GetValues<ActionType>()[_lastIndividualPrediction.SelectedActionIndex]} " +
+              $"({_lastIndividualPrediction.SelectedActionIndex}) wasn't good for the individual with a delta of {wellBeingDelta}.");
         FinalEvaluate(_lastIndividualPrediction, wellBeingDelta, _individualist);
 
         if (_lastPredictions.Count == CollectiveDecisionEvaluationDelay)
@@ -163,9 +167,12 @@ public class PersonMind : IMind
                 ApplyIndividualistFactorOnGlobalStateValues(currentGlobalState.AsNormalizedArray()).Sum() -
                 historicPrediction.NormalizedGlobalState.Sum();
             wellBeingDelta /= GlobalStatesCount;
-            _logger.Trace(wellBeingDelta > 0
-                ? $"Action {_lastIndividualPrediction.SelectedActionIndex} was good for the collective with a delta of {wellBeingDelta}"
-                : $"Action {_lastIndividualPrediction.SelectedActionIndex} wasn't good for the collective with a delta of {wellBeingDelta}");
+            _evaluationLogger.Trace(wellBeingDelta > 0
+                ? $"Action {Enum.GetValues<ActionType>()[historicPrediction.SelectedActionIndex]}" +
+                  $" ({historicPrediction.SelectedActionIndex})" +
+                  $"was good for the collective with a delta of {wellBeingDelta}"
+                : $"Action {Enum.GetValues<ActionType>()[historicPrediction.SelectedActionIndex]} " +
+                  $"({historicPrediction.SelectedActionIndex})wasn't good for the collective with a delta of {wellBeingDelta}");
             FinalEvaluate(historicPrediction, wellBeingDelta, 1 - _individualist);
         }
     }

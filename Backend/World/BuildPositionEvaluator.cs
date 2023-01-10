@@ -14,8 +14,11 @@ public class BuildPositionEvaluator
     private readonly Grid2D<Structure> _structures;
 
     private double[,] _housingScore;
+    private double[,] _restaurantScore;
     private double[,] _housingScoreBuffer;
+    private double[,] _restaurantScoreBuffer;
     public Safe2DArrayView<double> HousingScore => new(_housingScore);
+    public Safe2DArrayView<double> RestaurantScore => new(_restaurantScore);
 
     private long _lastEvalutedTick = 0;
 
@@ -26,7 +29,9 @@ public class BuildPositionEvaluator
     {
         _structures = structures;
         _housingScore = new double[structures.XSize, structures.YSize];
+        _restaurantScore = new double[structures.XSize, structures.YSize];
         _housingScoreBuffer = new double[structures.XSize, structures.YSize];
+        _restaurantScoreBuffer = new double[structures.XSize, structures.YSize];
 
         float[,] tilesCosts = new float[WorldLayer.Instance.XSize, WorldLayer.Instance.YSize];
         for (int i = 0; i < WorldLayer.Instance.XSize; i++)
@@ -41,27 +46,28 @@ public class BuildPositionEvaluator
         _pathFindingGrid = new PathFindingGrid(tilesCosts);
     }
 
-    public void EvaluateHousingScore()
+    public void EvaluateBuildingScore()
     {
         lock (this)
         {
             _lastEvalutedTick = WorldLayer.CurrentTick;
             _housingScoreBuffer.Clear();
-            var structuesAt = new List<(int, int)>();
+            _restaurantScoreBuffer.Clear();
+            var structuresAt = new List<(int, int)>();
             for (int x = 0; x < _structures.XSize; x++)
             for (int y = 0; y < _structures.YSize; y++)
             {
                 var structure = _structures[x, y];
-                var oldValue = _housingScore[x, y];
-                if (structure is not null || double.IsNegativeInfinity(oldValue))
+                if (structure is not null || double.IsNegativeInfinity(_housingScore[x, y]) || 
+                    double.IsNegativeInfinity(_restaurantScore[x, y]))
                 {
-                    structuesAt.Add((x, y));
+                    structuresAt.Add((x, y));
                     continue;
                 }
 
                 var targetPosition = new double[] { x, y };
 
-                var manhattanDistanceToRestaurant =
+                var manhattanDistanceToNearestRestaurant =
                     Distance.Manhattan(NearestRestaurant(targetPosition).Position.PositionArray, targetPosition);
 
                 const int width = 7;
@@ -69,21 +75,29 @@ public class BuildPositionEvaluator
                 IList<K2dTreeNode<Structure>>? buildingsNearby =
                     _structures.Kd.InsideRegion(new Hyperrectangle(x - width / 2, y - width / 2, width, height));
                 var buildingsNearbyCount = buildingsNearby.Select(node => node.Value).OfType<House>().Count();
-                _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToRestaurant;
+                _housingScoreBuffer[x, y] = buildingsNearbyCount - manhattanDistanceToNearestRestaurant;
+                _restaurantScoreBuffer[x, y] = buildingsNearbyCount * manhattanDistanceToNearestRestaurant;
             }
 
             var min = _housingScoreBuffer.Min();
             _housingScoreBuffer = _housingScoreBuffer.Subtract(min);
             var max = _housingScoreBuffer.Max();
             _housingScoreBuffer = _housingScoreBuffer.Divide(max);
-            for (var i = 0; i < structuesAt.Count; i++)
+            
+            min = _restaurantScoreBuffer.Min();
+            _restaurantScoreBuffer = _restaurantScoreBuffer.Subtract(min);
+            max = _restaurantScoreBuffer.Max();
+            _restaurantScoreBuffer = _restaurantScoreBuffer.Divide(max);
+            for (var i = 0; i < structuresAt.Count; i++)
             {
-                _housingScoreBuffer[structuesAt[i].Item1, structuesAt[i].Item2] = double.NegativeInfinity;
+                _housingScoreBuffer[structuresAt[i].Item1, structuresAt[i].Item2] = double.NegativeInfinity;
+                _restaurantScoreBuffer[structuresAt[i].Item1, structuresAt[i].Item2] = double.NegativeInfinity;
             }
-
 
             Buffer.BlockCopy(_housingScoreBuffer, 0, _housingScore, 0,
                 sizeof(double) * _housingScore.GetLength(0) * _housingScore.GetLength(1));
+            Buffer.BlockCopy(_restaurantScoreBuffer, 0, _restaurantScore, 0,
+                sizeof(double) * _restaurantScore.GetLength(0) * _restaurantScore.GetLength(1));
         }
     }
 
@@ -94,31 +108,52 @@ public class BuildPositionEvaluator
                throw new InvalidOperationException("There should be at least one restaurant on the map");
     }
 
-    public Position GetNextBuildPos()
+    public Position GetNextHouseBuildPos()
     {
         lock (this)
         {
             if (_lastEvalutedTick != WorldLayer.CurrentTick)
-                EvaluateHousingScore();
+                EvaluateBuildingScore();
 
             var (x, y) = _housingScore.ArgMax();
             _housingScore[x, y] = double.NegativeInfinity;
-
-            if (!WorldLayer.Instance.Structures.GetAdjecent(x, y).OfType<Street>().Any())
-            {
-                var (restX, restY) = NearestRestaurant(new double[] { x, y }).Position.PositionArray;
-                (restX, restY) = WorldLayer.Instance.Structures.GetAdjecent((int)restX, (int)restY).OfType<Street>().First()
-                    .Position.PositionArray;
-                var streetRoute = _pathFindingGrid.FindPath(new PathFindingPoint(x, y),
-                    new PathFindingPoint((int)restX, (int)restY));
-
-                BuildStreet(streetRoute);
-            }
+            BuildStreetToConnect(x, y);
 
             _pathFindingGrid.nodes[x, y].Update(false, x, y);
             return new Position(x, y);
         }
     }
+    public Position GetNextRestaurantBuildPos()
+    {
+        lock (this)
+        {
+            if (_lastEvalutedTick != WorldLayer.CurrentTick)
+                EvaluateBuildingScore();
+
+            var (x, y) = _restaurantScore.ArgMax();
+            _restaurantScore[x, y] = double.NegativeInfinity;
+            BuildStreetToConnect(x, y);
+
+            _pathFindingGrid.nodes[x, y].Update(false, x, y);
+            return new Position(x, y);
+        }
+    }
+
+    private void BuildStreetToConnect(int x, int y)
+    {
+        if (!WorldLayer.Instance.Structures.GetAdjecent(x, y).OfType<Street>().Any())
+        {
+            var (restX, restY) = NearestRestaurant(new double[] { x, y }).Position.PositionArray;
+            (restX, restY) = WorldLayer.Instance.Structures.GetAdjecent((int)restX, (int)restY).OfType<Street>().First()
+                .Position.PositionArray;
+            var streetRoute = _pathFindingGrid.FindPath(new PathFindingPoint(x, y),
+                new PathFindingPoint((int)restX, (int)restY));
+
+            BuildStreet(streetRoute);
+        }
+    }
+    
+    
 
     private void BuildStreet(PathFindingRoute streetRoute)
     {
@@ -131,7 +166,14 @@ public class BuildPositionEvaluator
         }
     }
 
-    public void ResetScore(Position targetPosition)
+    public void ResetHousingScore(Position targetPosition)
+    {
+        lock (this)
+        {
+            _housingScore[(int)targetPosition.X, (int)targetPosition.Y] = 0;
+        }
+    }
+    public void ResetRestaurantScore(Position targetPosition)
     {
         lock (this)
         {

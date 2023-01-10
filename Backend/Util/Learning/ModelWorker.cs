@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using CitySim.Backend.Entity.Agents;
 using CitySim.Backend.Entity.Agents.Behavior;
 using CitySim.Backend.World;
 using MQTTnet.Internal;
@@ -85,6 +86,7 @@ public class ModelWorker
     }
 
     private int _epoch = -1;
+    private int batchSize;
     private async void WorkOnModel()
     {
         _model = BuildModel(_configuration.UseCase, _configuration.WeightsFileToLoad, _configuration.LearningRate);
@@ -101,12 +103,14 @@ public class ModelWorker
                     {
                         _trainingBatchInput.Add(task.Input);
                         _trainingBatchExpected.Add(task.Output);
-                        if (_trainingBatchInput.Count ==  _configuration.BatchSize)
+                        batchSize = _configuration
+                            .BatchSize(WorldLayer.Instance.GridEnvironment.Entities.OfType<Person>().Count());
+                        if (_trainingBatchInput.Count ==  batchSize)
                         {
                             var input = np.stack(_trainingBatchInput.ToArray());
                             var expected = np.stack(_trainingBatchExpected.ToArray());
                             _stopwatch.Start();
-                            _model.fit(input, expected, batch_size: _configuration.BatchSize);
+                            _model.fit(input, expected, batch_size: batchSize);
                             _stopwatch.Stop();
                             AverageFitDuration = (AverageFitDuration * _fitCalls++ + _stopwatch.ElapsedMilliseconds) /
                                                  _fitCalls;

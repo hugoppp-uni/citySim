@@ -17,11 +17,6 @@ public class ExampleUserMind : IMind
         throw new NotImplementedException();
     }
 
-    public double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)
-    {
-        throw new NotImplementedException();
-    }
-
     public void LearnFromDeath(ActionType neededActionToSurvive)
     {
         throw new NotImplementedException();

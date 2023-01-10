@@ -4,7 +4,7 @@ using CitySim.Backend.World;
 
 namespace CitySim.Backend.Entity.Agents.Behavior.Actions;
 
-public record EatAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
+internal record EatAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
 {
     public const int BurgerCost = 3;
     public override ActionResult Execute()

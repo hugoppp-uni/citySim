@@ -37,7 +37,7 @@ CitySim.Backend.CitySim CreateModel(Type mindImpl)
     return new CitySim.Backend.CitySim(
         personMindWeightsFileToLoad: personMindFileName,
         newSaveLocationForPersonMindWeights: personMindFileName,
-        personCount: 30,
+        personCount: 10,
         personMindBatchSize: x => x / 2,
         personMindLearningRate: 0.02f,
     personActionExplorationRate:0,

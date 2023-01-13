@@ -17,7 +17,7 @@ public class Program
         _logger.Debug(Binding.tf.config.list_physical_devices("GPU"));
         var g = Binding.tf.config.list_physical_devices("GPU");
         var cancellationTokenSource = new CancellationTokenSource();
-        var iterationCount = 20;
+        var iterationCount = 50;
         CitySim.Backend.CitySim? citySim = null;
         if (args.Length > 0)
         {
@@ -40,7 +40,7 @@ public class Program
                 personMindWeightsFileToLoad: PersonMindFileName,
                 newSaveLocationForPersonMindWeights: PersonMindFileName,
                 personCount: 10,
-                maxTick: 150,
+                maxTick: 300,
                 personMindBatchSize: (x)=> x / 2,
                 personActionExplorationRate: 20,
                 personMindLearningRate: 0.02f,

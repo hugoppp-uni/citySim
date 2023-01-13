@@ -158,6 +158,8 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
         {
             ActionType.BuildHouse => _worldLayer.BuildPositionEvaluator.GetNextHouseBuildPos(),
             ActionType.BuildRestaurant => _worldLayer.BuildPositionEvaluator.GetNextRestaurantBuildPos(),
+            ActionType.Eat => _worldLayer.Structures.OfType<Restaurant>().MinBy( it => 
+                _worldLayer.FindRoute(Position,  it.Position).RemainingPath.Count())!.Position,
             _ => _recollection.ResolvePosition(nextActionType)
                 .MinBy(position => Distance.Manhattan(position.PositionArray, Position.PositionArray))
         };

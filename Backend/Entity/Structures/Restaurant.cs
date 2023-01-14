@@ -17,7 +17,7 @@ public class Restaurant : Structure , ITickClient
 
     private ConcurrentQueue<Person> _queue = new();
     public IReadOnlyCollection<Person> Queue => _queue;
-    private double _usageScore;
+    private double _usageScore = - 4;
     public double UsageScore => (-Math.Abs(2.0 * _usageScore)) / (10.0 + Math.Abs(_usageScore))+1;
     private HashSet<Person> _queuedForThisTick = new();
 

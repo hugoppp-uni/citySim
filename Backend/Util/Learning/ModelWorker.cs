@@ -139,7 +139,7 @@ public class ModelWorker
                 }
                 
             }
-            catch (OperationCanceledException _)
+            catch (Exception _)
             {
                 //ignore    
             }

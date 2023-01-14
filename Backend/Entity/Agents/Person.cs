@@ -11,8 +11,6 @@ using NesScripts.Controls.PathFind;
 using NLog;
 using CircularBuffer;
 using CitySim.Backend.Entity.Agents.Behavior.Actions;
-using Mars.Common.Core.Collections;
-using ServiceStack;
 
 namespace CitySim.Backend.Entity.Agents;
 
@@ -224,13 +222,14 @@ public class Person : IAgent<WorldLayer>, IPositionableEntity
             Reproduce();
         }
     }
-    
+    public double LastWellBeing { get; private set; } = 1;
     private double GetWellBeing(PersonNeeds personNeeds, GlobalState globalState)
     {
         var global = globalState.AsNormalizedArray();
         var personal = personNeeds.AsNormalizedArray();
-        return (personal.Sum() + global.Sum()) /
+        LastWellBeing = (personal.Sum() + global.Sum()) /
             (global.Length + personal.Length);
+        return LastWellBeing;
     }
 
     private void Reproduce()

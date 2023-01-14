@@ -65,8 +65,9 @@ namespace CitySim.Frontend.HUD.EntityInfoViews
 
 
                 Text(font, 30, x, $"Info about {Person.Name}\n", WHITE);
-
+                
                 Text(font, 20, x, $"Current action: {Person.GetNextAction()}", GREEN);
+                Text(font, 20, x, $"Well-being value: {Person.LastWellBeing}", GREEN);
                 Text(font, 20, x, $"Hunger: {Math.Round(Person.Needs.Hunger, 2)}", GREEN);
                 Text(font, 20, x, $"Money: {Person.Needs.Money}", GREEN);
                 Text(font, 20, x, $"Sleepiness: {Math.Round(Person.Needs.Sleepiness, 2)}", GREEN);

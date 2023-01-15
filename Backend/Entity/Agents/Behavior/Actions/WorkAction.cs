@@ -4,7 +4,7 @@ namespace CitySim.Backend.Entity.Agents.Behavior.Actions;
 
 internal record WorkAction(ActionType Type, Position TargetPosition, Person Person) : PersonAction(Type, TargetPosition, Person)
 {
-    private int _leftDuration = 5;
+    private int _leftDuration = 4;
     public override ActionResult Execute()
     {
         _leftDuration--;

@@ -34,7 +34,7 @@ public record PersonNeeds
     
     private static double NormalizeMoney(double x)
     {
-        return Math.Log(x + 1, 4) - 1;
+        return Math.Log(x + 1, 3.5) - 1;
     }
 
     public override string ToString()

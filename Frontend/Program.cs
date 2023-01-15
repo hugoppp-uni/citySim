@@ -33,15 +33,15 @@ List<Type> FindMindImplementations()
 
 CitySim.Backend.CitySim CreateModel(Type mindImpl)
 {
-    string? personMindFileName = "./ModelWeights/personMind.hdf5";
+    string? personMindFileName = "./ModelWeights/personMind306.hdf5";
     return new CitySim.Backend.CitySim(
         personMindWeightsFileToLoad: personMindFileName,
-        newSaveLocationForPersonMindWeights: personMindFileName,
+        newSaveLocationForPersonMindWeights: null,
         personCount: 10,
         personMindBatchSize: x => x / 2,
         personMindLearningRate: 0.02f,
-    personActionExplorationRate:0,
-        training: true,
+        personActionExplorationRate:0,
+        training: false,
         mindImplementationType: mindImpl
     )
     {

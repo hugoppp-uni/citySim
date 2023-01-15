@@ -13,11 +13,12 @@ public class Program
 
     public static async Task Main(string[] args)
     {
-        const string PersonMindFileName = "./ModelWeights/personMind.hdf5";
+        const string PersonMindFileName = "./ModelWeights/personMindXXX.hdf5";
         _logger.Debug(Binding.tf.config.list_physical_devices("GPU"));
         var g = Binding.tf.config.list_physical_devices("GPU");
         var cancellationTokenSource = new CancellationTokenSource();
-        var iterationCount = 50;
+        var iterationCount = 300;
+        var startNumber = 370;
         CitySim.Backend.CitySim? citySim = null;
         if (args.Length > 0)
         {
@@ -37,13 +38,14 @@ public class Program
             await Console.Out.WriteLineAsync($"Prepare Iteration {iteration}");
             _logger.Trace($"Prepare Iteration {iteration}");
             citySim = new CitySim.Backend.CitySim(
-                personMindWeightsFileToLoad: PersonMindFileName,
-                newSaveLocationForPersonMindWeights: PersonMindFileName,
-                personCount: 10,
-                maxTick: 300,
+                personMindWeightsFileToLoad: startNumber == 0 ? null :
+                    PersonMindFileName.Replace("XXX", (startNumber + iteration - 1).ToString()),
+                newSaveLocationForPersonMindWeights: PersonMindFileName.Replace("XXX", (startNumber + iteration).ToString()),
+                personCount: iteration < 100 ? 24 : 20,
+                maxTick: iteration < 200 && iteration % 2 != 0 ? 350 : 700,
                 personMindBatchSize: (x)=> x / 2,
-                personActionExplorationRate: 20,
-                personMindLearningRate: 0.02f,
+                personActionExplorationRate:iteration % 2 == 0 ? 0 : iteration < 100 ? 35 : iteration < 200 ? 15 : 5,
+                personMindLearningRate: iteration < 100 ? 0.03f : iteration < 200 ? 0.01f : 0.005f,
                 training: true,
                 generateInsightInterval: null
             )
@@ -67,7 +69,7 @@ public class Program
             //await task;
             Console.CancelKeyPress -= OnConsoleOnCancelKeyPress;
             _logger.Debug($"The training took in average {ModelWorker.GetInstance(PersonMind.ModelWorkerKey).AverageFitDuration}");
-            Console.WriteLine($"Iteration {iteration} finished after step ${citySim.WorldLayer.GetCurrentTick()}");
+            Console.WriteLine($"Iteration {iteration} finished after step {citySim.WorldLayer.GetCurrentTick()} with a maximum of {citySim.WorldLayer.MaxPersonCount} persons");
         }
     }
 }

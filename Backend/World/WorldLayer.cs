@@ -140,12 +140,16 @@ public class WorldLayer : AbstractLayer
         lock (_pathFindingGrid)
             return _pathFindingGrid.FindPath(new PathFindingPoint(x, y), new PathFindingPoint(x1, y1));
     }
-
+    
+    public int MaxPersonCount { get; private set; } = 0;
 
     public GlobalState GetGlobalState()
     {
+        int personCount = GridEnvironment.Entities.Count((it) => it is Person);
+        if (personCount > MaxPersonCount)
+            MaxPersonCount = personCount;
         return new GlobalState(
-            GridEnvironment.Entities.Count((it) => it is Person),
+            personCount,
             Structures.OfType<House>().Sum(house => house.MaxSpaces),
             Structures.OfType<Restaurant>()
                 .Sum(restaurant => restaurant.UsageScore) / Structures.OfType<Restaurant>().Count()

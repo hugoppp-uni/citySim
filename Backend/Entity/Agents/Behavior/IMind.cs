@@ -24,7 +24,7 @@ public interface IMind
 
         return type.Name switch
         {
-            nameof(PersonMind) => new PersonMind(0.5),
+            nameof(PersonMind) => new PersonMind(0.25 + Random.Shared.NextDouble()/2),
             _ => (IMind)Activator.CreateInstance(type)!
         };
     }

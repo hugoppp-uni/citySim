@@ -19,8 +19,8 @@ public class PersonMind : IMind
     private const double IgnoreOwnBodyScalar = 0.1;
     private const double GoodWorldLensScalar = 0.8;
     private const double BadWorldLensScalar = 0.3;
-    private const double BasisEvaluationFactor = 1.7;
-    private const int CollectiveDecisionEvaluationDelay = 10;
+    private const double BasisEvaluationFactor = 1.2;
+    private const int CollectiveDecisionEvaluationDelay = 5;
 
     private static readonly int PersonalNeedsCount = new PersonNeeds().AsNormalizedArray().Length;
     private static readonly int GlobalStatesCount = new GlobalState(1, 1, 1).AsNormalizedArray().Length;
@@ -120,12 +120,12 @@ public class PersonMind : IMind
             if (wellBeingDelta >= 0)
             {
                 expected[actionIndex] =
-                    (float)(1 - 0.9 * Math.Pow(1 - (double)expected[actionIndex], BasisEvaluationFactor + 3 * evaluationFactor));
+                    (float)(1 - 0.9 * Math.Pow(1 - (double)expected[actionIndex], BasisEvaluationFactor + 3.5 * evaluationFactor));
             }
             else
             {
                 expected[actionIndex] =
-                    (float)(0.9 * Math.Pow((double)expected[actionIndex], BasisEvaluationFactor + 3 * evaluationFactor));
+                    (float)(0.9 * Math.Pow((double)expected[actionIndex], BasisEvaluationFactor + 3.5 * evaluationFactor));
             }
 
             var diff = (float)prediction.Output[actionIndex] - expected[actionIndex];
